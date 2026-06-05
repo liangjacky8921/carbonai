@@ -9,14 +9,12 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:#0a0a1a;color:#e0e0e0;min-height:100vh}
-/* Header */
 .topbar{background:linear-gradient(135deg,#0f0f2a,#1a1a3e);border-bottom:1px solid #2a2a4a;padding:14px 24px;display:flex;justify-content:space-between;align-items:center}
 .topbar .logo{font-size:20px;font-weight:800;background:linear-gradient(135deg,#4CAF50,#00BCD4);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .topbar .logo span{color:#8BC34A}
 .topbar .creator{font-size:12px;color:#666}
 .topbar .creator strong{color:#8BC34A}
 .container{max-width:1100px;margin:0 auto;padding:20px}
-/* Upload */
 .upload-zone{background:#15152a;border:2px dashed #2a2a4a;border-radius:16px;padding:50px 30px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:20px}
 .upload-zone:hover,.upload-zone.dragover{border-color:#4CAF50;background:#1a1a35}
 .upload-zone .icon{font-size:48px;margin-bottom:12px}
@@ -24,7 +22,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .upload-zone h2 strong{color:#8BC34A}
 .upload-zone p{font-size:13px;color:#666}
 .upload-zone .hint{font-size:12px;color:#444;margin-top:8px}
-/* Steps indicator */
 .steps{display:flex;justify-content:center;gap:8px;margin-bottom:20px}
 .step{display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:20px;font-size:12px;background:#15152a;color:#555;border:1px solid #2a2a4a;transition:all .3s}
 .step.active{background:rgba(76,175,80,.1);color:#8BC34A;border-color:#4CAF50}
@@ -33,16 +30,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .step.active .num{background:#4CAF50;color:#fff}
 .step.done .num{background:#4CAF50;color:#fff}
 .step.inactive .num{background:#2a2a4a;color:#666}
-/* Stats */
 .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:20px}
 .stat-box{background:#15152a;border-radius:12px;padding:14px;text-align:center;border:1px solid #2a2a4a}
 .stat-box .num{font-size:24px;font-weight:700;color:#8BC34A}
 .stat-box .lbl{font-size:11px;color:#666;margin-top:2px}
-/* Charts */
 .chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
 .chart-box{background:#15152a;border-radius:14px;padding:20px;border:1px solid #2a2a4a}
 .chart-box h3{font-size:14px;color:#e0e0e0;margin-bottom:12px}
-/* Table */
 .table-wrap{overflow-x:auto;background:#15152a;border-radius:14px;border:1px solid #2a2a4a;padding:20px;margin-bottom:20px}
 .table-wrap h3{font-size:14px;color:#e0e0e0;margin-bottom:12px}
 table{width:100%;border-collapse:collapse;font-size:12px}
@@ -53,7 +47,6 @@ tr:hover td{background:#1a1a35}
 .tag-s1{background:rgba(244,67,54,.15);color:#f44336}
 .tag-s2{background:rgba(255,152,0,.15);color:#FF9800}
 .tag-s3{background:rgba(33,150,243,.15);color:#2196F3}
-/* Buttons */
 .btn-group{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
 .btn{padding:10px 24px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
 .btn-primary{background:linear-gradient(135deg,#4CAF50,#00BCD4);color:#fff}
@@ -62,22 +55,16 @@ tr:hover td{background:#1a1a35}
 .btn-outline:hover{background:rgba(76,175,80,.1)}
 .btn-secondary{background:#2a2a4a;color:#e0e0e0;border:1px solid #3a3a5a}
 .btn-secondary:hover{background:#3a3a5a}
-/* Hidden */
 .hidden{display:none!important}
-/* Report header */
 .report-header{background:linear-gradient(135deg,rgba(76,175,80,.05),rgba(0,188,212,.05));border-radius:14px;padding:20px;border:1px solid rgba(76,175,80,.2);margin-bottom:20px;display:flex;justify-content:space-between;align-items:center}
 .report-header h2{font-size:16px;color:#8BC34A}
 .report-header .sub{font-size:12px;color:#666;margin-top:2px}
-/* Footer */
 .footer{text-align:center;padding:30px;color:#444;font-size:12px;border-top:1px solid #1a1a2e;margin-top:30px}
-/* Loading */
 .loading{display:none;text-align:center;padding:40px}
 .loading.show{display:block}
 .spinner{width:40px;height:40px;border:3px solid #2a2a4a;border-top-color:#4CAF50;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
 @keyframes spin{to{transform:rotate(360deg)}}
-/* Print styles */
 @media print{body{background:#fff;color:#333}.topbar,.btn-group,.upload-zone,.steps,.footer{display:none!important}.chart-box,.table-wrap,.report-header,.stat-box{background:#fff!important;border-color:#ddd!important;box-shadow:none!important}.container{max-width:100%;padding:10px}.chart-row{page-break-inside:avoid}}
-/* Expert eval */
 .expert-section{background:#15152a;border-radius:14px;padding:24px;border:1px solid #2a2a4a;margin-bottom:20px}
 .expert-section h3{font-size:16px;color:#8BC34A;margin-bottom:12px}
 .expert-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px}
@@ -97,14 +84,12 @@ tr:hover td{background:#1a1a35}
 </div>
 
 <div class="container">
-  <!-- Steps -->
   <div class="steps">
     <div class="step active" id="s1"><span class="num">1</span>上传Excel</div>
     <div class="step inactive" id="s2"><span class="num">2</span>智能匹配</div>
     <div class="step inactive" id="s3"><span class="num">3</span>核算报告</div>
   </div>
 
-  <!-- Upload -->
   <div class="upload-zone" id="uploadZone">
     <div class="icon">📤</div>
     <h2>上传企业碳排放<strong>活动数据</strong></h2>
@@ -113,16 +98,12 @@ tr:hover td{background:#1a1a35}
     <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none">
   </div>
 
-  <!-- Loading -->
   <div class="loading" id="loading">
     <div class="spinner"></div>
     <p style="color:#888;font-size:14px">正在分析碳排放数据...</p>
   </div>
 
-  <!-- Results -->
   <div id="results" class="hidden">
-
-    <!-- Report Header -->
     <div class="report-header">
       <div>
         <h2>📊 碳排放核算报告</h2>
@@ -131,22 +112,18 @@ tr:hover td{background:#1a1a35}
       <button class="btn btn-outline" onclick="window.print()">📥 下载PDF报告</button>
     </div>
 
-    <!-- Stats -->
     <div class="stats-row" id="statsRow"></div>
 
-    <!-- Charts -->
     <div class="chart-row">
       <div class="chart-box"><h3>🌍 排放结构 (Scope 1-3)</h3><canvas id="scopeChart"></canvas></div>
       <div class="chart-box"><h3>🏭 主要排放源</h3><canvas id="sourceChart"></canvas></div>
     </div>
 
-    <!-- Detail Table -->
     <div class="table-wrap">
       <h3>📋 碳排放明细表</h3>
       <div id="tableContainer"></div>
     </div>
 
-    <!-- Expert Evaluation -->
     <div class="expert-section">
       <h3>👨‍⚖️ 软件开发团队 · 实用性评估</h3>
       <p style="font-size:13px;color:#888;margin-bottom:12px;">6人专家组对 CarbonAI v1.0 的综合评估：</p>
@@ -154,7 +131,6 @@ tr:hover td{background:#1a1a35}
       <div id="expertSummary" style="text-align:center;margin-top:12px;font-size:13px;color:#aaa"></div>
     </div>
 
-    <!-- Creator footer inside results -->
     <div style="text-align:center;padding:16px;font-size:13px;color:#555;border-top:1px solid #1a1a2e;">
       创作者：<strong style="color:#8BC34A;">梁家深</strong> · 嘉应学院 地理信息科学 · 基于 Claude Code 开发
     </div>
@@ -162,11 +138,11 @@ tr:hover td{background:#1a1a35}
 </div>
 
 <div class="footer">
-  CarbonAI v1.0 · 创作者：梁家深 · 本工具为DEMO演示，数据仅供测试使用
+  CarbonAI v1.1 · 创作者：梁家深 · 本工具为DEMO演示，数据仅供测试使用
 </div>
 
 <script>
-// ========== 排放因子数据库 (中国) ==========
+// ========== 排放因子数据库 ==========
 const EMISSION_FACTORS = [
   {kw:'外购电力',kw2:'电费',kw3:'用电',kw4:'kwh',scope:'Scope 2',factor:0.5703,unit:'kgCO₂/kWh',src:'华东电网'},
   {kw:'天然气',kw2:'燃气',kw3:'煤气',kw4:'锅炉',scope:'Scope 1',factor:2.165,unit:'kgCO₂/m³',src:'IPCC'},
@@ -183,7 +159,6 @@ const EMISSION_FACTORS = [
   {kw:'煤炭',kw2:'煤',scope:'Scope 1',factor:1.958,unit:'kgCO₂/kg',src:'生态环境部'},
   {kw:'蒸汽',kw2:'热力',scope:'Scope 2',factor:0.11,unit:'kgCO₂/MJ',src:'生态环境部'},
   {kw:'制冷剂',kw2:'冷媒',scope:'Scope 1',factor:1430,unit:'kgCO₂/kg',src:'IPCC'},
-  // 通用兜底
   {kw:'电力',kw2:'电',scope:'Scope 2',factor:0.5703,unit:'kgCO₂/kWh',src:'华东电网'},
   {kw:'燃料',kw2:'燃油',scope:'Scope 1',factor:2.617,unit:'kgCO₂/升',src:'生态环境部'},
   {kw:'运输',kw2:'交通',scope:'Scope 3',factor:0.892,unit:'kgCO₂/吨·公里',src:'GLEC'},
@@ -192,7 +167,6 @@ const EMISSION_FACTORS = [
   {kw:'垃圾',scope:'Scope 3',factor:498,unit:'kgCO₂/吨',src:'IPCC'},
 ];
 
-// ========== 匹配算法 ==========
 function matchFactor(name) {
   if(!name) return null;
   const n = String(name).toLowerCase().replace(/[\s\-]/g,'');
@@ -201,14 +175,12 @@ function matchFactor(name) {
       if(f[k] && n.includes(f[k].toLowerCase().replace(/[\s\-]/g,''))) return f;
     }
   }
-  // 二次匹配：按关键词
   for(const f of EMISSION_FACTORS) {
     if(n.includes(f.kw.toLowerCase().replace(/[\s\-]/g,''))) return f;
   }
   return null;
 }
 
-// ========== 主要逻辑 ==========
 function formatNum(v){return Number(v).toLocaleString('zh-CN',{minimumFractionDigits:1,maximumFractionDigits:1})}
 
 document.getElementById('uploadZone').addEventListener('click',()=>document.getElementById('fileInput').click());
@@ -227,14 +199,13 @@ async function handleFile(file) {
   document.getElementById('uploadZone').style.display='none';
   document.getElementById('loading').classList.add('show');
 
-  // 模拟处理延迟让UI平滑
   await new Promise(r=>setTimeout(r,800));
 
   try {
     const data = await file.arrayBuffer();
     const wb = XLSX.read(data,{type:'array'});
 
-    // 找第一个有数据的sheet
+    // 选Sheet
     let ws = null;
     for(const name of wb.SheetNames) {
       if(name.includes('活动')||name.includes('排放')||name.includes('Sheet1')||name===wb.SheetNames[0]) {
@@ -243,60 +214,47 @@ async function handleFile(file) {
     }
     if(!ws) ws = wb.Sheets[wb.SheetNames[0]];
 
-    const raw = XLSX.utils.sheet_to_json(ws,{defval:''});
-    if(!raw.length){alert('Excel中未找到数据');return}
+    // ★★★ BUG FIX: 改用数组模式(sheet_to_json header:1)，跳过标题/合并单元格行 ★★★
+    const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+    if(!rows.length){alert('Excel中未找到数据');return}
 
-    // 自动探测列名
-    const cols = Object.keys(raw[0]);
-    const nameCol = cols.find(c=>/排放源|名称|类别|source|name|活动/i.test(c))||cols[0];
-    const valCol = cols.find(c=>/活动数据|数值|用量|消耗|数据|amount|value|data|activity/i.test(c))||cols[1];
-    const unitCol = cols.find(c=>/单位|unit/i.test(c));
-    const yearCol = cols.find(c=>/年份|年度|year/i.test(c));
+    // 找表头行：扫描前20行，定位"排放源"和"活动数据"所在的列索引
+    let hi=-1,ni=-1,vi=-1,ui=-1,yi=-1;
+    for(let i=0;i<Math.min(rows.length,20);i++){
+      const r=rows[i];
+      for(let j=0;j<r.length;j++){
+        const c=String(r[j]).trim();
+        if(/排放源|名称/.test(c)) ni=j;
+        if(/活动数据|数值|用量|消耗/.test(c)) vi=j;
+        if(/单位/.test(c)) ui=j;
+        if(/年份|年度/.test(c)) yi=j;
+      }
+      if(ni>=0&&vi>=0){hi=i;break;}
+    }
+    if(hi<0){hi=0;ni=0;vi=1;ui=-1;yi=-1;}
 
-    // 解析
+    // 解析数据行
     const records = [];
-    for(const row of raw) {
-      const srcName = String(row[nameCol]||'').trim();
-      const rawVal = parseFloat(row[valCol])||0;
+    for(let i=hi+1;i<rows.length;i++){
+      const r=rows[i];
+      const srcName=String(r[ni]||'').trim();
+      const rawVal=parseFloat(r[vi])||0;
       if(!srcName||!rawVal) continue;
-
-      const matched = matchFactor(srcName);
+      const matched=matchFactor(srcName);
       if(!matched) continue;
-
-      const unit = unitCol ? (row[unitCol]||matched.unit) : matched.unit;
-      const year = yearCol ? (row[yearCol]||2025) : 2025;
-      let emission = rawVal * matched.factor / 1000; // → tCO₂e
-
-      records.push({
-        source: srcName,
-        scope: matched.scope,
-        activity: rawVal,
-        unit: unit,
-        factor: matched.factor,
-        factorUnit: matched.unit,
-        emission: emission,
-        year: year,
-        factorSrc: matched.src
-      });
+      const unit=ui>=0?(r[ui]||matched.unit):matched.unit;
+      const year=yi>=0?(r[yi]||2025):2025;
+      const emission=rawVal*matched.factor/1000;
+      records.push({source:srcName,scope:matched.scope,activity:rawVal,unit,factor:matched.factor,factorUnit:matched.unit,emission,year,factorSrc:matched.src});
     }
 
-    if(!records.length) {
-      // fallback: 尝试直接按数值列计算
-      for(const row of raw) {
-        const srcName = String(row[nameCol]||'').trim();
-        const rawVal = parseFloat(row[valCol])||0;
+    if(!records.length){
+      for(let i=hi+1;i<rows.length;i++){
+        const r=rows[i];
+        const srcName=String(r[ni]||'').trim();
+        const rawVal=parseFloat(r[vi])||0;
         if(!srcName||!rawVal) continue;
-        records.push({
-          source: srcName,
-          scope: 'Scope 2',
-          activity: rawVal,
-          unit: unitCol?(row[unitCol]||'kWh'):'kWh',
-          factor: 0.5703,
-          factorUnit: 'kgCO₂/kWh',
-          emission: rawVal*0.5703/1000,
-          year: yearCol?(row[yearCol]||2025):2025,
-          factorSrc: '默认(电力)'
-        });
+        records.push({source:srcName,scope:'Scope 2',activity:rawVal,unit:ui>=0?(r[ui]||'kWh'):'kWh',factor:0.5703,factorUnit:'kgCO₂/kWh',emission:rawVal*0.5703/1000,year:yi>=0?(r[yi]||2025):2025,factorSrc:'默认(电力)'});
       }
     }
 
@@ -320,19 +278,16 @@ async function handleFile(file) {
 function renderResults(records) {
   document.getElementById('results').classList.remove('hidden');
 
-  // Aggregations
   const byScope = {};
   let total = 0;
   for(const r of records) {
     byScope[r.scope] = (byScope[r.scope]||0) + r.emission;
     total += r.emission;
   }
-
   const s1 = byScope['Scope 1']||0;
   const s2 = byScope['Scope 2']||0;
   const s3 = byScope['Scope 3']||0;
 
-  // Stats
   document.getElementById('statsRow').innerHTML = `
     <div class="stat-box"><div class="num">${formatNum(total)}</div><div class="lbl">总排放 (tCO₂e)</div></div>
     <div class="stat-box"><div class="num">${formatNum(s1)}</div><div class="lbl">Scope 1 直接排放</div></div>
@@ -342,7 +297,6 @@ function renderResults(records) {
     <div class="stat-box"><div class="num">${records[0].year}</div><div class="lbl">数据年份</div></div>
   `;
 
-  // Scope chart
   const ctx1 = document.getElementById('scopeChart').getContext('2d');
   new Chart(ctx1,{
     type:'doughnut',
@@ -371,7 +325,6 @@ function renderResults(records) {
     }
   });
 
-  // Source chart - top 8
   const bySource = {};
   for(const r of records) {
     bySource[r.source] = (bySource[r.source]||0) + r.emission;
@@ -404,11 +357,9 @@ function renderResults(records) {
     }
   });
 
-  // Detail table
   let html = `<table><thead><tr>
     <th>排放源</th><th>Scope</th><th>活动数据</th><th>单位</th><th>排放因子</th><th>tCO₂e</th><th>占比</th>
   </tr></thead><tbody>`;
-  let idx=0;
   for(const r of records.sort((a,b)=>b.emission-a.emission)) {
     const pct = total>0?(r.emission/total*100).toFixed(1):0;
     const scopeClass = r.scope==='Scope 1'?'tag-s1':r.scope==='Scope 2'?'tag-s2':'tag-s3';
@@ -421,15 +372,11 @@ function renderResults(records) {
       <td><strong>${formatNum(r.emission)}</strong></td>
       <td>${pct}%</td>
     </tr>`;
-    idx++;
   }
   html += '</tbody></table>';
   document.getElementById('tableContainer').innerHTML = html;
 
-  // Expert evaluation
   renderExpertEvaluation(records,total);
-
-  // Scroll to results
   document.getElementById('results').scrollIntoView({behavior:'smooth'});
 }
 
@@ -460,7 +407,6 @@ function renderExpertEvaluation(records,total) {
   }
   document.getElementById('expertGrid').innerHTML = html;
 
-  // Summary
   const avgScore = experts.reduce((s,e)=>s+e.score,0)/experts.length;
   document.getElementById('expertSummary').innerHTML = `
     综合评分：<strong style="font-size:18px;color:#8BC34A;">${avgScore.toFixed(1)}</strong>/10
