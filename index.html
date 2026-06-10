@@ -293,7 +293,8 @@ body.dark .lca-flow{background:#0f172a}
   <div class="logo"><div class="icon">🌱</div><div class="text">CarbonAI</div><span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:2px">v5.0</span></div>
   <div style="display:flex;align-items:center;gap:10px">
     <button onclick="toggleDarkMode()" title="深色/浅色" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:14px;color:var(--text2)">🌓</button>
-    <button class="btn btn-outline btn-sm" onclick="showLogin()">登录</button>
+    <button onclick="toggleLang()" id="langBtn" title="Switch Language" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:11px;color:var(--text2);font-weight:600">EN</button>
+    <button class="btn btn-outline btn-sm" onclick="showLogin()"><span data-i18n="login.btn">登录</span></button>
   </div>
 </div>
 
@@ -302,19 +303,19 @@ body.dark .lca-flow{background:#0f172a}
 
 <!-- ========== TAB NAV ========== -->
 <div class="tab-nav" id="tabNav">
-  <button class="tab-btn active" data-tab="dashboard"><i class="ri-dashboard-line"></i> 数据大屏</button>
-  <button class="tab-btn" data-tab="accounting"><i class="ri-calculator-line"></i> 碳核算<span class="badge">核心</span></button>
-  <button class="tab-btn" data-tab="history"><i class="ri-history-line"></i> 历史对比</button>
-  <button class="tab-btn" data-tab="gis" style="background:#fef3c7"><i class="ri-satellite-line"></i> GIS遥感<span class="badge-new">NEW</span></button>
-  <button class="tab-btn" data-tab="trajectory" style="background:#fef3c7"><i class="ri-route-line"></i> 轨迹核算<span class="badge-new">NEW</span></button>
-  <button class="tab-btn" data-tab="grid" style="background:#fef3c7"><i class="ri-stack-line"></i> 网格监测<span class="badge-new">NEW</span></button>
-  <button class="tab-btn" data-tab="factorlib" style="background:#fef3c7"><i class="ri-database-2-line"></i> 因子库溯源<span class="badge-new">NEW</span></button>
-  <button class="tab-btn" data-tab="asset"><i class="ri-bank-line"></i> 碳资产<span class="pro-badge">PRO</span></button>
-  <button class="tab-btn" data-tab="pcf"><i class="ri-git-branch-line"></i> 产品碳足迹<span class="pro-badge">PRO</span></button>
-  <button class="tab-btn" data-tab="report"><i class="ri-file-list-3-line"></i> 合规报告<span class="pro-badge">PRO</span></button>
-  <button class="tab-btn" data-tab="ai"><i class="ri-robot-line"></i> AI顾问</button>
-  <button class="tab-btn" data-tab="tools"><i class="ri-tools-line"></i> 工具箱<span class="badge">7</span></button>
-  <button class="tab-btn" data-tab="news"><i class="ri-newspaper-line"></i> 资讯</button>
+  <button class="tab-btn active" data-tab="dashboard"><i class="ri-dashboard-line"></i> <span data-i18n="tab.dashboard">数据大屏</span></button>
+  <button class="tab-btn" data-tab="accounting"><i class="ri-calculator-line"></i> <span data-i18n="tab.accounting">碳核算</span><span class="badge">核心</span></button>
+  <button class="tab-btn" data-tab="history"><i class="ri-history-line"></i> <span data-i18n="tab.history">历史对比</span></button>
+  <button class="tab-btn" data-tab="gis" style="background:#fef3c7"><i class="ri-satellite-line"></i> <span data-i18n="tab.gis">GIS遥感</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="trajectory" style="background:#fef3c7"><i class="ri-route-line"></i> <span data-i18n="tab.trajectory">轨迹核算</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="grid" style="background:#fef3c7"><i class="ri-stack-line"></i> <span data-i18n="tab.grid">网格监测</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="factorlib" style="background:#fef3c7"><i class="ri-database-2-line"></i> <span data-i18n="tab.factorlib">因子库溯源</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="asset"><i class="ri-bank-line"></i> <span data-i18n="tab.asset">碳资产</span><span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="pcf"><i class="ri-git-branch-line"></i> <span data-i18n="tab.pcf">产品碳足迹</span><span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="report"><i class="ri-file-list-3-line"></i> <span data-i18n="tab.report">合规报告</span><span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="ai"><i class="ri-robot-line"></i> <span data-i18n="tab.ai">AI顾问</span></button>
+  <button class="tab-btn" data-tab="tools"><i class="ri-tools-line"></i> <span data-i18n="tab.tools">工具箱</span><span class="badge">7</span></button>
+  <button class="tab-btn" data-tab="news"><i class="ri-newspaper-line"></i> <span data-i18n="tab.news">资讯</span></button>
 </div>
 
 <div class="main">
@@ -322,9 +323,9 @@ body.dark .lca-flow{background:#0f172a}
 <!-- ===== DASHBOARD ===== -->
 <div class="tab-panel active" id="panel-dashboard">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-    <div class="section-title" style="margin-bottom:0"><span class="icon"><i class="ri-dashboard-line"></i></span>数据大屏</div>
+    <div class="section-title" style="margin-bottom:0"><span class="icon"><i class="ri-dashboard-line"></i></span><span data-i18n="dashboard.title">数据大屏</span></div>
     <div style="display:flex;align-items:center;gap:6px">
-      <span style="font-size:12px;color:var(--text2)">数据年份：</span>
+      <span style="font-size:12px;color:var(--text2)"><span data-i18n="dashboard.year">数据年份</span>：</span>
       <select id="globalYear" onchange="onGlobalYearChange()" style="width:auto;padding:7px 12px;border:2px solid var(--green-light);border-radius:8px;font-size:13px;font-weight:600;color:var(--green);background:var(--green-bg);cursor:pointer">
         <option value="2026">2026年</option><option value="2025">2025年</option><option value="2024">2024年</option><option value="2023">2023年</option><option value="2022">2022年</option>
       </select>
@@ -333,8 +334,8 @@ body.dark .lca-flow{background:#0f172a}
   <div class="stats-row" id="dashStats">
     <div class="stat-box" style="grid-column:1/-1;padding:35px;text-align:center">
       <div style="font-size:42px;margin-bottom:8px">📊</div>
-      <div style="font-weight:600;color:var(--text)">请先在"碳核算"页面上传Excel数据</div>
-      <div style="font-size:11px;color:var(--text2);margin-top:4px">支持.xlsx/.xls格式，自动识别排放源与排放因子</div>
+      <div style="font-weight:600;color:var(--text)" data-i18n="dashboard.nodata">请先在"碳核算"页面上传Excel数据</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px" data-i18n="dashboard.hint">支持.xlsx/.xls格式，自动识别排放源与排放因子</div>
     </div>
   </div>
   <div class="chart-row">
@@ -349,18 +350,18 @@ body.dark .lca-flow{background:#0f172a}
 
 <!-- ===== ACCOUNTING ===== -->
 <div class="tab-panel" id="panel-accounting">
-  <div class="section-title"><span class="icon"><i class="ri-calculator-line"></i></span>碳排放核算</div>
+  <div class="section-title"><span class="icon"><i class="ri-calculator-line"></i></span><span data-i18n="accounting.title">碳排放核算</span></div>
   <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
     <div class="icon">📁</div>
-    <h3>点击上传碳排放数据 (Excel .xlsx/.xls)</h3>
-    <div class="hint">文件格式：排放源 | 活动数据 | 单位 | Scope | 年份（可选）</div>
+    <h3 data-i18n="accounting.upload">点击上传碳排放数据 (Excel .xlsx/.xls)</h3>
+    <div class="hint" data-i18n="accounting.hint">文件格式：排放源 | 活动数据 | 单位 | Scope | 年份（可选）</div>
   </div>
   <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])" style="display:none">
   <div class="btn-group" style="margin-top:12px">
-    <button class="btn btn-outline btn-sm" onclick="loadDemoData()"><i class="ri-download-line"></i> 加载演示数据</button>
-    <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="ri-file-download-line"></i> 导出CSV</button>
-    <button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="ri-file-pdf-line"></i> 导出报告PDF</button>
-    <button class="btn btn-danger btn-sm" onclick="clearData()"><i class="ri-delete-bin-line"></i> 清空数据</button>
+    <button class="btn btn-outline btn-sm" onclick="loadDemoData()"><i class="ri-download-line"></i> <span data-i18n="accounting.demo">加载演示数据</span></button>
+    <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="ri-file-download-line"></i> <span data-i18n="accounting.export">导出CSV</span></button>
+    <button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="ri-file-pdf-line"></i> <span data-i18n="accounting.pdf">导出报告PDF</span></button>
+    <button class="btn btn-danger btn-sm" onclick="clearData()"><i class="ri-delete-bin-line"></i> <span data-i18n="accounting.clear">清空数据</span></button>
   </div>
   <div class="table-wrap hidden" id="results"><h4>核算结果明细</h4><div id="resultsTable"></div></div>
 </div>
@@ -730,7 +731,7 @@ body.dark .lca-flow{background:#0f172a}
 
 </div><!-- /main -->
 
-<div class="footer">CarbonAI v5.0 · 企业级碳管理SaaS平台 · 碳核算 | GIS遥感 | 轨迹核算 | 网格监测 | 因子溯源 | 碳资产管理 | 产品碳足迹 | 合规报告</div>
+<div class="footer">CarbonAI v5.0 · 企业级碳管理SaaS平台<br><span style="color:var(--text3)">Creator: Jacky Liang (Jiashen Liang)</span></div>
 
 <script>
 // ==================== GLOBAL STATE ====================
@@ -740,6 +741,53 @@ let gisMapObj, gisDrawnItems, gisPolygon, drawMode = false;
 let trajMapObj, gridMapObj, trajData = [];
 let ndviData = [], biomassData = [];
 let gridLayers = {heatmap:true, grid:true, wind:true, source:false};
+
+// ==================== I18N ====================
+let lang = localStorage.getItem('carbonai_lang') || 'zh';
+const I18N = {
+  'tab.dashboard':['数据大屏','Dashboard'],
+  'tab.accounting':['碳核算','Accounting'],
+  'tab.history':['历史对比','History'],
+  'tab.gis':['GIS遥感','GIS Remote'],
+  'tab.trajectory':['轨迹核算','Trajectory'],
+  'tab.grid':['网格监测','Grid Monitor'],
+  'tab.factorlib':['因子库溯源','Factor Library'],
+  'tab.asset':['碳资产','Carbon Asset'],
+  'tab.pcf':['产品碳足迹','Product CF'],
+  'tab.report':['合规报告','Compliance'],
+  'tab.ai':['AI顾问','AI Advisor'],
+  'tab.tools':['工具箱','Tools'],
+  'tab.news':['资讯','News'],
+  'login.btn':['登录','Login'],
+  'dashboard.title':['数据大屏','Dashboard'],
+  'dashboard.year':['数据年份','Data Year'],
+  'dashboard.nodata':['请先在"碳核算"页面上传Excel数据','Please upload Excel data in Accounting tab'],
+  'dashboard.hint':['支持.xlsx/.xls格式，自动识别排放源与排放因子','Supports .xlsx/.xls, auto-detects emission sources & factors'],
+  'accounting.title':['碳排放核算','Carbon Accounting'],
+  'accounting.upload':['点击上传碳排放数据 (Excel .xlsx/.xls)','Click to upload carbon data (Excel .xlsx/.xls)'],
+  'accounting.hint':['文件格式：排放源 | 活动数据 | 单位 | Scope | 年份（可选）','Format: Source | Activity | Unit | Scope | Year (optional)'],
+  'accounting.demo':['加载演示数据','Load Demo'],
+  'accounting.export':['导出CSV','Export CSV'],
+  'accounting.pdf':['导出报告PDF','Export PDF'],
+  'accounting.clear':['清空数据','Clear Data'],
+  'toast.demo_loaded':['已加载演示数据','Demo data loaded'],
+  'toast.csv_done':['CSV已导出','CSV exported'],
+  'toast.data_cleared':['数据已清空','Data cleared'],
+  'toast.no_data':['请先上传数据','Please upload data first'],
+  'toast.pdf_gen':['正在生成PDF报告...','Generating PDF report...'],
+  'toast.pdf_done':['PDF报告已下载','PDF report downloaded'],
+  'toast.upload_first':['请先上传数据','Please upload data first'],
+  'header.guest':['访客用户','Guest User'],
+  'dark.on':['深色模式已开启','Dark mode on'],
+  'dark.off':['浅色模式已开启','Light mode on'],
+};
+function t(key) { const v = I18N[key]; if (!v) return key; const idx = lang === 'en' ? 1 : 0; return v[idx] || key; }
+function applyLanguage() {
+  document.querySelectorAll('[data-i18n]').forEach(el => { const key = el.dataset.i18n; el.textContent = t(key); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
+  document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
+}
+function toggleLang() { lang = lang === 'zh' ? 'en' : 'zh'; localStorage.setItem('carbonai_lang', lang); applyLanguage(); showToast(lang==='en'?'Switched to English':'已切换为中文', 'info'); }
 
 // ==================== UTILS ====================
 function fmt(v){return Number(v).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -755,7 +803,9 @@ function showToast(msg, type = 'info') {
 }
 function toggleDarkMode() {
   document.body.classList.toggle('dark');
-  localStorage.setItem('carbonai_dark', document.body.classList.contains('dark') ? '1' : '0');
+  const isDark = document.body.classList.contains('dark');
+  localStorage.setItem('carbonai_dark', isDark ? '1' : '0');
+  showToast(isDark ? t('dark.on') : t('dark.off'), 'info');
 }
 if (localStorage.getItem('carbonai_dark') === '1') document.body.classList.add('dark');
 
@@ -888,31 +938,31 @@ function loadDemoData() {
   const demo=[{source:'烟煤',scope:'Scope 1',activity:500,unit:'吨',factor:1.9003,factorUnit:'tCO₂/t',emission:950.15,year:2026,factorSource:'国家发改委气候司'},{source:'柴油',scope:'Scope 1',activity:200,unit:'吨',factor:3.1605,factorUnit:'tCO₂/t',emission:632.1,year:2026,factorSource:'IPCC 2006'},{source:'电力',scope:'Scope 2',activity:8000,unit:'MWh',factor:0.5703,factorUnit:'tCO₂/MWh',emission:4562.4,year:2026,factorSource:'中国电网2023(南方)'},{source:'飞行',scope:'Scope 3',activity:50000,unit:'人·km',factor:0.115,factorUnit:'tCO₂/人·km',emission:5750,year:2026,factorSource:'ICAO'},{source:'公路货运',scope:'Scope 3',activity:300000,unit:'吨·km',factor:0.078,factorUnit:'tCO₂/吨·km',emission:23400,year:2026,factorSource:'GLEC 3.0'},{source:'天然气',scope:'Scope 1',activity:50,unit:'万m³',factor:21.840,factorUnit:'tCO₂/万m³',emission:1092,year:2026,factorSource:'IPCC 2006'}];
   currentRecords=demo;allRecords[2026]=demo;document.getElementById('globalYear').value=2026;
   renderResults(demo);setTimeout(()=>renderDashboard(),300);autoSave();
-  showToast('✅ 已加载演示数据 (6条记录)','success');
+  showToast('✅ '+t('toast.demo_loaded')+' (6 records)','success');
 }
 
 function exportCSV() {
-  if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
+  if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   let csv='﻿排放源,Scope,活动数据,单位,排放因子,因子单位,排放量(tCO₂e),占比\n';
   for(const r of currentRecords.sort((a,b)=>b.emission-a.emission)){
     csv+=`"${r.source}","${r.scope}",${r.activity},"${r.unit}",${r.factor},"${r.factorUnit}",${r.emission.toFixed(2)},${(r.emission/currentTotal*100).toFixed(1)}%\n`;
   }
   const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');
   a.href=u;a.download='碳排放数据_'+currentYear+'.csv';a.click();URL.revokeObjectURL(u);
-  showToast('✅ CSV已导出','success');
+  showToast('✅ '+t('toast.csv_done'),'success');
 }
 
 function exportPDF() {
-  if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
+  if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   const el=document.createElement('div');
   el.style.cssText='position:absolute;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b';
   el.innerHTML='<div style="text-align:center;padding:40px 0;border-bottom:3px solid #059669;margin-bottom:20px"><h1 style="color:#059669;font-size:24px">碳排放核算报告</h1><p style="color:#64748b">报告日期：'+new Date().toLocaleDateString('zh-CN')+' | 数据年份：'+currentYear+'</p></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放汇总</h3><div style="display:flex;gap:16px;margin:12px 0"><div style="background:#ecfdf5;padding:16px 24px;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:800;color:#059669">'+fmt(currentTotal)+'</div><div style="font-size:10px;color:#64748b">总排放 (tCO₂e)</div></div></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放明细</h3><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#059669;color:#fff"><th style="padding:6px 8px">排放源</th><th style="padding:6px 8px">Scope</th><th style="padding:6px 8px">活动数据</th><th style="padding:6px 8px">tCO₂e</th></tr></thead><tbody>'+currentRecords.sort((a,b)=>b.emission-a.emission).map(function(r){return '<tr><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.source+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.scope+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+fmt(r.activity)+' '+r.unit+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1;font-weight:600">'+fmt(r.emission)+'</td></tr>';}).join('')+'</tbody></table>';
   document.body.appendChild(el);
-  showToast('📄 正在生成PDF报告...', 'info');
-  html2pdf().set({margin:[10,10,10,10],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(function(){el.remove();showToast('✅ PDF报告已下载','success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
+  showToast('📄 '+t('toast.pdf_gen'), 'info');
+  html2pdf().set({margin:[10,10,10,10],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(function(){el.remove();showToast('✅ '+t('toast.pdf_done'),'success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
 }
 
-function clearData(){currentRecords=[];currentTotal=0;allRecords={};localStorage.removeItem('carbonai_data');document.getElementById('results').classList.add('hidden');document.getElementById('dashStats').innerHTML='<div class="stat-box" style="grid-column:1/-1;padding:35px;text-align:center"><div style="font-size:42px;margin-bottom:8px">📊</div><div style="font-weight:600;color:var(--text)">请先在"碳核算"页面上传Excel数据</div></div>';showToast('数据已清空','info');}
+function clearData(){currentRecords=[];currentTotal=0;allRecords={};localStorage.removeItem('carbonai_data');document.getElementById('results').classList.add('hidden');document.getElementById('dashStats').innerHTML='<div class="stat-box" style="grid-column:1/-1;padding:35px;text-align:center"><div style="font-size:42px;margin-bottom:8px">📊</div><div style="font-weight:600;color:var(--text)" data-i18n="dashboard.nodata">'+t('dashboard.nodata')+'</div></div>';showToast(t('toast.data_cleared'),'info');}
 
 // ==================== HISTORY ====================
 function renderHistory(){
@@ -1252,7 +1302,7 @@ function loadAutoSave(){
   if(saved){try{const data=JSON.parse(saved);if(data.allRecords&&Object.keys(data.allRecords).length>0){allRecords=data.allRecords;currentYear=data.year||2026;document.getElementById('globalYear').value=currentYear;if(allRecords[currentYear]){renderResults(allRecords[currentYear]);setTimeout(()=>renderDashboard(),300);}}}catch(e){}}
 }
 
-function showLogin(){showToast('演示模式 - 企业账号自动登录','info');}
+function showLogin(){showToast(lang==='en'?'Demo mode - Auto login':'演示模式 - 企业账号自动登录','info');}
 
 // ==================== NEW: 碳资产管理 ====================
 let currentReport='iso';
@@ -1395,7 +1445,7 @@ function generateReport(){
 }
 
 function exportReportPDF(){
-  if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
+  if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   const el=document.createElement('div');el.style.cssText='position:absolute;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b';
   el.innerHTML=document.getElementById('reportPreview').innerHTML;
   document.body.appendChild(el);
@@ -1405,7 +1455,7 @@ function exportReportPDF(){
 }
 
 function exportReportWord(){
-  if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
+  if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   const content=document.getElementById('reportPreview').innerHTML;
   const blob=new Blob(['<html><body>'+content+'</body></html>'],{type:'application/msword'});
   const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol'};
@@ -1416,6 +1466,7 @@ function exportReportWord(){
 
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded',function(){
+  applyLanguage();
   loadAutoSave();
   filterFactors();
   renderFactorCharts();
