@@ -25,7 +25,51 @@
   --radius: 14px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;position:relative;overflow-x:hidden}
+
+/* ===== 背景装饰层 ===== */
+.bg-decor{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:hidden}
+.bg-decor .orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:0.06;animation:orbFloat 18s ease-in-out infinite}
+.bg-decor .orb:nth-child(1){width:500px;height:500px;background:radial-gradient(circle,#059669,transparent);top:-10%;left:-8%;animation-delay:0s}
+.bg-decor .orb:nth-child(2){width:400px;height:400px;background:radial-gradient(circle,#0EA5E9,transparent);top:40%;right:-5%;animation-delay:-7s;animation-duration:22s}
+.bg-decor .orb:nth-child(3){width:350px;height:350px;background:radial-gradient(circle,#10B981,transparent);bottom:-8%;left:20%;animation-delay:-13s;animation-duration:20s}
+.bg-decor .orb:nth-child(4){width:280px;height:280px;background:radial-gradient(circle,#F59E0B,transparent);top:15%;right:25%;animation-delay:-4s;animation-duration:25s;opacity:0.03}
+@keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}25%{transform:translate(40px,-30px) scale(1.15)}50%{transform:translate(-20px,20px) scale(0.9)}75%{transform:translate(-35px,-15px) scale(1.1)}}
+
+/* 网格线图案 */
+.bg-grid{position:absolute;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(rgba(5,150,105,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(5,150,105,.025) 1px,transparent 1px);background-size:60px 60px;opacity:0.5}
+
+/* SVG 装饰图标 */
+.bg-icon{position:absolute;opacity:0.045;pointer-events:none;animation:iconDrift 28s ease-in-out infinite}
+.bg-icon:nth-child(6){top:12%;left:5%;width:180px;height:180px;animation-delay:0s}
+.bg-icon:nth-child(7){top:55%;right:8%;width:140px;height:140px;animation-delay:-8s;animation-duration:32s}
+.bg-icon:nth-child(8){top:25%;left:55%;width:120px;height:120px;animation-delay:-15s;animation-duration:26s}
+.bg-icon:nth-child(9){bottom:20%;left:35%;width:160px;height:160px;animation-delay:-20s;animation-duration:30s}
+.bg-icon:nth-child(10){top:70%;right:20%;width:130px;height:130px;animation-delay:-5s;animation-duration:24s}
+.bg-icon:nth-child(11){top:8%;right:35%;width:100px;height:100px;animation-delay:-18s;animation-duration:35s}
+.bg-icon:nth-child(12){bottom:35%;left:10%;width:150px;height:150px;animation-delay:-12s;animation-duration:29s}
+@keyframes iconDrift{0%,100%{transform:translateY(0) rotate(0deg) scale(1)}25%{transform:translateY(-25px) rotate(3deg) scale(1.08)}50%{transform:translateY(15px) rotate(-2deg) scale(0.94)}75%{transform:translateY(-10px) rotate(1deg) scale(1.05)}
+
+/* 碳分子结构 */
+.c-molecule{fill:none;stroke:#059669;stroke-width:1.5;opacity:0.06}
+.c-atom{fill:#059669;opacity:0.06}
+
+/* 叶子形状 */
+.leaf-path{fill:#10B981;opacity:0.05}
+
+/* 地球经纬线 */
+.earth-line{fill:none;stroke:#0EA5E9;stroke-width:0.8;opacity:0.05}
+
+/* 风力涡轮 */
+.turbine-blade{fill:#94a3b8;opacity:0.04;transform-origin:center;animation:turbineSpin 12s linear infinite}
+@keyframes turbineSpin{to{transform:rotate(360deg)}}
+
+/* 波浪线 (碳市场K线意象) */
+.c-wave{fill:none;stroke:#059669;stroke-width:1.2;opacity:0.04;animation:waveShift 8s ease-in-out infinite}
+@keyframes waveShift{0%,100%{transform:translateX(0)}50%{transform:translateX(15px)}}
+
+/* 六边形 (碳晶体/石墨烯意象) */
+.c-hex{fill:none;stroke:#10B981;stroke-width:1;opacity:0.04}
 .header{background:var(--card);border-bottom:1px solid var(--border);padding:0 24px;height:64px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:var(--shadow)}
 .header .logo{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}
 .header .logo .icon{width:38px;height:38px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
@@ -37,7 +81,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .badge{font-size:10px;padding:2px 6px;border-radius:8px;background:var(--green-bg);color:var(--green)}
 .badge-new{font-size:10px;padding:2px 6px;border-radius:8px;background:#fef3c7;color:#b45309;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.main{max-width:1400px;margin:0 auto;padding:0 24px 40px}
+.main{max-width:1400px;margin:0 auto;padding:0 24px 40px;position:relative;z-index:1}
 .tab-panel{display:none;background:var(--card);border-radius:0 var(--radius) var(--radius) var(--radius);padding:28px;border:1px solid var(--border);box-shadow:var(--shadow);min-height:500px}
 .tab-panel.active{display:block}
 .upload-zone{background:var(--green-bg);border:2px dashed var(--green-light);border-radius:var(--radius);padding:30px 20px;text-align:center;cursor:pointer;transition:all .3s;margin-bottom:20px}
@@ -122,7 +166,11 @@ body.dark .btn-secondary{background:#334155;color:#e2e8f0}
 body.dark .upload-zone{background:rgba(5,150,105,.08)}
 body.dark .map-overlay{background:#1e293b}
 body.dark .legend-bar,body.dark .grid-legend{background:#0f172a}
-body.dark #userDropdown{background:#1e293b;border-color:#334155}
+body.dark .bg-grid{background-image:linear-gradient(rgba(16,185,129,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(16,185,129,.04) 1px,transparent 1px)}
+body.dark .bg-icon{opacity:0.06}
+body.dark .c-molecule,body.dark .c-wave,body.dark .c-hex,body.dark .earth-line{stroke:#10B981}
+body.dark .c-atom{fill:#10B981}
+body.dark .leaf-path{fill:#34d399}
 
 .section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .section-title .icon{width:30px;height:30px;background:var(--green-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:15px}
@@ -154,6 +202,58 @@ body.dark #userDropdown{background:#1e293b;border-color:#334155}
 </style>
 </head>
 <body>
+
+<!-- ========== 背景装饰层 ========== -->
+<div class="bg-decor">
+  <div class="orb"></div><div class="orb"></div><div class="orb"></div><div class="orb"></div>
+  <div class="bg-grid"></div>
+  <!-- 叶子图标 -->
+  <svg class="bg-icon" viewBox="0 0 100 100"><path class="leaf-path" d="M50 95 C20 60 10 30 30 10 C50 -5 70 15 50 40 C65 20 85 15 80 5 C75 0 65 5 55 20 C60 35 70 55 50 95Z"/></svg>
+  <!-- CO2分子结构 -->
+  <svg class="bg-icon" viewBox="0 0 120 60">
+    <circle class="c-atom" cx="25" cy="30" r="10"/><text x="20" y="34" font-size="9" fill="#059669" opacity="0.06">O</text>
+    <circle class="c-atom" cx="60" cy="30" r="8"/><text x="56" y="33" font-size="8" fill="#059669" opacity="0.06">C</text>
+    <circle class="c-atom" cx="95" cy="30" r="10"/><text x="90" y="34" font-size="9" fill="#059669" opacity="0.06">O</text>
+    <line class="c-molecule" x1="33" y1="26" x2="54" y2="30"/><line class="c-molecule" x1="66" y1="30" x2="87" y2="26"/>
+    <line class="c-molecule" x1="33" y1="34" x2="54" y2="30"/><line class="c-molecule" x1="66" y1="30" x2="87" y2="34"/>
+  </svg>
+  <!-- 地球经纬线 -->
+  <svg class="bg-icon" viewBox="0 0 100 100">
+    <ellipse class="earth-line" cx="50" cy="50" rx="40" ry="40"/>
+    <ellipse class="earth-line" cx="50" cy="50" rx="40" ry="15"/>
+    <ellipse class="earth-line" cx="50" cy="50" rx="15" ry="40"/>
+    <line class="earth-line" x1="10" y1="50" x2="90" y2="50"/>
+    <line class="earth-line" x1="50" y1="10" x2="50" y2="90"/>
+    <path class="c-wave" d="M15 35 Q30 25 50 35 Q70 45 85 35"/>
+    <path class="c-wave" d="M15 65 Q30 55 50 65 Q70 75 85 65"/>
+  </svg>
+  <!-- 风力涡轮 -->
+  <svg class="bg-icon" viewBox="0 0 100 100">
+    <rect x="48" y="50" width="4" height="40" fill="#94a3b8" opacity="0.04"/>
+    <g class="turbine-blade"><ellipse cx="50" cy="35" rx="5" ry="18" fill="#94a3b8" opacity="0.04"/></g>
+    <g class="turbine-blade" style="animation-delay:-4s"><ellipse cx="50" cy="35" rx="5" ry="18" fill="#94a3b8" opacity="0.04" transform="rotate(120 50 35)"/></g>
+    <g class="turbine-blade" style="animation-delay:-8s"><ellipse cx="50" cy="35" rx="5" ry="18" fill="#94a3b8" opacity="0.04" transform="rotate(240 50 35)"/></g>
+  </svg>
+  <!-- 碳市场K线 -->
+  <svg class="bg-icon" viewBox="0 0 160 80">
+    <path class="c-wave" d="M5 50 L20 40 L25 42 L35 25 L40 27 L50 15 L55 17 L65 35 L70 33 L80 10 L85 12 L95 30 L100 28 L110 20 L115 22 L125 45 L130 43 L140 28 L155 30"/>
+    <path class="c-wave" d="M5 60 L20 55 L25 57 L35 45 L40 47 L50 35 L55 37 L65 50 L70 48 L80 30 L85 32 L95 50 L100 48 L110 38 L115 40 L125 58 L130 55 L140 45 L155 47" style="animation-delay:-4s"/>
+  </svg>
+  <!-- 树 -->
+  <svg class="bg-icon" viewBox="0 0 100 100">
+    <rect x="46" y="55" width="8" height="35" fill="#78716c" opacity="0.04"/>
+    <polygon points="50,5 20,55 80,55" fill="#10B981" opacity="0.04"/>
+    <polygon points="50,15 25,50 75,50" fill="#059669" opacity="0.04"/>
+  </svg>
+  <!-- 六边形网格 -->
+  <svg class="bg-icon" viewBox="0 0 150 130">
+    <polygon class="c-hex" points="25,5 45,16 45,38 25,50 5,38 5,16"/>
+    <polygon class="c-hex" points="75,5 95,16 95,38 75,50 55,38 55,16"/>
+    <polygon class="c-hex" points="50,55 70,66 70,88 50,100 30,88 30,66"/>
+    <polygon class="c-hex" points="100,55 120,66 120,88 100,100 80,88 80,66"/>
+    <polygon class="c-hex" points="25,105 45,116 45,138 25,150 5,138 5,116"/>
+  </svg>
+</div>
 
 <!-- ========== HEADER ========== -->
 <div class="header">
