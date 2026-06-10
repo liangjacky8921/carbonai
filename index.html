@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>CarbonAI v4.0 · AI驱动碳管理SaaS平台</title>
+<title>CarbonAI v5.0 · 企业级碳管理SaaS平台</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
@@ -120,6 +120,35 @@ tr:hover td{background:#f8fafc}
 .btn-secondary:hover{background:#e2e8f0}
 .btn-danger{background:#fef2f2;color:#dc2626;border:1px solid #fecaca}
 .btn-sm{padding:5px 12px;font-size:11px;border-radius:6px}
+.pro-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;font-weight:700}
+
+/* 碳资产 */
+.price-ticker{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px}
+.price-card{background:var(--card);border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;justify-content:space-between}
+.price-card .info .label{font-size:10px;color:var(--text3)}
+.price-card .info .value{font-size:20px;font-weight:800;color:var(--text)}
+.price-card .trend{font-size:11px;font-weight:600}
+.price-card .trend.up{color:#dc2626}.price-card .trend.down{color:var(--green)}
+.portfolio-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:6px 0}
+.timeline{position:relative;padding-left:8px;border-left:2px solid var(--border);margin-top:10px}
+.timeline-item{position:relative;margin-bottom:12px;padding-left:18px;font-size:12px}
+.timeline-item::before{content:'';position:absolute;left:-7px;top:4px;width:12px;height:12px;border-radius:50%;background:var(--green);border:2px solid var(--card)}
+.timeline-item.warn::before{background:var(--orange)}
+.timeline-item.danger::before{background:var(--red)}
+
+/* 产品碳足迹 */
+.lca-flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:16px}
+.lca-stage{background:var(--card);border-radius:8px;padding:10px 12px;text-align:center;border:1px solid var(--border);min-width:85px;transition:all .2s;cursor:pointer}
+.lca-stage:hover,.lca-stage.active{border-color:var(--green);background:var(--green-bg)}
+.lca-stage .stage-icon{font-size:20px;margin-bottom:4px}
+.lca-stage .stage-name{font-size:10px;font-weight:600;color:var(--text)}
+.lca-stage .stage-pct{font-size:9px;color:var(--text3)}
+.lca-arrow{font-size:14px;color:var(--text3)}
+
+/* 合规报告 */
+.report-template-card{background:var(--blue-bg);border:1px solid var(--blue);border-radius:10px;padding:16px;cursor:pointer;transition:all .2s;margin-bottom:10px}
+.report-template-card:hover{border-color:#0284c7;box-shadow:var(--shadow-md)}
+.report-template-card.selected{border-color:var(--green);background:var(--green-bg)}
 .form-group{margin-bottom:10px}
 .form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -171,6 +200,9 @@ body.dark .bg-icon{opacity:0.06}
 body.dark .c-molecule,body.dark .c-wave,body.dark .c-hex,body.dark .earth-line{stroke:#10B981}
 body.dark .c-atom{fill:#10B981}
 body.dark .leaf-path{fill:#34d399}
+body.dark #userDropdown{background:#1e293b;border-color:#334155}
+body.dark .price-card,body.dark .lca-stage,body.dark .report-template-card{background:#1e293b}
+body.dark .lca-flow{background:#0f172a}
 
 .section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .section-title .icon{width:30px;height:30px;background:var(--green-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:15px}
@@ -257,7 +289,7 @@ body.dark .leaf-path{fill:#34d399}
 
 <!-- ========== HEADER ========== -->
 <div class="header">
-  <div class="logo"><div class="icon">🌱</div><div class="text">CarbonAI</div><span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:2px">v4.0</span></div>
+  <div class="logo"><div class="icon">🌱</div><div class="text">CarbonAI</div><span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:2px">v5.0</span></div>
   <div style="display:flex;align-items:center;gap:10px">
     <button onclick="toggleDarkMode()" title="深色/浅色" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:14px;color:var(--text2)">🌓</button>
     <button class="btn btn-outline btn-sm" onclick="showLogin()">登录</button>
@@ -276,6 +308,9 @@ body.dark .leaf-path{fill:#34d399}
   <button class="tab-btn" data-tab="trajectory" style="background:#fef3c7"><i class="ri-route-line"></i> 轨迹核算<span class="badge-new">NEW</span></button>
   <button class="tab-btn" data-tab="grid" style="background:#fef3c7"><i class="ri-stack-line"></i> 网格监测<span class="badge-new">NEW</span></button>
   <button class="tab-btn" data-tab="factorlib" style="background:#fef3c7"><i class="ri-database-2-line"></i> 因子库溯源<span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="asset"><i class="ri-bank-line"></i> 碳资产<span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="pcf"><i class="ri-git-branch-line"></i> 产品碳足迹<span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="report"><i class="ri-file-list-3-line"></i> 合规报告<span class="pro-badge">PRO</span></button>
   <button class="tab-btn" data-tab="ai"><i class="ri-robot-line"></i> AI顾问</button>
   <button class="tab-btn" data-tab="tools"><i class="ri-tools-line"></i> 工具箱<span class="badge">7</span></button>
   <button class="tab-btn" data-tab="news"><i class="ri-newspaper-line"></i> 资讯</button>
@@ -484,6 +519,156 @@ body.dark .leaf-path{fill:#34d399}
   </div>
 </div>
 
+<!-- ===== NEW: 碳资产管理 ===== -->
+<div class="tab-panel" id="panel-asset">
+  <div class="section-title"><span class="icon"><i class="ri-bank-line"></i></span>碳资产管理 · 配额交易与碳信用组合</div>
+  <div class="price-ticker" id="priceTicker">
+    <div class="price-card"><div class="info"><div class="label">CEA 全国碳配额</div><div class="value">¥85.32</div><div style="font-size:10px;color:var(--text3)">上海环境能源交易所</div></div><div class="trend up">↑ 2.15%</div></div>
+    <div class="price-card"><div class="info"><div class="label">CCER 核证自愿减排量</div><div class="value">¥83.05</div><div style="font-size:10px;color:var(--text3)">北京绿色交易所</div></div><div class="trend up">↑ 1.82%</div></div>
+    <div class="price-card"><div class="info"><div class="label">EUA 欧盟碳配额</div><div class="value">€77.29</div><div style="font-size:10px;color:var(--text3)">ICE Endex</div></div><div class="trend down">↓ 0.87%</div></div>
+    <div class="price-card"><div class="info"><div class="label">碳远期 (2026.12)</div><div class="value">¥83.94</div><div style="font-size:10px;color:var(--text3)">复旦碳价指数</div></div><div class="trend up">↑ 0.56%</div></div>
+    <button class="btn btn-outline btn-sm" onclick="refreshPrices()" style="height:fit-content"><i class="ri-refresh-line"></i> 刷新</button>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-box">
+      <h4><i class="ri-pie-chart-line"></i> 碳资产组合结构</h4>
+      <div id="assetPortfolio" style="height:250px"></div>
+      <div class="portfolio-bar" style="margin-top:8px"><div style="width:58%;background:var(--green)"></div><div style="width:18%;background:var(--blue)"></div><div style="width:24%;background:#fde68a"></div></div>
+      <div style="font-size:10px;color:var(--text2);display:flex;gap:16px;margin-top:4px"><span>■ CEA配额 58%</span><span>■ CCER 18%</span><span>■ 碳信用储备 24%</span></div>
+    </div>
+    <div class="chart-box">
+      <h4><i class="ri-funds-line"></i> CEA碳价走势 & 复旦碳价指数预测</h4>
+      <div style="height:250px"><canvas id="carbonPriceChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="chart-row">
+    <div class="chart-box">
+      <h4><i class="ri-scales-line"></i> 配额盈缺分析 (2026年度)</h4>
+      <div class="stats-row" style="margin-bottom:12px">
+        <div class="stat-box"><div class="num" style="color:#059669">58,200</div><div class="lbl">配额持有 (tCO₂)</div></div>
+        <div class="stat-box"><div class="num" style="color:#dc2626">64,800</div><div class="lbl">预计排放 (tCO₂)</div></div>
+        <div class="stat-box"><div class="num" style="color:#F59E0B">-6,600</div><div class="lbl">配额缺口 (tCO₂)</div></div>
+        <div class="stat-box"><div class="num" style="color:#0EA5E9">¥56.1万</div><div class="lbl">缺口市值 (@¥85/t)</div></div>
+      </div>
+      <div style="padding:10px;background:#fffbeb;border-radius:8px;font-size:11px;color:#d97706">
+        <strong>⚠️ 碳资产预警</strong> — 预计第三履约周期(2026-2027)配额缺口6,600吨。建议：① 通过CCER抵消5%（3,240吨）；② 二级市场采购剩余配额3,360吨（预算约¥28.6万）；③ 或启动节能改造降低排放。
+      </div>
+    </div>
+    <div class="chart-box">
+      <h4><i class="ri-calendar-check-line"></i> 碳市场履约日历</h4>
+      <div class="timeline">
+        <div class="timeline-item"><strong>2025.12.31</strong> — 第二履约周期截止 (已完成) <span class="compliance-badge pass">✓ 合规</span></div>
+        <div class="timeline-item warn"><strong>2026.03.31</strong> — 年度碳排放报告提交 <span class="compliance-badge pending">待办</span></div>
+        <div class="timeline-item"><strong>2026.06.30</strong> — 第三方核查报告提交</div>
+        <div class="timeline-item danger"><strong>2026.10.15</strong> — CBAM首次报告提交截止 (欧盟进口商)</div>
+        <div class="timeline-item warn"><strong>2026.12.31</strong> — 第三履约周期配额清缴 <span class="compliance-badge pending">待办</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== NEW: 产品碳足迹 ===== -->
+<div class="tab-panel" id="panel-pcf">
+  <div class="section-title"><span class="icon"><i class="ri-git-branch-line"></i></span>产品碳足迹 (PCF) · LCA全生命周期核算</div>
+  <div class="lca-flow">
+    <div class="lca-stage active" onclick="selectLCAStage('raw')"><div class="stage-icon">⛏️</div><div class="stage-name">原材料获取</div><div class="stage-pct" id="pct-raw">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('mfg')"><div class="stage-icon">🏭</div><div class="stage-name">生产制造</div><div class="stage-pct" id="pct-mfg">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('tpt')"><div class="stage-icon">🚛</div><div class="stage-name">运输分销</div><div class="stage-pct" id="pct-tpt">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('use')"><div class="stage-icon">⚡</div><div class="stage-name">使用阶段</div><div class="stage-pct" id="pct-use">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('eol')"><div class="stage-icon">♻️</div><div class="stage-name">废弃回收</div><div class="stage-pct" id="pct-eol">-</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div>
+      <div class="form-row">
+        <div class="form-group"><label>产品名称</label><input type="text" id="pcfProductName" value="XX电子元器件" placeholder="输入产品名称"></div>
+        <div class="form-group"><label>产品单位</label><select id="pcfUnit"><option>件 (pcs)</option><option>公斤 (kg)</option><option>吨 (t)</option></select></div>
+      </div>
+      <div class="form-group"><label>核算标准</label><select id="pcfStandard"><option>ISO 14067:2018</option><option>PAS 2050</option><option>GHG Protocol Product Standard</option><option>欧盟 PEF (Product Environmental Footprint)</option></select></div>
+      <button class="btn btn-primary" onclick="calcPCF()"><i class="ri-calculator-line"></i> 计算产品碳足迹</button>
+      <button class="btn btn-outline btn-sm" onclick="loadPCFDemo()"><i class="ri-download-line"></i> 加载演示数据</button>
+    </div>
+    <div id="pcfResultPanel" class="hidden" style="background:var(--green-bg);border-radius:var(--radius);padding:16px;border:1px solid var(--green-light)">
+      <h4 style="color:var(--green);margin-bottom:8px"><i class="ri-check-double-line"></i> 碳足迹核算结果</h4>
+      <div style="font-size:24px;font-weight:800;color:var(--green)" id="pcfTotal">—</div>
+      <div style="font-size:11px;color:var(--text2)" id="pcfPerUnit"></div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text2)" id="pcfCBAM"></div>
+    </div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-pie-chart-2-line"></i> 各阶段碳排放占比</h4><div style="height:250px"><canvas id="pcfStageChart"></canvas></div></div>
+    <div class="chart-box"><h4><i class="ri-bar-chart-grouped-line"></i> 与行业基准值对比 (kgCO₂e/件)</h4><div style="height:250px"><canvas id="pcfBenchmarkChart"></canvas></div></div>
+  </div>
+  <div class="table-wrap"><h4>LCA各阶段排放明细</h4><div id="pcfTable"></div></div>
+</div>
+
+<!-- ===== NEW: 合规报告中心 ===== -->
+<div class="tab-panel" id="panel-report">
+  <div class="section-title"><span class="icon"><i class="ri-file-list-3-line"></i></span>合规报告中心 · 一键生成多标准核查报告</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:20px">
+    <div class="report-template-card selected" id="rpt-iso" onclick="selectReport('iso')">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <h4 style="font-size:14px"><i class="ri-global-line"></i> ISO 14064-1:2018</h4>
+        <span class="compliance-badge pass">推荐</span>
+      </div>
+      <p style="font-size:11px;color:var(--text2)">组织层面温室气体核算与报告标准。适用于企业碳披露、碳市场履约、供应链碳管理。</p>
+      <div style="font-size:10px;color:var(--text3)">覆盖：Scope 1+2+3 | GHG识别 | 基准年设定 | 不确定性分析</div>
+    </div>
+    <div class="report-template-card" id="rpt-cbam" onclick="selectReport('cbam')">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <h4 style="font-size:14px"><i class="ri-ship-line"></i> EU CBAM 碳边境调节</h4>
+        <span class="compliance-badge pending">2026强制</span>
+      </div>
+      <p style="font-size:11px;color:var(--text2)">欧盟碳边境调节机制合规报告。适用于对欧出口的钢铁、铝、水泥、化肥、电力、氢能产品。</p>
+      <div style="font-size:10px;color:var(--text3)">覆盖：隐含碳排放 | 碳价抵扣 | 季度报告 | 核查声明</div>
+    </div>
+    <div class="report-template-card" id="rpt-esg" onclick="selectReport('esg')">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <h4 style="font-size:14px"><i class="ri-file-chart-line"></i> ESG 环境信息披露</h4>
+        <span class="compliance-badge pass">合规</span>
+      </div>
+      <p style="font-size:11px;color:var(--text2)">上市公司ESG报告环境(E)部分。支撑港交所/上交所/深交所ESG披露要求。</p>
+      <div style="font-size:10px;color:var(--text3)">覆盖：TCFD气候风险 | GRI 305 | SASB | 双重重要性评估</div>
+    </div>
+    <div class="report-template-card" id="rpt-ghg" onclick="selectReport('ghg')">
+      <div style="display:flex;justify-content:space-between;align-items:start">
+        <h4 style="font-size:14px"><i class="ri-building-line"></i> GHG Protocol 企业标准</h4>
+      </div>
+      <p style="font-size:11px;color:var(--text2)">国际通用的温室气体核算体系。全球500强企业标配。</p>
+      <div style="font-size:10px;color:var(--text3)">覆盖：组织边界 | 运营边界 | 基准年调整 | 排放源分类</div>
+    </div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box">
+      <h4><i class="ri-file-copy-line"></i> 报告预览 · <span id="selectedReportName">ISO 14064-1:2018</span></h4>
+      <div id="reportPreview" style="border:1px solid var(--border);border-radius:8px;padding:14px;max-height:350px;overflow-y:auto;background:#fafbfc;font-size:11px;line-height:1.8">
+        <p style="color:var(--text2);text-align:center;padding:20px">请先在"碳核算"页面上传数据，系统将自动填充报告内容</p>
+      </div>
+      <div class="btn-group" style="margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="generateReport()"><i class="ri-magic-line"></i> 一键生成报告</button>
+        <button class="btn btn-outline btn-sm" onclick="exportReportPDF()"><i class="ri-file-pdf-line"></i> 导出PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="exportReportWord()"><i class="ri-file-word-line"></i> 导出Word</button>
+      </div>
+    </div>
+    <div class="chart-box">
+      <h4><i class="ri-history-line"></i> 历史报告</h4>
+      <table style="font-size:11px">
+        <thead><tr><th>报告名称</th><th>标准</th><th>生成日期</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>2025年度碳排放核查报告</td><td>ISO 14064-1</td><td>2026-03-15</td><td><span class="compliance-badge pass">已通过</span></td></tr>
+          <tr><td>2025 CBAM季度报告 Q4</td><td>EU CBAM</td><td>2026-01-31</td><td><span class="compliance-badge pass">已提交</span></td></tr>
+          <tr><td>2024年度ESG环境信息披露</td><td>GRI 305</td><td>2025-04-22</td><td><span class="compliance-badge pass">已披露</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <!-- ===== AI CONSULTANT ===== -->
 <div class="tab-panel" id="panel-ai">
   <div class="section-title"><span class="icon"><i class="ri-robot-line"></i></span>AI碳管理顾问</div>
@@ -544,7 +729,7 @@ body.dark .leaf-path{fill:#34d399}
 
 </div><!-- /main -->
 
-<div class="footer">CarbonAI v4.0 · AI驱动碳管理SaaS平台 · GIS遥感+轨迹核算+网格监测+因子溯源 | 数据来源：生态环境部、IPCC、Ecoinvent 3.9、中国电网2023</div>
+<div class="footer">CarbonAI v5.0 · 企业级碳管理SaaS平台 · 碳核算 | GIS遥感 | 轨迹核算 | 网格监测 | 因子溯源 | 碳资产管理 | 产品碳足迹 | 合规报告</div>
 
 <script>
 // ==================== GLOBAL STATE ====================
@@ -1067,17 +1252,178 @@ function loadAutoSave(){
 
 function showLogin(){showToast('演示模式 - 企业账号自动登录','info');}
 
+// ==================== NEW: 碳资产管理 ====================
+let currentReport='iso';
+
+function refreshPrices(){
+  const prices=[{v:85.32+Math.random()*3-1.5,t:Math.random()>0.5?'up':'down',p:(Math.random()*3-1).toFixed(2)},
+    {v:83.05+Math.random()*3-1.5,t:Math.random()>0.5?'up':'down',p:(Math.random()*3-1).toFixed(2)},
+    {v:77.29+Math.random()*2-1,t:Math.random()>0.5?'up':'down',p:(Math.random()*2-1).toFixed(2)}];
+  const cards=document.querySelectorAll('#priceTicker .price-card');
+  cards[0].querySelector('.value').textContent='¥'+prices[0].v.toFixed(2);
+  cards[0].querySelector('.trend').textContent=(prices[0].t==='up'?'↑ ':'↓ ')+prices[0].p+'%';
+  cards[0].querySelector('.trend').className='trend '+prices[0].t;
+  cards[1].querySelector('.value').textContent='¥'+prices[1].v.toFixed(2);
+  cards[1].querySelector('.trend').textContent=(prices[1].t==='up'?'↑ ':'↓ ')+prices[1].p+'%';
+  cards[1].querySelector('.trend').className='trend '+prices[1].t;
+  cards[2].querySelector('.value').textContent='€'+prices[2].v.toFixed(2);
+  cards[2].querySelector('.trend').textContent=(prices[2].t==='up'?'↑ ':'↓ ')+prices[2].p+'%';
+  cards[2].querySelector('.trend').className='trend '+prices[2].t;
+  showToast('✅ 碳价数据已刷新','success');
+}
+
+function renderAssetCharts(){
+  // Portfolio ECharts
+  const ad=document.getElementById('assetPortfolio');
+  if(ad){let c=echarts.getInstanceByDom(ad);if(c)c.dispose();echarts.init(ad).setOption({series:[{type:'pie',radius:['50%','75%'],data:[{name:'CEA配额',value:58},{name:'CCER',value:18},{name:'碳信用储备',value:24}],color:['#059669','#0EA5E9','#fde68a']}]});}
+  // Carbon price trend
+  const ctx=document.getElementById('carbonPriceChart');
+  if(ctx){
+    const months=['1月','2月','3月','4月','5月','6月','7月(预)','8月(预)','9月(预)','10月(预)','11月(预)','12月(预)'];
+    const actual=[78.2,79.1,80.5,81.8,83.0,85.3,null,null,null,null,null,null];
+    const forecast=[null,null,null,null,null,85.3,84.5,84.8,83.9,83.5,83.8,83.94];
+    new Chart(ctx,{type:'line',data:{labels:months,datasets:[
+      {label:'CEA实际',data:actual,borderColor:'#059669',backgroundColor:'rgba(5,150,105,0.1)',fill:true,spanGaps:false},
+      {label:'复旦碳价指数预测',data:forecast,borderColor:'#F59E0B',borderDash:[5,5],fill:false,spanGaps:false}
+    ]}});
+  }
+}
+
+// ==================== NEW: 产品碳足迹 (PCF) ====================
+let pcfData={raw:0,mfg:0,tpt:0,use:0,eol:0},selectedStage='raw';
+
+function selectLCAStage(stage){
+  selectedStage=stage;
+  document.querySelectorAll('.lca-stage').forEach(s=>s.classList.remove('active'));
+  document.getElementById('pct-'+stage).parentElement.classList.add('active');
+}
+
+function loadPCFDemo(){
+  document.getElementById('pcfProductName').value='XX电子元器件';
+  pcfData={raw:12.5,mfg:28.3,tpt:5.7,use:18.2,eol:3.1};
+  renderPCFResults();
+  showToast('✅ 已加载产品碳足迹演示数据','success');
+}
+
+function calcPCF(){
+  const name=document.getElementById('pcfProductName').value||'未命名产品';
+  // Simulate LCA calculation based on product type
+  const base=20+Math.random()*40;
+  pcfData={raw:base*0.2*Math.random(),mfg:base*0.42*Math.random(),tpt:base*0.08*Math.random(),use:base*0.25*Math.random(),eol:base*0.05*Math.random()};
+  renderPCFResults();
+  showToast('✅ '+name+' 碳足迹核算完成','success');
+}
+
+function renderPCFResults(){
+  const total=pcfData.raw+pcfData.mfg+pcfData.tpt+pcfData.use+pcfData.eol;
+  document.getElementById('pcfResultPanel').classList.remove('hidden');
+  document.getElementById('pcfTotal').textContent=total.toFixed(2)+' kgCO₂e/'+document.getElementById('pcfUnit').value;
+  document.getElementById('pcfPerUnit').textContent='全生命周期碳排放 ('+document.getElementById('pcfStandard').value+')';
+  document.getElementById('pcfCBAM').innerHTML='<span class="compliance-badge pass">CBAM</span> 隐含碳排放：'+(total*0.85).toFixed(1)+' kgCO₂e（直接+间接排放，不含使用阶段）';
+  // Update LCA flow percentages
+  ['raw','mfg','tpt','use','eol'].forEach(s=>{
+    document.getElementById('pct-'+s).textContent=(pcfData[s]/total*100).toFixed(0)+'%';
+  });
+  // Stage chart
+  const ctx=document.getElementById('pcfStageChart');
+  if(ctx){if(window._pcfChart)window._pcfChart.destroy();
+    window._pcfChart=new Chart(ctx.getContext('2d'),{type:'doughnut',data:{labels:['原料获取','生产制造','运输分销','使用阶段','废弃回收'],datasets:[{data:Object.values(pcfData),backgroundColor:['#8B5CF6','#EF4444','#F59E0B','#3B82F6','#10B981']}]}});}
+  // Benchmark
+  const bctx=document.getElementById('pcfBenchmarkChart');
+  if(bctx){if(window._bmkChart)window._bmkChart.destroy();
+    window._bmkChart=new Chart(bctx.getContext('2d'),{type:'bar',data:{labels:['本品','行业平均','行业先进','欧盟PEF基准'],datasets:[{label:'kgCO₂e/件',data:[total,total*1.3,total*0.55,total*0.7],backgroundColor:['#059669','#94a3b8','#10B981','#3B82F6']}]}});}
+  // Table
+  const stages=[{k:'raw',n:'原材料获取',icon:'⛏️'},{k:'mfg',n:'生产制造',icon:'🏭'},{k:'tpt',n:'运输分销',icon:'🚛'},{k:'use',n:'使用阶段',icon:'⚡'},{k:'eol',n:'废弃回收',icon:'♻️'}];
+  let html='<table><thead><tr><th>阶段</th><th>排放量 (kgCO₂e)</th><th>占比</th><th>主要排放源</th><th>数据来源</th></tr></thead><tbody>';
+  stages.forEach(s=>{
+    html+=`<tr><td>${s.icon} <strong>${s.n}</strong></td><td style="font-weight:600">${pcfData[s.k].toFixed(2)}</td><td>${(pcfData[s.k]/total*100).toFixed(1)}%</td><td style="font-size:11px">${s.k==='raw'?'钢铁/铝材/塑料采购':s.k==='mfg'?'冲压/焊接/注塑/涂装':s.k==='tpt'?'陆运/海运/空运':s.k==='use'?'电力消耗/维护':'填埋/焚烧/回收'}</td><td style="font-size:10px;color:var(--text3)">Ecoinvent 3.9 / 行业LCA数据</td></tr>`;
+  });
+  html+=`<tr style="font-weight:700;background:#f0fdf4"><td colspan="2">合计</td><td>100%</td><td colspan="2">${total.toFixed(2)} kgCO₂e / ${document.getElementById('pcfProductName').value||'产品'}</td></tr></tbody></table>`;
+  document.getElementById('pcfTable').innerHTML=html;
+}
+
+// ==================== NEW: 合规报告中心 ====================
+function selectReport(type){
+  currentReport=type;
+  document.querySelectorAll('.report-template-card').forEach(c=>c.classList.remove('selected'));
+  document.getElementById('rpt-'+type).classList.add('selected');
+  const names={iso:'ISO 14064-1:2018',cbam:'EU CBAM 碳边境调节',esg:'ESG环境信息披露',ghg:'GHG Protocol企业标准'};
+  document.getElementById('selectedReportName').textContent=names[type]||'';
+  autoPreviewReport();
+}
+
+function autoPreviewReport(){
+  const preview=document.getElementById('reportPreview');
+  if(!currentRecords.length){preview.innerHTML='<p style="color:var(--text2);text-align:center;padding:20px">请先在"碳核算"页面上传数据，系统将自动填充报告内容</p>';return}
+  const total=currentTotal;const byScope={};currentRecords.forEach(r=>{byScope[r.scope]=(byScope[r.scope]||0)+r.emission;});
+  const s1=byScope['Scope1']||0,s2=byScope['Scope2']||0,s3=byScope['Scope3']||0;
+  const templates={
+    iso:`<h4 style="color:#059669">ISO 14064-1:2018 温室气体核查报告</h4>
+      <p><strong>组织边界：</strong>运营控制法 | <strong>基准年：</strong>2022</p>
+      <p><strong>总排放：</strong>${fmt(total)} tCO₂e | <strong>不确定性：</strong>±5.2%</p>
+      <p><strong>Scope 1 直接排放：</strong>${fmt(s1)} tCO₂e (${(s1/total*100).toFixed(1)}%)</p>
+      <p><strong>Scope 2 能源间接排放：</strong>${fmt(s2)} tCO₂e (${(s2/total*100).toFixed(1)}%)</p>
+      <p><strong>Scope 3 其他间接排放：</strong>${fmt(s3)} tCO₂e (${(s3/total*100).toFixed(1)}%)</p>
+      <p style="margin-top:8px;font-size:10px">数据质量评级(DQR)：★★★★☆ | 本报告符合ISO 14064-1:2018第7条款核查要求。附排放因子来源：Ecoinvent 3.9、中国电网2023、IPCC 2006/2019。</p>`,
+    cbam:`<h4 style="color:#d97706">EU CBAM 隐含碳排放季度报告</h4>
+      <p><strong>报告期：</strong>2026 Q2 (4-6月) | <strong>CN代码：</strong>7318 (钢铁制品)</p>
+      <p><strong>总隐含碳排放：</strong>${fmt((s1+s2)*0.85)} tCO₂e（直接+间接）</p>
+      <p><strong>原产国碳价抵扣：</strong>¥85.32/t × ${fmtInt((s1+s2)*0.85)} = ¥${fmt((s1+s2)*0.85*85.32)}</p>
+      <p><strong>CBAM证书价格：</strong>€75.36/t (EU ETS 2026 Q2均价)</p>
+      <p style="margin-top:8px;font-size:10px;color:#dc2626">⚠️ 注意：CBAM 2026年1月起全面强制实施，须于每季度结束后一个月内提交。碳排放数据须经欧盟认可的核查机构核证。</p>`,
+    esg:`<h4 style="color:#2563eb">ESG环境信息披露报告 (GRI 305)</h4>
+      <p><strong>披露标准：</strong>GRI 305:2016 + TCFD气候相关财务信息披露</p>
+      <p><strong>温室气体排放强度：</strong>${fmt(total/8000)} tCO₂e / 万元营收</p>
+      <p><strong>碳减排目标：</strong>2030年较2025年下降35%（SBTi 1.5°C路径）</p>
+      <p><strong>气候风险评估：</strong>转型风险(碳价上涨) 中高 | 物理风险(极端天气) 中</p>
+      <p style="margin-top:8px;font-size:10px">符合港交所ESG指引、上交所/深交所可持续发展报告指引。双重重要性评估已完成。</p>`,
+    ghg:`<h4 style="color:#8B5CF6">GHG Protocol 企业标准 温室气体清单</h4>
+      <p><strong>组织边界：</strong>股权比例法 | <strong>运营边界：</strong>控制权法</p>
+      <p><strong>温室气体种类：</strong>CO₂, CH₄, N₂O, HFCs, PFCs, SF₆</p>
+      <p><strong>总排放：</strong>${fmt(total)} tCO₂e | 范围1: ${fmt(s1)} | 范围2: ${fmt(s2)} | 范围3: ${fmt(s3)}</p>
+      <p><strong>基准年调整：</strong>无结构性变化 | <strong>数据质量：</strong>活动数据主要来自计量表/采购单</p>`
+  };
+  preview.innerHTML=templates[type]||templates.iso;
+}
+
+function generateReport(){
+  if(!currentRecords.length){showToast('⚠️ 请先在"碳核算"页面上传数据','error');return}
+  autoPreviewReport();
+  showToast('✅ 报告已自动生成，请查看预览','success');
+}
+
+function exportReportPDF(){
+  if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
+  const el=document.createElement('div');el.style.cssText='position:fixed;left:0;top:0;width:800px;background:#fff;z-index:9999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8';
+  el.innerHTML=document.getElementById('reportPreview').innerHTML;
+  document.body.appendChild(el);
+  const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol'};
+  html2pdf().set({margin:[10,10,10,10],filename:'合规报告_'+names[currentReport]+'_'+currentYear+'.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4'}}).from(el).save().then(()=>el.remove());
+  showToast('✅ PDF报告已导出','success');
+}
+
+function exportReportWord(){
+  if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
+  const content=document.getElementById('reportPreview').innerHTML;
+  const blob=new Blob(['<html><body>'+content+'</body></html>'],{type:'application/msword'});
+  const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol'};
+  const u=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=u;a.download='合规报告_'+names[currentReport]+'_'+currentYear+'.doc';a.click();URL.revokeObjectURL(u);
+  showToast('✅ Word报告已导出','success');
+}
+
 // ==================== INIT ====================
 document.addEventListener('DOMContentLoaded',function(){
   loadAutoSave();
   filterFactors();
   renderFactorCharts();
+  renderAssetCharts();
   // Lazy init GIS maps on tab click
   document.querySelector('[data-tab="gis"]').addEventListener('click',function(){setTimeout(()=>{initGISMap();if(gisMapObj)gisMapObj.invalidateSize();},200);});
   document.querySelector('[data-tab="trajectory"]').addEventListener('click',function(){setTimeout(()=>{initTrajMap();if(trajMapObj)trajMapObj.invalidateSize();},200);});
   document.querySelector('[data-tab="grid"]').addEventListener('click',function(){setTimeout(()=>{initGridMap();if(gridMapObj)gridMapObj.invalidateSize();},200);});
 });
 
-console.log('CarbonAI v4.0 · GIS遥感+轨迹核算+网格监测+因子溯源 已就绪');
+console.log('CarbonAI v5.0 · 碳核算+GIS遥感+轨迹核算+网格监测+因子溯源+碳资产+产品碳足迹+合规报告 已就绪');
 </script>
 </body></html>
