@@ -204,6 +204,9 @@ body.dark .leaf-path{fill:#34d399}
 body.dark #userDropdown{background:#1e293b;border-color:#334155}
 body.dark .price-card,body.dark .lca-stage,body.dark .report-template-card{background:#1e293b}
 body.dark .lca-flow{background:#0f172a}
+body.dark .ai-preview-header{background:#1e293b}
+body.dark .ai-preview-content{background:#1e293b}
+body.dark .ai-row.flagged{background:rgba(217,119,6,.1)}
 
 .section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:7px}
 .section-title .icon{width:30px;height:30px;background:var(--green-bg);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--green);font-size:15px}
@@ -229,6 +232,21 @@ body.dark .lca-flow{background:#0f172a}
 .route-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:14px}
 .spinner{width:36px;height:36px;border:3px solid #e2e8f0;border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* AI Preview Modal */
+.ai-preview-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:flex-start;justify-content:center;padding-top:30px;overflow-y:auto}
+.ai-preview-content{background:var(--card);border-radius:var(--radius);width:90%;max-width:900px;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:fadeIn .3s ease}
+.ai-preview-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--card);z-index:1;border-radius:var(--radius) var(--radius) 0 0}
+.ai-preview-body{padding:20px}
+.ai-thinking{text-align:center;padding:30px}
+.ai-thinking .spinner{margin-bottom:12px}
+.ai-thinking p{font-size:13px;color:var(--text2)}
+.ai-badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600}
+.ai-badge.match{background:var(--green-bg);color:var(--green)}
+.ai-badge.warn{background:#fffbeb;color:#d97706}
+.ai-badge.error{background:#fef2f2;color:#dc2626}
+.ai-row.flagged{background:#fffbeb}
 
 @media print{body{background:#fff}.header,.tab-nav,.btn-group,.upload-zone,.footer{display:none!important}.main{padding:0}.tab-panel{border:none;box-shadow:none}.tab-panel.active{display:block}}
 @media(max-width:768px){.chart-row,.form-row{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}.tab-btn{font-size:11px;padding:7px 10px}.map-container{height:320px}}
@@ -294,7 +312,7 @@ body.dark .lca-flow{background:#0f172a}
   <div style="display:flex;align-items:center;gap:10px">
     <button onclick="toggleDarkMode()" title="深色/浅色" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:14px;color:var(--text2)">🌓</button>
     <button onclick="toggleLang()" id="langBtn" title="Switch Language" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:11px;color:var(--text2);font-weight:600">EN</button>
-    <button class="btn btn-outline btn-sm" onclick="showLogin()"><span data-i18n="login.btn">登录</span></button>
+    <button class="btn btn-outline btn-sm" id="headerLoginBtn" onclick="showLogin()"><span data-i18n="login.btn">登录</span></button>
   </div>
 </div>
 
@@ -759,6 +777,12 @@ const I18N = {
   'tab.tools':['工具箱','Tools'],
   'tab.news':['资讯','News'],
   'login.btn':['登录','Login'],
+  'login.title':['登录 CarbonAI','Login CarbonAI'],
+  'login.email':['邮箱','Email'],
+  'login.password':['密码','Password'],
+  'login.demo':['演示账号','Demo Account'],
+  'login.hint':['演示模式：点击演示账号或直接登录','Demo mode: Click Demo Account or Login directly'],
+  'login.logout':['退出','Logout'],
   'dashboard.title':['数据大屏','Dashboard'],
   'dashboard.year':['数据年份','Data Year'],
   'dashboard.nodata':['请先在"碳核算"页面上传Excel数据','Please upload Excel data in Accounting tab'],
@@ -849,9 +873,11 @@ function matchFactor(name) {
 }
 
 // ==================== CARBON ACCOUNTING ====================
+let aiPreviewRecords=[];
+
 async function handleFile(file) {
   if(!file) return;
-  showToast('正在解析文件...', 'info');
+  showToast(lang==='en'?'Parsing file...':'正在解析文件...', 'info');
   try {
     const data = await file.arrayBuffer();
     const wb = XLSX.read(data,{type:'array'});
@@ -870,7 +896,7 @@ async function handleFile(file) {
         if(c.includes('排放源')||c.includes('source')||ni==j) hi=i;
       }
     }
-    if(ni<0||vi<0){showToast('未识别到"排放源"和"活动数据"列，请检查Excel格式','error');return;}
+    if(ni<0||vi<0){showToast(lang==='en'?'Cannot identify columns - check Excel format':'未识别到排放源/活动数据列，请检查Excel格式','error');return;}
     const records=[];
     for(let i=hi+1;i<rows.length;i++){
       const r=rows[i];const srcName=String(r[ni]||'').trim();const rawVal=parseFloat(r[vi])||0;
@@ -878,16 +904,44 @@ async function handleFile(file) {
       const matched=matchFactor(srcName);
       const unit=ui>=0?(r[ui]||matched.unit):matched.unit;
       const year=yi>=0?(r[yi]||currentYear):currentYear;
-      records.push({source:matched.kw||srcName,scope:matched.scope,activity:rawVal,unit,factor:matched.factor,factorUnit:matched.factorUnit,emission:rawVal*matched.factor/1000,year,factorSource:matched.source});
+      records.push({source:matched.kw||srcName,scope:matched.scope,activity:rawVal,unit,factor:matched.factor,factorUnit:matched.factorUnit,emission:rawVal*matched.factor/1000,year,factorSource:matched.source,confidence:matched.source==='默认排放因子'?'low':'high'});
     }
-    if(records.length===0){showToast('未解析到有效数据行','error');return}
-    currentRecords=records;currentYear=records[0].year||currentYear;
-    allRecords[currentYear]=records;
-    document.getElementById('globalYear').value=currentYear;
-    renderResults(records);
-    setTimeout(()=>renderDashboard(),300);
-    autoSave();
-  }catch(e){showToast('解析失败: '+e.message,'error')}
+    if(records.length===0){showToast(lang==='en'?'No valid data rows found':'未解析到有效数据行','error');return}
+    // Show AI preview instead of directly importing
+    aiPreviewRecords=records;
+    showAIPreview(records, rows[hi] ? rows[hi][ni] : '排放源');
+  }catch(e){showToast((lang==='en'?'Parse failed: ':'解析失败: ')+e.message,'error')}
+}
+
+function showAIPreview(records, colName){
+  const zh=lang==='zh';
+  const overlay=document.createElement('div');
+  overlay.className='ai-preview-overlay';
+  overlay.id='aiPreviewOverlay';
+  const total=records.reduce((s,r)=>s+r.emission,0);
+  const lowConf=records.filter(r=>r.confidence==='low').length;
+  let rowsHTML='';
+  records.forEach((r,i)=>{
+    const confidenceLabel=r.confidence==='high'?(zh?'高置信':'High'):(zh?'需确认':'Review');
+    const badgeClass=r.confidence==='high'?'match':'warn';
+    const rowClass=r.confidence==='low'?'flagged':'';
+    rowsHTML+='<tr class="ai-row '+rowClass+'"><td>'+(i+1)+'</td><td><strong>'+r.source+'</strong></td><td>'+fmt(r.activity)+'</td><td>'+r.unit+'</td><td>'+r.factor+'</td><td style="font-size:10px;color:var(--text3)">'+r.factorSource+'</td><td>'+r.scope+'</td><td style="font-weight:600">'+fmt(r.emission)+'</td><td><span class="ai-badge '+badgeClass+'">'+confidenceLabel+'</span></td></tr>';
+  });
+  overlay.innerHTML='<div class="ai-preview-content"><div class="ai-preview-header"><div><h4 style="font-size:14px;color:var(--text)">🤖 '+(zh?'AI 智能识别结果 · 请确认后导入':'AI Smart Recognition · Please confirm')+'</h4><span style="font-size:11px;color:var(--text2)">'+(zh?'识别到 ':'Found ')+records.length+(zh?' 条排放记录，':' emission records, ')+fmt(total)+(zh?' tCO₂e，':' tCO₂e, ')+(lowConf>0?(zh?'其中 <span style="color:#d97706">'+lowConf+' 条</span> 置信度较低需人工确认':'<span style="color:#059669">全部匹配成功</span>'):'<span style="color:#059669">all matched</span>')+'</span></div><button onclick="document.getElementById(\'aiPreviewOverlay\').remove()" style="border:none;background:transparent;cursor:pointer;font-size:20px;color:var(--text3)">&times;</button></div><div class="ai-preview-body"><div class="table-wrap" style="margin-bottom:12px"><table style="font-size:11px"><thead><tr><th>#</th><th>'+(zh?'排放源':'Source')+'</th><th>'+(zh?'活动数据':'Activity')+'</th><th>'+(zh?'单位':'Unit')+'</th><th>'+(zh?'排放因子':'Factor')+'</th><th>'+(zh?'因子来源':'Factor Source')+'</th><th>Scope</th><th>tCO₂e</th><th>'+(zh?'置信度':'Confidence')+'</th></tr></thead><tbody>'+rowsHTML+'</tbody></table></div><div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-secondary" onclick="document.getElementById(\'aiPreviewOverlay\').remove()">'+(zh?'取消':'Cancel')+'</button><button class="btn btn-primary" onclick="confirmAIImport()">✅ '+(zh?'确认导入':'Confirm Import')+'</button></div></div></div>';
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+}
+
+function confirmAIImport(){
+  const records=aiPreviewRecords;
+  currentRecords=records;currentYear=records[0].year||currentYear;
+  allRecords[currentYear]=records;
+  document.getElementById('globalYear').value=currentYear;
+  document.getElementById('aiPreviewOverlay').remove();
+  renderResults(records);
+  setTimeout(()=>renderDashboard(),300);
+  autoSave();
+  showToast('✅ '+(lang==='en'?'Imported ':'已导入 ')+records.length+(lang==='en'?' records':' 条记录')+' · '+fmt(currentTotal)+' tCO₂e','success');
 }
 
 function renderResults(records) {
@@ -935,10 +989,9 @@ function renderDashboard() {
 }
 
 function loadDemoData() {
-  const demo=[{source:'烟煤',scope:'Scope 1',activity:500,unit:'吨',factor:1.9003,factorUnit:'tCO₂/t',emission:950.15,year:2026,factorSource:'国家发改委气候司'},{source:'柴油',scope:'Scope 1',activity:200,unit:'吨',factor:3.1605,factorUnit:'tCO₂/t',emission:632.1,year:2026,factorSource:'IPCC 2006'},{source:'电力',scope:'Scope 2',activity:8000,unit:'MWh',factor:0.5703,factorUnit:'tCO₂/MWh',emission:4562.4,year:2026,factorSource:'中国电网2023(南方)'},{source:'飞行',scope:'Scope 3',activity:50000,unit:'人·km',factor:0.115,factorUnit:'tCO₂/人·km',emission:5750,year:2026,factorSource:'ICAO'},{source:'公路货运',scope:'Scope 3',activity:300000,unit:'吨·km',factor:0.078,factorUnit:'tCO₂/吨·km',emission:23400,year:2026,factorSource:'GLEC 3.0'},{source:'天然气',scope:'Scope 1',activity:50,unit:'万m³',factor:21.840,factorUnit:'tCO₂/万m³',emission:1092,year:2026,factorSource:'IPCC 2006'}];
-  currentRecords=demo;allRecords[2026]=demo;document.getElementById('globalYear').value=2026;
-  renderResults(demo);setTimeout(()=>renderDashboard(),300);autoSave();
-  showToast('✅ '+t('toast.demo_loaded')+' (6 records)','success');
+  const demo=[{source:'烟煤',scope:'Scope 1',activity:500,unit:'吨',factor:1.9003,factorUnit:'tCO₂/t',emission:950.15,year:2026,factorSource:'国家发改委气候司',confidence:'high'},{source:'柴油',scope:'Scope 1',activity:200,unit:'吨',factor:3.1605,factorUnit:'tCO₂/t',emission:632.1,year:2026,factorSource:'IPCC 2006',confidence:'high'},{source:'电力',scope:'Scope 2',activity:8000,unit:'MWh',factor:0.5703,factorUnit:'tCO₂/MWh',emission:4562.4,year:2026,factorSource:'中国电网2023(南方)',confidence:'high'},{source:'飞行',scope:'Scope 3',activity:50000,unit:'人·km',factor:0.115,factorUnit:'tCO₂/人·km',emission:5750,year:2026,factorSource:'ICAO',confidence:'high'},{source:'公路货运',scope:'Scope 3',activity:300000,unit:'吨·km',factor:0.078,factorUnit:'tCO₂/吨·km',emission:23400,year:2026,factorSource:'GLEC 3.0',confidence:'low'},{source:'天然气',scope:'Scope 1',activity:50,unit:'万m³',factor:21.840,factorUnit:'tCO₂/万m³',emission:1092,year:2026,factorSource:'IPCC 2006',confidence:'high'}];
+  aiPreviewRecords=demo;
+  showAIPreview(demo, '排放源');
 }
 
 function exportCSV() {
@@ -955,7 +1008,7 @@ function exportCSV() {
 function exportPDF() {
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   const el=document.createElement('div');
-  el.style.cssText='position:absolute;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b';
+  el.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:800px;max-height:90vh;overflow-y:auto;background:#fff;z-index:99999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b;box-shadow:0 20px 60px rgba(0,0,0,.3);border-radius:8px';
   el.innerHTML='<div style="text-align:center;padding:40px 0;border-bottom:3px solid #059669;margin-bottom:20px"><h1 style="color:#059669;font-size:24px">碳排放核算报告</h1><p style="color:#64748b">报告日期：'+new Date().toLocaleDateString('zh-CN')+' | 数据年份：'+currentYear+'</p></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放汇总</h3><div style="display:flex;gap:16px;margin:12px 0"><div style="background:#ecfdf5;padding:16px 24px;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:800;color:#059669">'+fmt(currentTotal)+'</div><div style="font-size:10px;color:#64748b">总排放 (tCO₂e)</div></div></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放明细</h3><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#059669;color:#fff"><th style="padding:6px 8px">排放源</th><th style="padding:6px 8px">Scope</th><th style="padding:6px 8px">活动数据</th><th style="padding:6px 8px">tCO₂e</th></tr></thead><tbody>'+currentRecords.sort((a,b)=>b.emission-a.emission).map(function(r){return '<tr><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.source+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.scope+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+fmt(r.activity)+' '+r.unit+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1;font-weight:600">'+fmt(r.emission)+'</td></tr>';}).join('')+'</tbody></table>';
   document.body.appendChild(el);
   showToast('📄 '+t('toast.pdf_gen'), 'info');
@@ -1302,7 +1355,21 @@ function loadAutoSave(){
   if(saved){try{const data=JSON.parse(saved);if(data.allRecords&&Object.keys(data.allRecords).length>0){allRecords=data.allRecords;currentYear=data.year||2026;document.getElementById('globalYear').value=currentYear;if(allRecords[currentYear]){renderResults(allRecords[currentYear]);setTimeout(()=>renderDashboard(),300);}}}catch(e){}}
 }
 
-function showLogin(){showToast(lang==='en'?'Demo mode - Auto login':'演示模式 - 企业账号自动登录','info');}
+function showLogin(){
+  const overlay=document.createElement('div');
+  overlay.id='loginOverlay';
+  overlay.style.cssText='position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+  overlay.innerHTML='<div style="background:var(--card);border-radius:var(--radius);width:400px;max-width:90vw;padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.2);animation:fadeIn .3s ease"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><h3 style="font-size:16px;color:var(--text)">'+t('login.title')+'</h3><button onclick="document.getElementById(\'loginOverlay\').remove()" style="border:none;background:transparent;cursor:pointer;font-size:18px;color:var(--text3)">&times;</button></div><div class="form-group"><label>'+t('login.email')+'</label><input type="email" id="loginEmail" placeholder="admin@carbontool.cn" value="admin@carbontool.cn"></div><div class="form-group"><label>'+t('login.password')+'</label><input type="password" id="loginPass" placeholder="········" value="demo123"></div><div style="display:flex;gap:8px;margin-top:16px"><button class="btn btn-primary" onclick="doLogin()" style="flex:1">'+t('login.btn')+'</button><button class="btn btn-secondary" onclick="document.getElementById(\'loginEmail\').value=\'admin@carbontool.cn\';document.getElementById(\'loginPass\').value=\'demo123\';doLogin();" style="flex:1">'+t('login.demo')+'</button></div><p style="font-size:10px;color:var(--text3);text-align:center;margin-top:12px">'+t('login.hint')+'</p></div>';
+  overlay.addEventListener('click',function(e){if(e.target===overlay)overlay.remove();});
+  document.body.appendChild(overlay);
+}
+function doLogin(){
+  const email=document.getElementById('loginEmail').value.trim();
+  if(!email){showToast(lang==='en'?'Please enter email':'请输入邮箱','error');return}
+  document.getElementById('loginOverlay').remove();
+  document.getElementById('headerLoginBtn').innerHTML='<span data-i18n="login.logout">退出</span>';
+  showToast(lang==='en'?'Welcome, '+email:'欢迎，'+email,'success');
+}
 
 // ==================== NEW: 碳资产管理 ====================
 let currentReport='iso';
@@ -1408,7 +1475,7 @@ function autoPreviewReport(){
   const preview=document.getElementById('reportPreview');
   if(!currentRecords.length){preview.innerHTML='<p style="color:var(--text2);text-align:center;padding:20px">请先在"碳核算"页面上传数据，系统将自动填充报告内容</p>';return}
   const total=currentTotal;const byScope={};currentRecords.forEach(r=>{byScope[r.scope]=(byScope[r.scope]||0)+r.emission;});
-  const s1=byScope['Scope1']||0,s2=byScope['Scope2']||0,s3=byScope['Scope3']||0;
+  const s1=byScope['Scope 1']||0,s2=byScope['Scope 2']||0,s3=byScope['Scope 3']||0;
   const templates={
     iso:`<h4 style="color:#059669">ISO 14064-1:2018 温室气体核查报告</h4>
       <p><strong>组织边界：</strong>运营控制法 | <strong>基准年：</strong>2022</p>
@@ -1439,14 +1506,14 @@ function autoPreviewReport(){
 }
 
 function generateReport(){
-  if(!currentRecords.length){showToast('⚠️ 请先在"碳核算"页面上传数据','error');return}
+  if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   autoPreviewReport();
-  showToast('✅ 报告已自动生成，请查看预览','success');
+  showToast('✅ '+(lang==='en'?'Report generated - check preview':'报告已自动生成，请查看预览'),'success');
 }
 
 function exportReportPDF(){
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
-  const el=document.createElement('div');el.style.cssText='position:absolute;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b';
+  const el=document.createElement('div');el.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:800px;max-height:90vh;overflow-y:auto;background:#fff;z-index:99999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b;box-shadow:0 20px 60px rgba(0,0,0,.3);border-radius:8px';
   el.innerHTML=document.getElementById('reportPreview').innerHTML;
   document.body.appendChild(el);
   const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol'};
