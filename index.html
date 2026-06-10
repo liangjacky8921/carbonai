@@ -48,7 +48,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .bg-icon:nth-child(10){top:70%;right:20%;width:130px;height:130px;animation-delay:-5s;animation-duration:24s}
 .bg-icon:nth-child(11){top:8%;right:35%;width:100px;height:100px;animation-delay:-18s;animation-duration:35s}
 .bg-icon:nth-child(12){bottom:35%;left:10%;width:150px;height:150px;animation-delay:-12s;animation-duration:29s}
-@keyframes iconDrift{0%,100%{transform:translateY(0) rotate(0deg) scale(1)}25%{transform:translateY(-25px) rotate(3deg) scale(1.08)}50%{transform:translateY(15px) rotate(-2deg) scale(0.94)}75%{transform:translateY(-10px) rotate(1deg) scale(1.05)}
+@keyframes iconDrift{0%,100%{transform:translateY(0) rotate(0deg) scale(1)}25%{transform:translateY(-25px) rotate(3deg) scale(1.08)}50%{transform:translateY(15px) rotate(-2deg) scale(0.94)}75%{transform:translateY(-10px) rotate(1deg) scale(1.05)}}
 
 /* 碳分子结构 */
 .c-molecule{fill:none;stroke:#059669;stroke-width:1.5;opacity:0.06}
@@ -74,8 +74,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Micr
 .header .logo{display:flex;align-items:center;gap:10px;font-size:22px;font-weight:800}
 .header .logo .icon{width:38px;height:38px;background:linear-gradient(135deg,#059669,#10B981);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px}
 .header .logo .text{background:linear-gradient(135deg,#059669,#0EA5E9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.tab-nav{display:flex;gap:4px;padding:16px 24px 0;max-width:1600px;margin:0 auto;overflow-x:auto;flex-wrap:wrap}
-.tab-btn{padding:10px 16px;border-radius:10px 10px 0 0;border:none;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--text2);display:flex;align-items:center;gap:5px;white-space:nowrap}
+.tab-nav{display:flex;gap:3px;padding:12px 16px 0;max-width:100%;margin:0 auto;overflow-x:auto;flex-wrap:nowrap;border-bottom:1px solid var(--border);background:var(--bg)}
+.tab-nav::-webkit-scrollbar{height:0}
+.tab-btn{padding:8px 13px;border-radius:8px 8px 0 0;border:none;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--text2);display:flex;align-items:center;gap:4px;white-space:nowrap;flex-shrink:0}
 .tab-btn:hover{color:var(--green);background:var(--green-bg)}
 .tab-btn.active{background:var(--card);color:var(--green);border:1px solid var(--border);border-bottom-color:var(--card);position:relative;z-index:1}
 .badge{font-size:10px;padding:2px 6px;border-radius:8px;background:var(--green-bg);color:var(--green)}
