@@ -905,10 +905,11 @@ function exportCSV() {
 function exportPDF() {
   if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
   const el=document.createElement('div');
-  el.style.cssText='position:fixed;left:0;top:0;width:800px;background:#fff;z-index:9999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8';
-  el.innerHTML=`<div style="text-align:center;padding:40px 0;border-bottom:3px solid #059669;margin-bottom:20px"><h1 style="color:#059669;font-size:24px">碳排放核算报告</h1><p style="color:#64748b">报告日期：${new Date().toLocaleDateString('zh-CN')} | 数据年份：${currentYear}</p></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放汇总</h3><div style="display:flex;gap:16px;margin:12px 0"><div style="background:#ecfdf5;padding:16px 24px;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:800;color:#059669">${fmt(currentTotal)}</div><div style="font-size:10px;color:#64748b">总排放 (tCO₂e)</div></div></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放明细</h3><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#059669;color:#fff"><th style="padding:6px 8px">排放源</th><th style="padding:6px 8px">Scope</th><th style="padding:6px 8px">活动数据</th><th style="padding:6px 8px">tCO₂e</th></tr></thead><tbody>${currentRecords.sort((a,b)=>b.emission-a.emission).map(r=>`<tr><td style="padding:6px 8px;border:1px solid #cbd5e1">${r.source}</td><td style="padding:6px 8px;border:1px solid #cbd5e1">${r.scope}</td><td style="padding:6px 8px;border:1px solid #cbd5e1">${fmt(r.activity)} ${r.unit}</td><td style="padding:6px 8px;border:1px solid #cbd5e1;font-weight:600">${fmt(r.emission)}</td></tr>`).join('')}</tbody></table>`;
+  el.style.cssText='position:absolute;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b';
+  el.innerHTML='<div style="text-align:center;padding:40px 0;border-bottom:3px solid #059669;margin-bottom:20px"><h1 style="color:#059669;font-size:24px">碳排放核算报告</h1><p style="color:#64748b">报告日期：'+new Date().toLocaleDateString('zh-CN')+' | 数据年份：'+currentYear+'</p></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放汇总</h3><div style="display:flex;gap:16px;margin:12px 0"><div style="background:#ecfdf5;padding:16px 24px;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:800;color:#059669">'+fmt(currentTotal)+'</div><div style="font-size:10px;color:#64748b">总排放 (tCO₂e)</div></div></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放明细</h3><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#059669;color:#fff"><th style="padding:6px 8px">排放源</th><th style="padding:6px 8px">Scope</th><th style="padding:6px 8px">活动数据</th><th style="padding:6px 8px">tCO₂e</th></tr></thead><tbody>'+currentRecords.sort((a,b)=>b.emission-a.emission).map(function(r){return '<tr><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.source+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.scope+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+fmt(r.activity)+' '+r.unit+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1;font-weight:600">'+fmt(r.emission)+'</td></tr>';}).join('')+'</tbody></table>';
   document.body.appendChild(el);
-  html2pdf().set({margin:[10,10,10,10],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(()=>el.remove());
+  showToast('📄 正在生成PDF报告...', 'info');
+  html2pdf().set({margin:[10,10,10,10],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(function(){el.remove();showToast('✅ PDF报告已下载','success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
 }
 
 function clearData(){currentRecords=[];currentTotal=0;allRecords={};localStorage.removeItem('carbonai_data');document.getElementById('results').classList.add('hidden');document.getElementById('dashStats').innerHTML='<div class="stat-box" style="grid-column:1/-1;padding:35px;text-align:center"><div style="font-size:42px;margin-bottom:8px">📊</div><div style="font-weight:600;color:var(--text)">请先在"碳核算"页面上传Excel数据</div></div>';showToast('数据已清空','info');}
@@ -1395,12 +1396,12 @@ function generateReport(){
 
 function exportReportPDF(){
   if(!currentRecords.length){showToast('⚠️ 请先上传数据','error');return}
-  const el=document.createElement('div');el.style.cssText='position:fixed;left:0;top:0;width:800px;background:#fff;z-index:9999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8';
+  const el=document.createElement('div');el.style.cssText='position:absolute;left:-9999px;top:0;width:800px;background:#fff;z-index:-1;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b';
   el.innerHTML=document.getElementById('reportPreview').innerHTML;
   document.body.appendChild(el);
   const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol'};
-  html2pdf().set({margin:[10,10,10,10],filename:'合规报告_'+names[currentReport]+'_'+currentYear+'.pdf',html2canvas:{scale:2},jsPDF:{unit:'mm',format:'a4'}}).from(el).save().then(()=>el.remove());
-  showToast('✅ PDF报告已导出','success');
+  showToast('📄 正在生成合规报告PDF...', 'info');
+  html2pdf().set({margin:[10,10,10,10],filename:'合规报告_'+names[currentReport]+'_'+currentYear+'.pdf',html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4'}}).from(el).save().then(function(){el.remove();showToast('✅ PDF报告已导出','success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
 }
 
 function exportReportWord(){
