@@ -558,7 +558,14 @@ body.dark .gba-city-card.active,.gba-city-card:hover{background:rgba(5,150,105,.
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
     <div>
       <div class="form-row">
-        <div class="form-group"><label>监测区域</label><select id="gridRegion" onchange="refreshGrid()"><option value="sz">深圳市光明区</option><option value="gz">广州市黄埔区</option><option value="dg">东莞市松山湖</option><option value="fs">佛山市顺德区</option></select></div>
+        <div class="form-group"><label>监测区域</label><select id="gridRegion" onchange="refreshGrid()">
+          <optgroup label="深圳市"><option value="sz_gm">深圳市光明区</option><option value="sz_ns">深圳市南山区</option><option value="sz_ft">深圳市福田区</option><option value="sz_ba">深圳市宝安区</option></optgroup>
+          <optgroup label="广州市"><option value="gz_hp">广州市黄埔区</option><option value="gz_th">广州市天河区</option><option value="gz_hz">广州市海珠区</option><option value="gz_by">广州市白云区</option></optgroup>
+          <optgroup label="惠州市"><option value="hz_hc">惠州市惠城区</option><option value="hz_zk">惠州市仲恺高新区</option><option value="hz_hy">惠州市惠阳区(大亚湾)</option></optgroup>
+          <optgroup label="东莞市"><option value="dg_ssl">东莞市松山湖</option></optgroup>
+          <optgroup label="佛山市"><option value="fs_sd">佛山市顺德区</option></optgroup>
+          <optgroup label="香港"><option value="hk_yj">油尖旺区</option><option value="hk_xjl">西九龙</option><option value="hk_central">中环</option><option value="hk_sheung">上环</option><option value="hk_tsing">青衣</option></optgroup>
+        </select></div>
         <div class="form-group"><label>时间窗口</label><select id="gridTime" onchange="refreshGrid()"><option value="realtime">实时监测</option><option value="1h">近1小时</option><option value="24h">近24小时</option><option value="7d">近7天</option></select></div>
       </div>
       <div class="form-group"><label>显示图层</label>
@@ -1486,41 +1493,75 @@ function calculateTrajCarbon(){
 // ==================== NEW MODULE 3: 网格化排放监测 ====================
 function initGridMap(){
   if(gridMapObj)return;
-  gridMapObj=L.map('gridMap').setView([22.75,114.08],13);
+  const defReg=GRID_REGIONS[document.getElementById('gridRegion').value]||GRID_REGIONS.sz_gm;
+  gridMapObj=L.map('gridMap').setView([defReg.lat,defReg.lon],defReg.zoom);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM | Grid Emission Monitoring',maxZoom:19}).addTo(gridMapObj);
-  renderGridLayers();
+  renderGridLayers(defReg);
 }
 
-function renderGridLayers(){
+let currentGridRegion=null;
+function renderGridLayers(region){
   if(!gridMapObj)return;
+  if(region)currentGridRegion=region;
+  const reg=currentGridRegion||{name:'深圳市光明区',lat:22.75,lon:113.95,sources:[{name:'XX电子厂',lat:22.76,lon:113.93,co2:8.5}]};
   gridMapObj.eachLayer(l=>{if(!(l instanceof L.TileLayer))gridMapObj.removeLayer(l);});
-  const ctr=gridMapObj.getCenter();const cells=[];
-  for(let lat=ctr.lat-0.04;lat<ctr.lat+0.04;lat+=0.005){
-    for(let lng=ctr.lng-0.04;lng<ctr.lng+0.04;lng+=0.005){
-      const val=Math.exp(-((lat-ctr.lat+0.01)**2+(lng-ctr.lng-0.01)**2)/0.0002)*20+Math.exp(-((lat-ctr.lat-0.01)**2+(lng-ctr.lng+0.005)**2)/0.0003)*12+Math.random()*3;
+  const ctr={lat:reg.lat,lon:reg.lon};const cells=[];
+  const span=gridMapObj.getZoom()>14?0.02:0.04;
+  for(let lat=ctr.lat-span;lat<ctr.lat+span;lat+=span/10){
+    for(let lng=ctr.lon-span;lng<ctr.lon+span;lng+=span/10){
+      let val=Math.random()*2;
+      reg.sources.forEach(s=>{const d=Math.sqrt((lat-s.lat)**2+(lng-s.lon)**2);val+=s.co2*Math.exp(-d*d/0.0001);});
       cells.push({lat,lng,val});
     }
   }
   if(gridLayers.grid||gridLayers.heatmap){
-    cells.forEach(c=>{const color=c.val>15?'#ef4444':c.val>8?'#f97316':c.val>3?'#eab308':'#22c55e';L.rectangle([[c.lat-0.0025,c.lng-0.0025],[c.lat+0.0025,c.lng+0.0025]],{color:'transparent',fillColor:color,fillOpacity:0.45,weight:0.5}).addTo(gridMapObj);});
+    cells.forEach(c=>{const color=c.val>15?'#ef4444':c.val>8?'#f97316':c.val>3?'#eab308':'#22c55e';L.rectangle([[c.lat-span/20,c.lng-span/20],[c.lat+span/20,c.lng+span/20]],{color:'transparent',fillColor:color,fillOpacity:0.45,weight:0.5}).addTo(gridMapObj);});
   }
-  // Sources
-  const sources=[{name:'XX钢铁厂',lat:22.76,lon:114.07,co2:18.5},{name:'XX化工厂',lat:22.74,lon:114.09,co2:12.3},{name:'XX热电厂',lat:22.755,lon:114.10,co2:22.1}];
-  if(gridLayers.source)sources.forEach(s=>{const color=s.co2>15?'#ef4444':s.co2>8?'#f97316':'#eab308';L.circleMarker([s.lat,s.lon],{radius:Math.sqrt(s.co2)*5,color,fillColor:color,fillOpacity:0.6,weight:2}).bindPopup(`<strong>${s.name}</strong><br>排放强度: ${s.co2.toFixed(1)} tCO₂/km²·h`).addTo(gridMapObj);});
-  // Wind direction lines
-  if(gridLayers.wind){for(let i=-3;i<=3;i++){for(let j=-3;j<=3;j++){L.polyline([[ctr.lat+i*0.008,ctr.lng+j*0.008],[ctr.lat+i*0.008+0.003,ctr.lng+j*0.008-0.003]],{color:'#94a3b8',weight:1,opacity:0.4,dashArray:'5,5'}).addTo(gridMapObj);}}}
+  if(gridLayers.source)reg.sources.forEach(s=>{const color=s.co2>15?'#ef4444':s.co2>8?'#f97316':'#eab308';L.circleMarker([s.lat,s.lon],{radius:Math.sqrt(s.co2)*5,color,fillColor:color,fillOpacity:0.6,weight:2}).bindPopup(`<strong>${s.name}</strong><br>排放强度: ${s.co2.toFixed(1)} tCO₂/km²·h`).addTo(gridMapObj);});
+  if(gridLayers.wind){for(let i=-3;i<=3;i++){for(let j=-3;j<=3;j++){L.polyline([[ctr.lat+i*0.008,ctr.lon+j*0.008],[ctr.lat+i*0.008+0.003,ctr.lon+j*0.008-0.003]],{color:'#94a3b8',weight:1,opacity:0.4,dashArray:'5,5'}).addTo(gridMapObj);}}}
   // Heatmap chart
   const hd=document.getElementById('gridHeatmap');
-  if(hd){let c=echarts.getInstanceByDom(hd);if(c)c.dispose();const hdata=cells.filter((_,i)=>i%2===0).map(c=>[c.lng.toFixed(4),c.lat.toFixed(4),c.val.toFixed(1)]);echarts.init(hd).setOption({tooltip:{},grid:{left:'10%',right:'5%',bottom:'10%',top:'5%'},xAxis:{type:'category',data:[...new Set(hdata.map(d=>d[0]))],axisLabel:{rotate:45,fontSize:10}},yAxis:{type:'category',data:[...new Set(hdata.map(d=>d[1]))]},visualMap:{min:0,max:25,orient:'horizontal',left:'center',bottom:0,inRange:{color:['#22c55e','#eab308','#f97316','#ef4444']}},series:[{type:'heatmap',data:hdata}]});}
-  document.getElementById('gridAlerts').innerHTML=`
-    <div style="padding:8px;background:#fef2f2;border-radius:6px;margin-bottom:6px;border-left:3px solid #ef4444"><strong style="color:#dc2626">🔴 红色预警</strong> — XX热电厂 排放超标 22.1 tCO₂/km²·h<br><span style="font-size:10px;color:var(--text3)">2026-06-10 14:32:15</span></div>
-    <div style="padding:8px;background:#fef2f2;border-radius:6px;margin-bottom:6px;border-left:3px solid #ef4444"><strong style="color:#dc2626">🔴 红色预警</strong> — XX钢铁厂 排放超标 18.5 tCO₂/km²·h<br><span style="font-size:10px;color:var(--text3)">2026-06-10 14:28:42</span></div>
-    <div style="padding:8px;background:#fffbeb;border-radius:6px;margin-bottom:6px;border-left:3px solid #f97316"><strong style="color:#d97706">🟡 黄色预警</strong> — XX化工厂 排放偏高 12.3 tCO₂/km²·h<br><span style="font-size:10px;color:var(--text3)">2026-06-10 14:15:03</span></div>
-    <div style="padding:8px;background:#f0fdf4;border-radius:6px;border-left:3px solid #22c55e"><strong style="color:#166534">🟢 正常</strong> — 其他网格排放均在限值内<br><span style="font-size:10px;color:var(--text3)">2026-06-10 14:00:00</span></div>`;
+  if(hd){let c=echarts.getInstanceByDom(hd);if(c)c.dispose();const hdata=cells.filter((_,i)=>i%3===0).map(c=>[c.lng.toFixed(4),c.lat.toFixed(4),c.val.toFixed(1)]);echarts.init(hd).setOption({tooltip:{},grid:{left:'10%',right:'5%',bottom:'10%',top:'5%'},xAxis:{type:'category',data:[...new Set(hdata.map(d=>d[0]))],axisLabel:{rotate:45,fontSize:9}},yAxis:{type:'category',data:[...new Set(hdata.map(d=>d[1]))]},visualMap:{min:0,max:Math.max(...cells.map(c=>c.val),25),orient:'horizontal',left:'center',bottom:0,inRange:{color:['#22c55e','#eab308','#f97316','#ef4444']}},series:[{type:'heatmap',data:hdata}]});}
+  // Alerts
+  const alerts=reg.sources.filter(s=>s.co2>15).map(s=>'<div style="padding:8px;background:#fef2f2;border-radius:6px;margin-bottom:6px;border-left:3px solid #ef4444"><strong style="color:#dc2626">🔴 红色预警</strong> — '+s.name+' 排放超标 '+s.co2.toFixed(1)+' tCO₂/km²·h<br><span style="font-size:10px;color:var(--text3)">'+new Date(Date.now()-Math.random()*86400000).toLocaleTimeString('zh-CN')+'</span></div>').join('');
+  const warns=reg.sources.filter(s=>s.co2>8&&s.co2<=15).map(s=>'<div style="padding:8px;background:#fffbeb;border-radius:6px;margin-bottom:6px;border-left:3px solid #f97316"><strong style="color:#d97706">🟡 黄色预警</strong> — '+s.name+' 排放偏高 '+s.co2.toFixed(1)+' tCO₂/km²·h<br><span style="font-size:10px;color:var(--text3)">'+new Date(Date.now()-Math.random()*86400000).toLocaleTimeString('zh-CN')+'</span></div>').join('');
+  const normals=reg.sources.filter(s=>s.co2<=8);
+  document.getElementById('gridAlerts').innerHTML=alerts+warns+(normals.length>0?'<div style="padding:8px;background:#f0fdf4;border-radius:6px;border-left:3px solid #22c55e"><strong style="color:#166534">🟢 正常</strong> — 其余网格排放均在限值内<br><span style="font-size:10px;color:var(--text3)">'+new Date().toLocaleTimeString('zh-CN')+'</span></div>':'');
 }
 
 function toggleGridLayer(layer,visible){gridLayers[layer]=visible;renderGridLayers();}
-function refreshGrid(){renderGridLayers();showToast('✅ 网格监测已刷新','success');}
+const GRID_REGIONS={
+  sz_gm:{name:'深圳市光明区',lat:22.75,lon:113.95,zoom:13,sources:[{name:'XX电子厂',lat:22.76,lon:113.93,co2:8.5},{name:'XX注塑厂',lat:22.74,lon:113.96,co2:12.3},{name:'光明能源站',lat:22.75,lon:113.94,co2:6.1}]},
+  sz_ns:{name:'深圳市南山区',lat:22.53,lon:113.93,zoom:13,sources:[{name:'XX科技园数据中心',lat:22.54,lon:113.95,co2:14.2},{name:'XX半导体厂',lat:22.52,lon:113.92,co2:9.8},{name:'南山热电厂',lat:22.53,lon:113.94,co2:18.5}]},
+  sz_ft:{name:'深圳市福田区',lat:22.55,lon:114.05,zoom:14,sources:[{name:'XX金融中心',lat:22.545,lon:114.055,co2:11.3},{name:'XX商业综合体',lat:22.555,lon:114.045,co2:7.8},{name:'福田交通枢纽',lat:22.54,lon:114.06,co2:15.2}]},
+  sz_ba:{name:'深圳市宝安区',lat:22.58,lon:113.88,zoom:12,sources:[{name:'宝安国际机场',lat:22.64,lon:113.81,co2:28.5},{name:'XX线路板厂',lat:22.57,lon:113.87,co2:16.3},{name:'XX物流园区',lat:22.59,lon:113.89,co2:10.1}]},
+  gz_hp:{name:'广州市黄埔区',lat:23.10,lon:113.45,zoom:13,sources:[{name:'XX石化基地',lat:23.11,lon:113.44,co2:32.1},{name:'XX汽车工厂',lat:23.09,lon:113.46,co2:18.5},{name:'黄埔港区',lat:23.10,lon:113.47,co2:12.3}]},
+  gz_th:{name:'广州市天河区',lat:23.125,lon:113.36,zoom:14,sources:[{name:'XX商业大厦',lat:23.13,lon:113.37,co2:9.2},{name:'天河数据中心',lat:23.12,lon:113.35,co2:14.8},{name:'XX医院',lat:23.13,lon:113.36,co2:5.6}]},
+  gz_hz:{name:'广州市海珠区',lat:23.10,lon:113.32,zoom:14,sources:[{name:'XX会展中心',lat:23.11,lon:113.33,co2:8.1},{name:'XX纺织工业区',lat:23.09,lon:113.31,co2:11.5},{name:'琶洲互联网基地',lat:23.10,lon:113.34,co2:13.2}]},
+  gz_by:{name:'广州市白云区',lat:23.17,lon:113.27,zoom:12,sources:[{name:'白云国际机场',lat:23.39,lon:113.30,co2:35.2},{name:'XX家具工业园',lat:23.16,lon:113.26,co2:10.8},{name:'XX物流中心',lat:23.18,lon:113.28,co2:7.5}]},
+  hz_hc:{name:'惠州市惠城区',lat:23.08,lon:114.42,zoom:13,sources:[{name:'XX电子产业基地',lat:23.09,lon:114.41,co2:14.5},{name:'XX线路板产业园',lat:23.07,lon:114.43,co2:20.1},{name:'惠城热电',lat:23.08,lon:114.42,co2:16.8}]},
+  hz_zk:{name:'惠州市仲恺高新区',lat:23.03,lon:114.35,zoom:13,sources:[{name:'XX液晶面板厂',lat:23.04,lon:114.34,co2:18.2},{name:'XX移动终端基地',lat:23.02,lon:114.36,co2:12.6},{name:'仲恺数据中心',lat:23.03,lon:114.35,co2:9.4}]},
+  hz_hy:{name:'惠州市惠阳区(大亚湾)',lat:22.75,lon:114.47,zoom:12,sources:[{name:'大亚湾石化区',lat:22.76,lon:114.48,co2:45.8},{name:'XX化工码头',lat:22.74,lon:114.46,co2:22.3},{name:'惠州LNG接收站',lat:22.77,lon:114.49,co2:18.6}]},
+  dg_ssl:{name:'东莞市松山湖',lat:22.91,lon:113.88,zoom:13,sources:[{name:'XX通讯设备厂',lat:22.92,lon:113.87,co2:10.5},{name:'松山湖材料实验室',lat:22.90,lon:113.89,co2:5.2},{name:'XX新能源基地',lat:22.91,lon:113.88,co2:8.1}]},
+  fs_sd:{name:'佛山市顺德区',lat:22.80,lon:113.29,zoom:12,sources:[{name:'XX家电制造基地',lat:22.81,lon:113.28,co2:16.5},{name:'XX陶瓷建材厂',lat:22.79,lon:113.30,co2:28.3},{name:'顺德港口区',lat:22.80,lon:113.27,co2:9.8}]},
+  hk_yj:{name:'香港油尖旺区',lat:22.31,lon:114.17,zoom:15,sources:[{name:'XX商业大厦',lat:22.315,lon:114.17,co2:7.2},{name:'XX酒店',lat:22.305,lon:114.17,co2:5.8},{name:'旺角交通枢纽',lat:22.32,lon:114.17,co2:12.5}]},
+  hk_xjl:{name:'香港西九龙',lat:22.31,lon:114.16,zoom:15,sources:[{name:'西九龙高铁站',lat:22.305,lon:114.16,co2:8.5},{name:'XX文化区',lat:22.31,lon:114.155,co2:3.2},{name:'柯士甸商业区',lat:22.31,lon:114.165,co2:6.8}]},
+  hk_central:{name:'香港中环',lat:22.28,lon:114.16,zoom:16,sources:[{name:'国际金融中心',lat:22.285,lon:114.16,co2:9.5},{name:'中环写字楼群',lat:22.28,lon:114.155,co2:14.2},{name:'中环码头',lat:22.287,lon:114.16,co2:6.3}]},
+  hk_sheung:{name:'香港上环',lat:22.286,lon:114.15,zoom:16,sources:[{name:'上环商业区',lat:22.286,lon:114.15,co2:5.8},{name:'信德中心',lat:22.288,lon:114.152,co2:4.2},{name:'港澳码头',lat:22.289,lon:114.152,co2:8.6}]},
+  hk_tsing:{name:'香港青衣',lat:22.35,lon:114.10,zoom:14,sources:[{name:'青衣发电厂',lat:22.355,lon:114.105,co2:38.5},{name:'青衣油库',lat:22.35,lon:114.11,co2:25.3},{name:'青衣工业中心',lat:22.345,lon:114.09,co2:12.8}]},
+};
+
+function refreshGrid(){
+  const sel=document.getElementById('gridRegion').value;
+  const reg=GRID_REGIONS[sel];
+  if(reg&&gridMapObj){
+    gridMapObj.setView([reg.lat,reg.lon],reg.zoom);
+    setTimeout(()=>renderGridLayers(reg),300);
+  }else{
+    renderGridLayers();
+  }
+  showToast('✅ 网格监测已刷新 · '+((reg&&reg.name)||'当前区域'),'success');
+}
 
 // ==================== NEW MODULE 4: 排放因子库 ====================
 const FACTOR_DB=[
