@@ -270,6 +270,73 @@ body.dark .gba-city-card.active,.gba-city-card:hover{background:rgba(5,150,105,.
 .ai-badge.error{background:#fef2f2;color:#dc2626}
 .ai-row.flagged{background:#fffbeb}
 
+/* ===== AI Chat Module ===== */
+.ai-chat-wrap{display:flex;flex-direction:column;height:620px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg)}
+.ai-api-bar{padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border)}
+.api-config-inline{display:flex;gap:6px;align-items:center}
+.api-status{font-size:10px;cursor:pointer}
+.ai-chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
+.ai-chat-messages::-webkit-scrollbar{width:5px}
+.ai-chat-messages::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+.chat-welcome{text-align:center;padding:20px 10px;animation:fadeIn .4s ease}
+.chat-welcome.hidden{display:none}
+.welcome-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#059669,#10B981);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;box-shadow:0 4px 16px rgba(5,150,105,.3)}
+.chat-welcome h4{font-size:16px;color:var(--text);margin-bottom:4px}
+.chat-welcome p{font-size:11px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.quick-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px;margin:0 auto}
+.quick-actions button{font-size:11px;padding:7px 14px;border-radius:16px;border:1px solid var(--border);background:var(--card);color:var(--text);cursor:pointer;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.quick-actions button:hover{background:var(--green-bg);border-color:var(--green-light);color:var(--green);transform:translateY(-1px)}
+.chat-msg{display:flex;gap:8px;max-width:85%;animation:fadeIn .3s ease}
+.chat-msg.user{align-self:flex-end;flex-direction:row-reverse}
+.chat-msg.assistant{align-self:flex-start}
+.chat-msg .msg-avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.chat-msg.user .msg-avatar{background:var(--blue-bg);color:var(--blue)}
+.chat-msg.assistant .msg-avatar{background:var(--green-bg);color:var(--green)}
+.chat-msg .msg-bubble{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 14px;font-size:12px;line-height:1.7;color:var(--text);box-shadow:var(--shadow);overflow-x:auto}
+.chat-msg.user .msg-bubble{background:linear-gradient(135deg,#f0f9ff,#eff6ff);border-color:#bfdbfe}
+.chat-msg.assistant .msg-bubble{background:var(--card);border-color:var(--border)}
+.chat-msg .msg-time{font-size:9px;color:var(--text3);margin-top:2px;text-align:right}
+.chat-msg.user .msg-time{text-align:left}
+.msg-bubble h1,.msg-bubble h2,.msg-bubble h3{font-size:14px;font-weight:700;margin:8px 0 4px;color:var(--green)}
+.msg-bubble h4,.msg-bubble h5{font-size:12px;font-weight:600;margin:6px 0 3px}
+.msg-bubble p{margin:4px 0}
+.msg-bubble ul,.msg-bubble ol{margin:4px 0;padding-left:18px}
+.msg-bubble li{margin:2px 0}
+.msg-bubble strong{color:var(--text);font-weight:700}
+.msg-bubble code{background:#f1f5f9;padding:1px 5px;border-radius:3px;font-size:10px;font-family:'SF Mono','Fira Code',monospace}
+.msg-bubble pre{background:#1e293b;color:#e2e8f0;padding:10px 14px;border-radius:8px;font-size:10px;overflow-x:auto;margin:6px 0}
+.msg-bubble pre code{background:transparent;color:inherit;padding:0}
+.msg-bubble blockquote{border-left:3px solid var(--green-light);padding-left:10px;margin:6px 0;color:var(--text2);font-style:italic}
+.msg-bubble table{border-collapse:collapse;font-size:10px;margin:6px 0}
+.msg-bubble th,.msg-bubble td{border:1px solid var(--border);padding:4px 8px;text-align:left}
+.msg-bubble th{background:#f1f5f9;font-weight:600}
+.msg-bubble a{color:var(--blue);text-decoration:underline}
+.ai-chat-input-area{padding:10px 14px;border-top:1px solid var(--border);background:var(--card)}
+.ai-chat-input-row{display:flex;gap:6px;align-items:flex-end}
+.ai-chat-input-row textarea{flex:1;margin:0;padding:9px 14px;border:1px solid var(--border);border-radius:20px;font-size:12px;resize:none;min-height:38px;max-height:120px;line-height:1.4;background:var(--bg);transition:border-color .2s}
+.ai-chat-input-row textarea:focus{border-color:var(--green-light);box-shadow:0 0 0 3px rgba(16,185,129,.1)}
+.ai-chat-input-row .btn-primary{border-radius:50%;width:38px;height:38px;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ai-chat-input-row .btn-secondary{border-radius:50%;width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.chat-loading{display:flex;align-items:center;gap:8px;padding:8px 14px;align-self:flex-start;animation:fadeIn .3s ease}
+.loading-dots{display:flex;gap:4px}
+.loading-dots span{width:7px;height:7px;border-radius:50%;background:var(--green-light);animation:dotBounce 1.4s ease-in-out infinite}
+.loading-dots span:nth-child(2){animation-delay:.2s}
+.loading-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotBounce{0%,80%,100%{transform:scale(.6);opacity:.4}40%{transform:scale(1);opacity:1}}
+.chat-loading p{font-size:11px;color:var(--text2);margin:0}
+.chat-error{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:10px 14px;font-size:11px;color:#dc2626;align-self:center;animation:fadeIn .3s ease;max-width:90%}
+body.dark .ai-chat-wrap{background:var(--bg);border-color:var(--border)}
+body.dark .ai-chat-messages{background:var(--bg)}
+body.dark .ai-api-bar{background:var(--card);border-color:var(--border)}
+body.dark .ai-chat-input-area{background:var(--card);border-color:var(--border)}
+body.dark .ai-chat-input-row textarea{background:#0f172a;color:#f1f5f9}
+body.dark .chat-msg.user .msg-bubble{background:linear-gradient(135deg,#1e3a5f,#1e293b);border-color:#334155}
+body.dark .chat-msg.assistant .msg-bubble{background:#1e293b;border-color:#334155}
+body.dark .quick-actions button{background:#1e293b;border-color:#334155}
+body.dark .msg-bubble code{background:#334155}
+body.dark .msg-bubble th{background:#0f172a}
+body.dark .chat-error{background:rgba(220,38,38,.1)}
+
 @media print{body{background:#fff}.header,.tab-nav,.btn-group,.upload-zone,.footer{display:none!important}.main{padding:0}.tab-panel{border:none;box-shadow:none}.tab-panel.active{display:block}}
 @media(max-width:768px){.chart-row,.form-row{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}.tab-btn{font-size:11px;padding:7px 10px}.map-container{height:320px}}
 </style>
@@ -866,17 +933,46 @@ body.dark .gba-city-card.active,.gba-city-card:hover{background:rgba(5,150,105,.
 <!-- ===== AI CONSULTANT ===== -->
 <div class="tab-panel" id="panel-ai">
   <div class="section-title"><span class="icon"><i class="ri-robot-line"></i></span>AI碳管理顾问</div>
-  <div class="ai-panel">
-    <h4 style="margin-bottom:6px"><i class="ri-magic-line"></i> 碳排放智能分析</h4>
-    <p style="font-size:11px;color:var(--text2);margin-bottom:10px">基于您的数据自动生成减排建议、合规指导和行业对标</p>
-    <button class="btn btn-primary btn-sm" onclick="runAIAnalysis()"><i class="ri-play-line"></i> 运行AI分析</button>
-    <div id="aiResults" style="margin-top:14px"></div>
-  </div>
-  <div class="ai-panel">
-    <h4 style="margin-bottom:6px"><i class="ri-question-answer-line"></i> 政策问答</h4>
-    <input type="text" id="aiQuestion" placeholder="例如：2026年碳配额分配方案有哪些变化？" style="margin-bottom:6px">
-    <button class="btn btn-outline btn-sm" onclick="askAI()"><i class="ri-send-plane-line"></i> 提问</button>
-    <div id="aiAnswer" style="margin-top:10px;font-size:12px"></div>
+  <div class="ai-chat-wrap">
+    <!-- API Config Bar -->
+    <div class="ai-api-bar">
+      <div class="api-config-inline">
+        <select id="aiModel" style="width:auto;min-width:130px;margin:0;font-size:11px;padding:5px 8px;">
+          <option value="deepseek-chat">DeepSeek-V3</option>
+          <option value="deepseek-reasoner">DeepSeek-R1</option>
+        </select>
+        <input type="password" id="aiApiKey" placeholder="输入API Key（留空使用演示Key）" style="width:auto;flex:1;min-width:180px;margin:0;font-size:11px;padding:5px 8px;">
+        <span class="api-status" id="apiStatus" title="API状态">🟢</span>
+      </div>
+    </div>
+    <!-- Chat Messages -->
+    <div class="ai-chat-messages" id="aiChatMessages">
+      <div class="chat-welcome">
+        <div class="welcome-avatar"><i class="ri-robot-line"></i></div>
+        <h4>您好，我是 CarbonAI 碳管理顾问</h4>
+        <p>我可以帮您完成：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导 · 碳足迹分析</p>
+        <div class="quick-actions" id="quickActions">
+          <button onclick="sendQuickMsg('请根据我当前的碳排放数据，自动生成一份详细的碳盘查分析报告，包含排放结构、减排建议和合规评估')"><i class="ri-file-chart-line"></i> 分析我的碳数据</button>
+          <button onclick="sendQuickMsg('2026年中国碳配额分配方案有哪些最新变化？第三履约周期有什么需要注意的？')"><i class="ri-scales-line"></i> 配额政策解读</button>
+          <button onclick="sendQuickMsg('欧盟CBAM碳关税正式实施后，中国企业需要如何应对？请给出详细的合规步骤')"><i class="ri-global-line"></i> CBAM合规指导</button>
+          <button onclick="sendQuickMsg('基于一般制造业的最佳实践，给我制定一份详细的减排路线图，包含短期、中期、长期措施')"><i class="ri-lightbulb-line"></i> 减排路线图</button>
+          <button onclick="sendQuickMsg('请解释碳足迹核算的LCA方法学，以及如何进行产品碳足迹认证')"><i class="ri-footprint-line"></i> 产品碳足迹</button>
+          <button onclick="sendQuickMsg('介绍一下CCER自愿减排交易机制，以及企业如何参与碳交易市场')"><i class="ri-exchange-line"></i> 碳交易入门</button>
+        </div>
+      </div>
+    </div>
+    <!-- Input Area -->
+    <div class="ai-chat-input-area">
+      <div class="ai-chat-input-row">
+        <textarea id="aiChatInput" placeholder="输入碳管理相关问题..." rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+        <button class="btn btn-primary" id="aiSendBtn" onclick="sendChatMessage()" title="发送消息">
+          <i class="ri-send-plane-fill"></i>
+        </button>
+        <button class="btn btn-secondary btn-sm" id="aiClearBtn" onclick="clearChatHistory()" title="清空对话" style="margin-left:4px;">
+          <i class="ri-delete-bin-line"></i>
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1758,22 +1854,379 @@ function renderFactorCharts(){
   new Chart(document.getElementById('factorSourceChart').getContext('2d'),{type:'doughnut',data:{labels:Object.keys(bySrc),datasets:[{data:Object.values(bySrc),backgroundColor:['#059669','#10B981','#0EA5E9','#F59E0B','#8B5CF6','#EF4444']}]}});
 }
 
-// ==================== AI / TOOLS ====================
+// ==================== AI CHAT ====================
+const AI_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+const AI_DEMO_KEY = 'sk-demo-carbonai-placeholder';
+const AI_SYSTEM_PROMPT = `你是 CarbonAI 平台的首席时空碳管理顾问。你精通碳盘查、ESG 政策，并具备空间分析思维。当用户询问某区域排放时，请结合地理视角回答。如果需要，你可以输出格式化的地理数据（如 GeoJSON）或指挥前端页面的指令，请严格使用 Markdown 进行结构化排版。
+
+## 你的核心能力：
+1. **碳盘查与核算** — 精通GHG Protocol、ISO 14064-1、中国GB/T 32150等标准，支持Scope 1/2/3全范围排放核算；能结合空间化排放因子（如各省级/电网级排放因子）进行区域差异分析
+2. **碳配额与碳交易** — 熟悉中国全国碳市场(CEA)、CCER自愿减排、欧盟EU ETS交易机制，了解各区域碳市场试点（北京、上海、广东、深圳、湖北等）价格差异
+3. **ESG政策与合规** — 精通ISSB IFRS S1/S2、CSRD/ESRS E1、HKEX ESG Code Part D、中国三大交易所可持续发展报告指引，了解不同司法管辖区的披露时间和边界要求
+4. **CBAM碳关税** — 深入了解欧盟CBAM正式实施阶段（2026.1.1起）申报要求，熟悉中国对欧出口企业面临的五大类产品（钢铁、铝、水泥、化肥、电力）碳核算方法
+5. **空间化碳分析** — 能结合GIS遥感数据（Sentinel-2、Landsat、高分系列卫星）分析区域碳汇分布、NDVI植被碳储量、土地利用变化导致的碳排放/碳移除；理解6大区域电网排放因子空间差异及其对Scope 2核算的影响
+6. **减排策略与碳中和路径** — 可提供分布式光伏选址评估、绿色物流路径优化（轨迹碳核算）、林业碳汇项目空间选址、CCUS技术适用性评估等全链条建议
+7. **产品碳足迹(PCF)** — 精通LCA方法学、PAS 2050、ISO 14067、EPD环境产品声明，了解粤港澳大湾区产品碳足迹认证体系（"一次核查、两张证书"模式）
+
+## 粤港澳大湾区（GBA）专业知识：
+- 熟悉大湾区11城（广州、深圳、珠海、佛山、惠州、东莞、中山、江门、肇庆、香港、澳门）的碳管理政策差异
+- 了解港深环保合作、粤港跨境碳数据互认、大湾区碳足迹公共服务平台
+- 掌握广东"十五五"碳双控目标、深圳碳交易试点、香港2050碳中和路线图等区域政策细节
+
+## 回复规范：
+- **强制使用 Markdown 格式化回复**，善用标题(H2/H3)、列表、表格、代码块增强可读性
+- 引用具体的标准条款、政策文件名称、生效日期和管辖范围
+- 当用户提供数据时，主动进行定量分析（排放量计算、配额需求估算、减排潜力评估、碳价敏感性分析等）
+- 回复语言与用户提问语言保持一致（中文/English）
+- 对于不确定的最新政策信息，明确标注【建议进一步核实最新政策文件】
+- 涉及碳价/配额价格时，注明数据来源和参考时间，提醒市场波动风险
+- 当涉及空间/地理分析时，可输出 GeoJSON 格式数据（如工厂位置、碳汇范围、物流路径等），前端将自动解析并在地图上可视化`;
+
+let chatHistory = [];
+let chatWelcomeEl = null;
+
+function initChat(){
+  chatWelcomeEl = document.getElementById('quickActions') ? document.querySelector('.chat-welcome') : null;
+  const saved = localStorage.getItem('carbonai_chat_history');
+  if(saved){ try{ chatHistory = JSON.parse(saved); }catch(e){ chatHistory = []; } }
+  const savedKey = localStorage.getItem('carbonai_api_key');
+  if(savedKey){ document.getElementById('aiApiKey').value = savedKey; }
+}
+
+function saveChatHistory(){
+  const toSave = chatHistory.slice(-30);
+  try{ localStorage.setItem('carbonai_chat_history', JSON.stringify(toSave)); }catch(e){}
+}
+
+function clearChatHistory(){
+  chatHistory = [];
+  localStorage.removeItem('carbonai_chat_history');
+  const container = document.getElementById('aiChatMessages');
+  container.innerHTML = '';
+  const welcome = document.createElement('div');
+  welcome.className = 'chat-welcome';
+  welcome.id = 'quickActionsParent';
+  welcome.innerHTML = `
+    <div class="welcome-avatar"><i class="ri-robot-line"></i></div>
+    <h4>您好，我是 CarbonAI 碳管理顾问</h4>
+    <p>我可以帮您完成：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导 · 碳足迹分析</p>
+    <div class="quick-actions" id="quickActions">
+      <button onclick="sendQuickMsg('请根据我当前的碳排放数据，自动生成一份详细的碳盘查分析报告，包含排放结构、减排建议和合规评估')"><i class="ri-file-chart-line"></i> 分析我的碳数据</button>
+      <button onclick="sendQuickMsg('2026年中国碳配额分配方案有哪些最新变化？第三履约周期有什么需要注意的？')"><i class="ri-scales-line"></i> 配额政策解读</button>
+      <button onclick="sendQuickMsg('欧盟CBAM碳关税正式实施后，中国企业需要如何应对？请给出详细的合规步骤')"><i class="ri-global-line"></i> CBAM合规指导</button>
+      <button onclick="sendQuickMsg('基于一般制造业的最佳实践，给我制定一份详细的减排路线图，包含短期、中期、长期措施')"><i class="ri-lightbulb-line"></i> 减排路线图</button>
+      <button onclick="sendQuickMsg('请解释碳足迹核算的LCA方法学，以及如何进行产品碳足迹认证')"><i class="ri-footprint-line"></i> 产品碳足迹</button>
+      <button onclick="sendQuickMsg('介绍一下CCER自愿减排交易机制，以及企业如何参与碳交易市场')"><i class="ri-exchange-line"></i> 碳交易入门</button>
+    </div>`;
+  container.appendChild(welcome);
+  chatWelcomeEl = welcome;
+  showToast('对话历史已清空', 'info');
+}
+
+function sendQuickMsg(msg){
+  document.getElementById('aiChatInput').value = msg;
+  sendChatMessage();
+}
+
+function addMessage(role, content){
+  const container = document.getElementById('aiChatMessages');
+  if(chatWelcomeEl){ chatWelcomeEl.classList.add('hidden'); chatWelcomeEl = null; }
+  const div = document.createElement('div');
+  div.className = 'chat-msg ' + role;
+  const avatarIcon = role === 'user' ? 'ri-user-line' : 'ri-robot-line';
+  const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  div.innerHTML = `
+    <div class="msg-avatar"><i class="${avatarIcon}"></i></div>
+    <div>
+      <div class="msg-bubble">${role === 'assistant' ? renderMarkdown(content) : escapeHtml(content)}</div>
+      <div class="msg-time">${time}</div>
+    </div>`;
+  container.appendChild(div);
+  scrollToBottom();
+}
+
+function addLoading(){
+  const container = document.getElementById('aiChatMessages');
+  if(chatWelcomeEl){ chatWelcomeEl.classList.add('hidden'); chatWelcomeEl = null; }
+  const div = document.createElement('div');
+  div.className = 'chat-loading';
+  div.id = 'chatLoading';
+  div.innerHTML = '<div class="loading-dots"><span></span><span></span><span></span></div><p>AI顾问正在分析中...</p>';
+  container.appendChild(div);
+  scrollToBottom();
+}
+
+function removeLoading(){
+  const el = document.getElementById('chatLoading');
+  if(el) el.remove();
+}
+
+function addError(msg){
+  const container = document.getElementById('aiChatMessages');
+  const div = document.createElement('div');
+  div.className = 'chat-error';
+  div.innerHTML = '<i class="ri-error-warning-line"></i> ' + escapeHtml(msg);
+  container.appendChild(div);
+  scrollToBottom();
+}
+
+function scrollToBottom(){
+  const container = document.getElementById('aiChatMessages');
+  setTimeout(() => { container.scrollTop = container.scrollHeight; }, 100);
+}
+
+/**
+ * ==================== 空间指令拦截器 ====================
+ * 【预留接口】未来用于拦截AI回复中的特定指令，驱动前端GIS/地图行为。
+ *
+ * 使用场景示例：
+ *   - AI回复包含 GeoJSON 数据块 → 自动解析并在Leaflet地图叠加显示
+ *   - AI回复包含 "ZOOM_TO:lat,lng,zoom" 指令 → 地图自动飞行定位
+ *   - AI回复包含 "HIGHLIGHT_REGION:GBA" → 高亮粤港澳大湾区11城
+ *   - AI回复包含 "SWITCH_TAB:gis" → 自动切换到GIS遥感面板
+ *
+ * 解析约定（AI回复中使用以下标记）：
+ *   ```geojson
+ *   {"type":"FeatureCollection","features":[...]}
+ *   ```
+ *   或行内指令：<!--GIS:ZOOM_TO:22.5431,114.0579,12-->
+ *
+ * @param {string} aiResponse - AI完整回复文本
+ */
+function handleSpatialCommand(aiResponse){
+  if(!aiResponse) return;
+
+  // 1. 检测 GeoJSON 代码块
+  const geojsonMatch = aiResponse.match(/```geojson\s*([\s\S]*?)```/);
+  if(geojsonMatch){
+    try{
+      const geojson = JSON.parse(geojsonMatch[1]);
+      console.log('[SpatialCommand] GeoJSON detected:', geojson);
+      // TODO: 未来实现 → 调用 Leaflet L.geoJSON(geojson).addTo(gisMapObj)
+      // 并自动切换到GIS面板: switchTab('gis')
+    }catch(e){
+      console.warn('[SpatialCommand] Invalid GeoJSON:', e.message);
+    }
+  }
+
+  // 2. 检测行内GIS指令
+  const cmdMatch = aiResponse.match(/<!--GIS:(\w+):(.+?)-->/g);
+  if(cmdMatch){
+    cmdMatch.forEach(cmd => {
+      const parts = cmd.replace('<!--GIS:', '').replace('-->', '').split(':');
+      const action = parts[0];
+      const args = parts.slice(1);
+      console.log('[SpatialCommand] Command:', action, args);
+      // TODO: 未来实现 → 根据action执行对应前端操作
+      // ZOOM_TO → gisMapObj.flyTo([lat,lng], zoom)
+      // HIGHLIGHT_REGION → highlightGBARegion(args[0])
+      // SWITCH_TAB → switchTab(args[0])
+      // SHOW_HEATMAP → toggleHeatmapLayer(true)
+    });
+  }
+
+  // 3. 检测表格中的坐标数据（如工厂排放清单含经纬度）
+  const coordPattern = /(\d{2,3}\.\d+)\s*[,，]\s*(\d{2,3}\.\d+)/g;
+  const coords = [];
+  let m;
+  while((m = coordPattern.exec(aiResponse)) !== null){
+    coords.push({lat: parseFloat(m[1]), lng: parseFloat(m[2])});
+  }
+  if(coords.length > 0){
+    console.log('[SpatialCommand] Coordinates detected:', coords.length, 'points');
+    // TODO: 未来实现 → 批量在地图上打点标记
+  }
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function renderMarkdown(text){
+  /*
+   * 当前使用简易正则解析 Markdown，支持：标题、粗体/斜体、行内代码、
+   * 代码块、列表、引用、表格、链接等基础语法。
+   *
+   * 【升级提示】如需要完整 GFM 支持（任务列表、脚注、HTML标签清洗等），
+   * 请引入 marked.js (https://github.com/markedjs/marked):
+   *   <script src="https://cdn.jsdelivr.net/npm/marked@12.0/marked.min.js"></script>
+   *   然后替换本函数为:
+   *     function renderMarkdown(text){ return marked.parse(text); }
+   */
+  let html = text;
+  // code blocks (```)
+  html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+  // inline code
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  // bold
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // italic
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // headers
+  html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+  html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+  html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+  // blockquote
+  html = html.replace(/^&gt; (.+)$/gm, '<blockquote>$1</blockquote>');
+  // horizontal rule
+  html = html.replace(/^---$/gm, '<hr>');
+  // unordered lists
+  html = html.replace(/^[*-] (.+)$/gm, '<li>$1</li>');
+  html = html.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>');
+  // ordered lists
+  html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+  // wrap consecutive <li> in <ul>
+  html = html.replace(/((?:<li>.*?<\/li>\n?)+)/g, '<ul>$1</ul>');
+  // fix double wraps
+  html = html.replace(/<\/ul>\n?<ul>/g, '\n');
+  // tables (simple pipe tables)
+  html = html.replace(/^\|(.+)\|$/gm, function(m){
+    const cells = m.split('|').filter(c => c.trim());
+    if(cells.every(c => /^[-:]+$/.test(c.trim()))) return ''; // separator row
+    const tag = cells.every(c => /^[-:]+$/.test(c.trim())) ? '' : 'td';
+    return '<tr>' + cells.map(c => '<td>' + c.trim() + '</td>').join('') + '</tr>';
+  });
+  html = html.replace(/((?:<tr>.*?<\/tr>\n?)+)/g, '<table>$1</table>');
+  // line breaks
+  html = html.replace(/\n\n/g, '<br><br>');
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
+
+async function sendChatMessage(){
+  const input = document.getElementById('aiChatInput');
+  const sendBtn = document.getElementById('aiSendBtn');
+  const msg = input.value.trim();
+  if(!msg) return;
+
+  // Build context with current emission data
+  let dataContext = '';
+  if(currentRecords.length > 0){
+    const byScope = {};
+    currentRecords.forEach(r => { byScope[r.scope] = (byScope[r.scope] || 0) + r.emission; });
+    const topSources = [...currentRecords].sort((a,b) => b.emission - a.emission).slice(0, 5);
+    dataContext = `\n\n【用户当前碳核算数据上下文】总排放: ${currentTotal.toFixed(2)} tCO₂e。`;
+    for(const [s,v] of Object.entries(byScope)){
+      dataContext += ` ${s}: ${v.toFixed(2)} tCO₂e (${(v/currentTotal*100).toFixed(1)}%)。`;
+    }
+    dataContext += ` 排放源Top5: ${topSources.map(r => r.source+'('+r.emission.toFixed(1)+'t)').join('、')}。`;
+  }
+
+  addMessage('user', msg);
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+  addLoading();
+
+  const apiKey = document.getElementById('aiApiKey').value.trim() || AI_DEMO_KEY;
+  // Save API key
+  if(apiKey !== AI_DEMO_KEY){
+    localStorage.setItem('carbonai_api_key', apiKey);
+    document.getElementById('apiStatus').textContent = '🟢';
+  } else {
+    document.getElementById('apiStatus').textContent = '🟡';
+  }
+
+  const messages = [
+    { role: 'system', content: AI_SYSTEM_PROMPT + dataContext },
+  ];
+  // Add recent chat history (last 20 messages)
+  const recentHistory = chatHistory.slice(-20);
+  for(const h of recentHistory){
+    messages.push({ role: h.role, content: h.content });
+  }
+  messages.push({ role: 'user', content: msg });
+
+  chatHistory.push({ role: 'user', content: msg });
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 90000);
+
+    const resp = await fetch(AI_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + apiKey,
+      },
+      body: JSON.stringify({
+        model: document.getElementById('aiModel').value,
+        messages: messages,
+        temperature: 0.7,
+        max_tokens: 4096,
+        stream: false,
+      }),
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeout);
+    removeLoading();
+
+    if(!resp.ok){
+      const errText = await resp.text();
+      let errMsg = '';
+      if(resp.status === 401){
+        errMsg = 'API密钥无效或未配置，请在顶部输入有效的DeepSeek API Key，或前往 platform.deepseek.com 获取';
+      } else if(resp.status === 429){
+        errMsg = 'API调用频率超限，请稍后重试';
+      } else if(resp.status === 503){
+        errMsg = 'AI服务暂时不可用，请稍后重试';
+      } else {
+        errMsg = 'API请求失败 (' + resp.status + '): ' + (errText.length > 200 ? errText.substring(0,200)+'...' : errText);
+      }
+      addError(errMsg);
+      sendBtn.disabled = false;
+      return;
+    }
+
+    const data = await resp.json();
+    const reply = data.choices && data.choices[0] && data.choices[0].message ?
+      data.choices[0].message.content : '(AI未返回有效回复)';
+
+    chatHistory.push({ role: 'assistant', content: reply });
+    saveChatHistory();
+    addMessage('assistant', reply);
+    handleSpatialCommand(reply);
+
+  } catch(err){
+    removeLoading();
+    if(err.name === 'AbortError'){
+      addError('请求超时（90秒），请检查网络连接后重试');
+    } else if(err.message.includes('Failed to fetch') || err.message.includes('NetworkError')){
+      addError('网络连接失败，请检查网络后重试。如持续失败，可能是API地址不可达');
+    } else {
+      addError('请求异常: ' + escapeHtml(err.message));
+    }
+  }
+
+  sendBtn.disabled = false;
+  input.focus();
+}
+
+// Migrate old aiQuestion key behavior: Enter key in old input now handled via new chat
 function runAIAnalysis(){
   if(!currentRecords.length){showToast('请先上传碳排放数据','error');return}
   const total=currentTotal;const byScope={};currentRecords.forEach(r=>{byScope[r.scope]=(byScope[r.scope]||0)+r.emission;});
-  const s3pct=((byScope['Scope 3']||0)/total*100).toFixed(1);
-  document.getElementById('aiResults').innerHTML=`
-    <div class="advice-item"><strong>📊 排放结构：</strong>总排放 ${fmt(total)} tCO₂e。Scope 3 占比 ${s3pct}%，${s3pct>30?'建议重点关注供应链减排与轨迹碳核算。':'直接排放占比较高，建议优化生产工艺。'}</div>
-    <div class="advice-item"><strong>💡 减排建议：</strong>① ${byScope['Scope 1']>0?'考虑燃料替代（煤改气/电）降低Scope 1排放':'Scope 1排放已较低'}；② ${byScope['Scope 2']>0?'采购绿电/PPA协议降低Scope 2排放':'Scope 2排放合理'}；③ 通过GIS轨迹核算优化物流路径降低Scope 3排放。</div>
-    <div class="advice-item"><strong>⚖️ 合规：</strong>按碳价¥85/t，年度碳资产需求约¥${fmt(total*85)}。建议利用GIS遥感模块监测林地碳汇，提前布局CCER抵消策略。</div>`;
+  const top5=[...currentRecords].sort((a,b)=>b.emission-a.emission).slice(0,5).map(r=>r.source+'('+r.emission.toFixed(1)+'t)').join('、');
+  const prompt=`请根据以下碳排放数据进行专业分析并给出减排建议：\n\n总排放: ${total.toFixed(2)} tCO₂e\nScope 1: ${(byScope['Scope 1']||0).toFixed(2)} tCO₂e\nScope 2: ${(byScope['Scope 2']||0).toFixed(2)} tCO₂e\nScope 3: ${(byScope['Scope 3']||0).toFixed(2)} tCO₂e\n主要排放源: ${top5}`;
+  document.getElementById('aiChatInput').value = prompt;
+  sendChatMessage();
 }
 
 function askAI(){
-  const q=document.getElementById('aiQuestion').value.trim();if(!q)return;
-  document.getElementById('aiAnswer').innerHTML='<div class="spinner"></div>';
-  setTimeout(()=>{document.getElementById('aiAnswer').innerHTML=`<div class="advice-item">根据最新政策数据库及排放因子库（含Ecoinvent 3.9、IPCC、中国电网2023），针对"<strong>${q}</strong>"：当前CEA交易约85元/吨，第三履约周期配额分配方案强调区域差异性——不同电网排放因子差异可达36%（南方vs东北）。建议参考因子库中的空间化数据进行合规申报。详细分析请提供更多背景。</div>`;},800);
+  const q = document.getElementById('aiQuestion');
+  if(q && q.value && q.value.trim()){
+    document.getElementById('aiChatInput').value = q.value.trim();
+    sendChatMessage();
+  }
 }
+
+// Initialize chat on tab switch
+document.querySelector('[data-tab="ai"]').addEventListener('click', function(){
+  setTimeout(initChat, 100);
+});
 
 function calcElec(){const kwh=parseFloat(document.getElementById('elecKwh').value)||0;const ge={south:0.5703,east:0.5890,north:0.7410,central:0.5250,northwest:0.6120,northeast:0.7760};const ef=ge[document.getElementById('elecGrid').value]||0.5703;const co2=kwh*ef/1000;document.getElementById('elecResult').classList.remove('hidden');document.getElementById('elecResult').innerHTML=`碳排放量：<strong>${fmt(co2)} tCO₂e</strong> (因子: ${ef} kgCO₂/kWh · 来源: 中国电网2023)`;}
 function calcFuel(){const qty=parseFloat(document.getElementById('fuelQty').value)||0;const ef={烟煤:1.9003,无烟煤:2.5300,柴油:3.1605,汽油:2.9251,天然气:21.840};const co2=qty*(ef[document.getElementById('fuelType').value]||1);document.getElementById('fuelResult').classList.remove('hidden');document.getElementById('fuelResult').innerHTML=`碳排放量：<strong>${fmt(co2)} tCO₂e</strong> (因子: ${ef[document.getElementById('fuelType').value]} · 来源: IPCC 2006/国家发改委)`;}
@@ -2191,6 +2644,7 @@ document.addEventListener('DOMContentLoaded',function(){
   document.querySelector('[data-tab="grid"]').addEventListener('click',function(){setTimeout(function(){initGridMap();if(gridMapObj)gridMapObj.invalidateSize();updateAQIIndicator();updateGridWind();},200);});
   document.querySelector('[data-tab="news"]').addEventListener('click',function(){loadNewsToPanel();});
   document.querySelector('[data-tab="asset"]').addEventListener('click',function(){refreshPrices();});
+  initChat();
   startRealtimeEngine();
 });
 
