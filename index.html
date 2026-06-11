@@ -1099,11 +1099,24 @@ function exportCSV() {
 function exportPDF() {
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   const el=document.createElement('div');
-  el.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:800px;max-height:90vh;overflow-y:auto;background:#fff;z-index:99999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b;box-shadow:0 20px 60px rgba(0,0,0,.3);border-radius:8px';
-  el.innerHTML='<div style="text-align:center;padding:40px 0;border-bottom:3px solid #059669;margin-bottom:20px"><h1 style="color:#059669;font-size:24px">碳排放核算报告</h1><p style="color:#64748b">报告日期：'+new Date().toLocaleDateString('zh-CN')+' | 数据年份：'+currentYear+'</p></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放汇总</h3><div style="display:flex;gap:16px;margin:12px 0"><div style="background:#ecfdf5;padding:16px 24px;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:800;color:#059669">'+fmt(currentTotal)+'</div><div style="font-size:10px;color:#64748b">总排放 (tCO₂e)</div></div></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放明细</h3><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#059669;color:#fff"><th style="padding:6px 8px">排放源</th><th style="padding:6px 8px">Scope</th><th style="padding:6px 8px">活动数据</th><th style="padding:6px 8px">tCO₂e</th></tr></thead><tbody>'+currentRecords.sort((a,b)=>b.emission-a.emission).map(function(r){return '<tr><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.source+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.scope+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+fmt(r.activity)+' '+r.unit+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1;font-weight:600">'+fmt(r.emission)+'</td></tr>';}).join('')+'</tbody></table>';
+  // Use fixed positioning WITHOUT CSS transform — html2canvas cannot capture transformed elements.
+  // left:50% + margin-left:-400px centers the 800px-wide element without a transform.
+  el.style.cssText='position:fixed;top:0;left:50%;margin-left:-400px;width:800px;min-height:100vh;background:#fff;z-index:99999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,.3)';
+  var reportDate=new Date().toLocaleDateString('zh-CN');
+  var totalFmt=fmt(currentTotal);
+  var rowsHtml=currentRecords.sort(function(a,b){return b.emission-a.emission;}).map(function(r){
+    return '<tr><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.source+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+r.scope+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1">'+fmt(r.activity)+' '+r.unit+'</td><td style="padding:6px 8px;border:1px solid #cbd5e1;font-weight:600">'+fmt(r.emission)+'</td></tr>';
+  }).join('');
+  el.innerHTML='<div style="text-align:center;padding:40px 0;border-bottom:3px solid #059669;margin-bottom:20px"><h1 style="color:#059669;font-size:24px">碳排放核算报告</h1><p style="color:#64748b">报告日期：'+reportDate+' | 数据年份：'+currentYear+'</p></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放汇总</h3><div style="display:flex;gap:16px;margin:12px 0"><div style="background:#ecfdf5;padding:16px 24px;border-radius:8px;text-align:center"><div style="font-size:20px;font-weight:800;color:#059669">'+totalFmt+'</div><div style="font-size:10px;color:#64748b">总排放 (tCO₂e)</div></div></div><h3 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:4px;margin-bottom:10px">排放明细</h3><table style="width:100%;border-collapse:collapse"><thead><tr style="background:#059669;color:#fff"><th style="padding:6px 8px">排放源</th><th style="padding:6px 8px">Scope</th><th style="padding:6px 8px">活动数据</th><th style="padding:6px 8px">tCO₂e</th></tr></thead><tbody>'+rowsHtml+'</tbody></table>';
   document.body.appendChild(el);
   showToast('📄 '+t('toast.pdf_gen'), 'info');
-  html2pdf().set({margin:[10,10,10,10],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(function(){el.remove();showToast('✅ '+t('toast.pdf_done'),'success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
+  // Double rAF to ensure the browser paints the element before html2canvas captures it.
+  // html2canvas reads the DOM synchronously but needs layout+paint to be complete.
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      html2pdf().set({margin:[10,10,10,10],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'}}).from(el).save().then(function(){el.remove();showToast('✅ '+t('toast.pdf_done'),'success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
+    });
+  });
 }
 
 function clearData(){currentRecords=[];currentTotal=0;allRecords={};localStorage.removeItem('carbonai_data');document.getElementById('results').classList.add('hidden');document.getElementById('dashStats').innerHTML='<div class="stat-box" style="grid-column:1/-1;padding:35px;text-align:center"><div style="font-size:42px;margin-bottom:8px">📊</div><div style="font-weight:600;color:var(--text)" data-i18n="dashboard.nodata">'+t('dashboard.nodata')+'</div></div>';showToast(t('toast.data_cleared'),'info');}
@@ -1839,12 +1852,19 @@ function generateReport(){
 
 function exportReportPDF(){
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
-  const el=document.createElement('div');el.style.cssText='position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:800px;max-height:90vh;overflow-y:auto;background:#fff;z-index:99999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b;box-shadow:0 20px 60px rgba(0,0,0,.3);border-radius:8px';
+  const el=document.createElement('div');
+  // Use fixed positioning WITHOUT CSS transform — html2canvas cannot capture transformed elements.
+  el.style.cssText='position:fixed;top:0;left:50%;margin-left:-400px;width:800px;min-height:100vh;background:#fff;z-index:99999;padding:40px;font-family:sans-serif;font-size:12px;line-height:1.8;color:#1e293b;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,.3)';
   el.innerHTML=document.getElementById('reportPreview').innerHTML;
   document.body.appendChild(el);
   const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol'};
   showToast('📄 正在生成合规报告PDF...', 'info');
-  html2pdf().set({margin:[10,10,10,10],filename:'合规报告_'+names[currentReport]+'_'+currentYear+'.pdf',html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4'}}).from(el).save().then(function(){el.remove();showToast('✅ PDF报告已导出','success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
+  // Double rAF to ensure the browser paints before html2canvas capture
+  requestAnimationFrame(function(){
+    requestAnimationFrame(function(){
+      html2pdf().set({margin:[10,10,10,10],filename:'合规报告_'+names[currentReport]+'_'+currentYear+'.pdf',html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4'}}).from(el).save().then(function(){el.remove();showToast('✅ PDF报告已导出','success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
+    });
+  });
 }
 
 function exportReportWord(){
@@ -1998,5 +2018,24 @@ document.addEventListener('DOMContentLoaded',function(){
 
 console.log('CarbonAI v5.0 · 碳核算+GIS遥感+轨迹核算+网格监测+因子溯源+碳资产+产品碳足迹+合规报告 已就绪');
 console.log('[Realtime] 实时数据引擎: AQI(Open-Meteo) 碳价(智能模拟) 资讯(动态) — 纯前端 零后端');
+/*
+ * ==================== 2026-06-11 PDF BUG FIX ====================
+ * Root Cause: html2pdf.js v0.10.2 (bundled html2canvas) cannot capture DOM elements
+ *   styled with CSS transform:translate(). The exportPDF() and exportReportPDF()
+ *   functions used transform:translate(-50%,-50%) to center the report div, causing
+ *   html2canvas to render an empty canvas → jsPDF produced a blank (3KB) PDF with
+ *   only font definitions but zero content.
+ *
+ * Fix Applied:
+ *   1. Replaced transform-based centering with left:50% + margin-left:-400px
+ *   2. Added double requestAnimationFrame() before html2pdf().from(el) to ensure
+ *      the browser completes layout+paint before html2canvas captures the element
+ *   3. Changed overflow-y:auto to overflow:visible for full-content capture
+ *
+ * Alternative: For server-side/offline PDF generation, use:
+ *   python D:/research/generate_carbon_pdf.py
+ *   This script reads the Excel directly and generates a proper PDF via fpdf2
+ *   with embedded Chinese fonts (DengXian), bypassing browser/html2canvas entirely.
+ */
 </script>
 </body></html>
