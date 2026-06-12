@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -272,9 +272,13 @@ body.dark .gba-city-card.active,.gba-city-card:hover{background:rgba(5,150,105,.
 
 /* ===== AI Chat Module ===== */
 .ai-chat-wrap{display:flex;flex-direction:column;height:620px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--bg)}
-.ai-api-bar{padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border)}
-.api-config-inline{display:flex;gap:6px;align-items:center}
-.api-status{font-size:10px;cursor:pointer}
+.ai-api-bar{padding:10px 14px;background:var(--card);border-bottom:1px solid var(--border)}
+.api-config-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
+.api-field{display:flex;flex-direction:column;gap:2px}
+.api-field label{font-size:9px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
+.api-field input,.api-field select{margin:0!important;padding:5px 8px;font-size:11px;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text)}
+.api-field input:focus,.api-field select:focus{border-color:var(--green-light);outline:none}
+.api-config-row .api-status{align-self:center;font-size:16px;cursor:pointer;margin-bottom:2px}
 .ai-chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px;scroll-behavior:smooth}
 .ai-chat-messages::-webkit-scrollbar{width:5px}
 .ai-chat-messages::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
@@ -297,6 +301,8 @@ body.dark .gba-city-card.active,.gba-city-card:hover{background:rgba(5,150,105,.
 .chat-msg.assistant .msg-bubble{background:var(--card);border-color:var(--border)}
 .chat-msg .msg-time{font-size:9px;color:var(--text3);margin-top:2px;text-align:right}
 .chat-msg.user .msg-time{text-align:left}
+.msg-usage{font-size:9px;color:var(--text3);margin-top:2px;text-align:right;opacity:0.7}
+.chat-msg.user .msg-usage{text-align:left}
 .msg-bubble h1,.msg-bubble h2,.msg-bubble h3{font-size:14px;font-weight:700;margin:8px 0 4px;color:var(--green)}
 .msg-bubble h4,.msg-bubble h5{font-size:12px;font-weight:600;margin:6px 0 3px}
 .msg-bubble p{margin:4px 0}
@@ -892,59 +898,32 @@ body.dark .chat-error{background:rgba(220,38,38,.1)}
   </div>
 </div>
 
-<!-- ===== NEW: 产品碳足迹 ===== -->
-<div class="tab-panel" id="panel-pcf">
-  <div class="section-title"><span class="icon"><i class="ri-git-branch-line"></i></span>产品碳足迹 (PCF) · LCA全生命周期核算</div>
-  <div class="lca-flow">
-    <div class="lca-stage active" onclick="selectLCAStage('raw')"><div class="stage-icon">⛏️</div><div class="stage-name">原材料获取</div><div class="stage-pct" id="pct-raw">-</div></div>
-    <div class="lca-arrow">→</div>
-    <div class="lca-stage" onclick="selectLCAStage('mfg')"><div class="stage-icon">🏭</div><div class="stage-name">生产制造</div><div class="stage-pct" id="pct-mfg">-</div></div>
-    <div class="lca-arrow">→</div>
-    <div class="lca-stage" onclick="selectLCAStage('tpt')"><div class="stage-icon">🚛</div><div class="stage-name">运输分销</div><div class="stage-pct" id="pct-tpt">-</div></div>
-    <div class="lca-arrow">→</div>
-    <div class="lca-stage" onclick="selectLCAStage('use')"><div class="stage-icon">⚡</div><div class="stage-name">使用阶段</div><div class="stage-pct" id="pct-use">-</div></div>
-    <div class="lca-arrow">→</div>
-    <div class="lca-stage" onclick="selectLCAStage('eol')"><div class="stage-icon">♻️</div><div class="stage-name">废弃回收</div><div class="stage-pct" id="pct-eol">-</div></div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-    <div>
-      <div class="form-row">
-        <div class="form-group"><label>产品名称</label><input type="text" id="pcfProductName" value="XX电子元器件" placeholder="输入产品名称"></div>
-        <div class="form-group"><label>产品单位</label><select id="pcfUnit"><option>件 (pcs)</option><option>公斤 (kg)</option><option>吨 (t)</option></select></div>
-      </div>
-      <div class="form-group"><label>核算标准</label><select id="pcfStandard"><option>ISO 14067:2018</option><option>PAS 2050</option><option>GHG Protocol Product Standard</option><option>欧盟 PEF (Product Environmental Footprint)</option></select></div>
-      <button class="btn btn-primary" onclick="calcPCF()"><i class="ri-calculator-line"></i> 计算产品碳足迹</button>
-      <button class="btn btn-outline btn-sm" onclick="loadPCFDemo()"><i class="ri-download-line"></i> 加载演示数据</button>
-    </div>
-    <div id="pcfResultPanel" class="hidden" style="background:var(--green-bg);border-radius:var(--radius);padding:16px;border:1px solid var(--green-light)">
-      <h4 style="color:var(--green);margin-bottom:8px"><i class="ri-check-double-line"></i> 碳足迹核算结果</h4>
-      <div style="font-size:24px;font-weight:800;color:var(--green)" id="pcfTotal">—</div>
-      <div style="font-size:11px;color:var(--text2)" id="pcfPerUnit"></div>
-      <div style="margin-top:8px;font-size:11px;color:var(--text2)" id="pcfCBAM"></div>
-    </div>
-  </div>
-  <div class="chart-row">
-    <div class="chart-box"><h4><i class="ri-pie-chart-2-line"></i> 各阶段碳排放占比</h4><div style="height:250px"><canvas id="pcfStageChart"></canvas></div></div>
-    <div class="chart-box"><h4><i class="ri-bar-chart-grouped-line"></i> 与行业基准值对比 (kgCO₂e/件)</h4><div style="height:250px"><canvas id="pcfBenchmarkChart"></canvas></div></div>
-  </div>
-  <div class="table-wrap"><h4>LCA各阶段排放明细</h4><div id="pcfTable"></div></div>
-</div>
-
 <!-- ===== AI CONSULTANT ===== -->
 <div class="tab-panel" id="panel-ai">
   <div class="section-title"><span class="icon"><i class="ri-robot-line"></i></span>AI碳管理顾问</div>
   <div class="ai-chat-wrap">
     <!-- API Config Bar -->
     <div class="ai-api-bar">
-      <div class="api-config-inline">
-        <select id="aiModel" style="width:auto;min-width:130px;margin:0;font-size:11px;padding:5px 8px;">
-          <option value="deepseek-chat">DeepSeek-V3</option>
-          <option value="deepseek-reasoner">DeepSeek-R1</option>
-          <option value="claude-sonnet-4-6">Claude Sonnet 4.6</option>
-          <option value="claude-opus-4-7">Claude Opus 4.7</option>
-        </select>
-        <input type="password" id="aiApiKey" placeholder="输入API Key（留空使用演示Key）" style="width:auto;flex:1;min-width:180px;margin:0;font-size:11px;padding:5px 8px;">
-        <span class="api-status" id="apiStatus" title="API状态">🟢</span>
+      <div class="api-config-row">
+        <div class="api-field">
+          <label>请求地址</label>
+          <input type="text" id="aiApiUrl" placeholder="https://api.deepseek.com/v1/chat/completions" style="font-size:10px;font-family:monospace;">
+        </div>
+        <div class="api-field">
+          <label>模型</label>
+          <input type="text" id="aiModel" list="aiModelList" value="deepseek-v4-pro" style="font-size:10px;">
+          <datalist id="aiModelList">
+            <option value="deepseek-v4-pro">
+            <option value="deepseek-v4-flash">
+            <option value="deepseek-chat">
+            <option value="deepseek-reasoner">
+          </datalist>
+        </div>
+        <div class="api-field" style="flex:1;min-width:0;">
+          <label>API Key</label>
+          <input type="text" id="aiApiKey" placeholder="sk-..." style="font-size:10px;font-family:monospace;">
+        </div>
+        <span class="api-status" id="apiStatus">🟢</span>
       </div>
     </div>
     <!-- Chat Messages -->
@@ -1279,7 +1258,7 @@ function loadDemoData() {
 
 function exportCSV() {
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
-  let csv='﻿排放源,Scope,活动数据,单位,排放因子,因子单位,排放量(tCO₂e),占比\n';
+  let csv='排放源,Scope,活动数据,单位,排放因子,因子单位,排放量(tCO₂e),占比\n';
   for(const r of currentRecords.sort((a,b)=>b.emission-a.emission)){
     csv+=`"${r.source}","${r.scope}",${r.activity},"${r.unit}",${r.factor},"${r.factorUnit}",${r.emission.toFixed(2)},${(r.emission/currentTotal*100).toFixed(1)}%\n`;
   }
@@ -1831,7 +1810,7 @@ function renderFactorTable(factors){
 }
 
 function exportFactorsCSV(){
-  let csv='﻿排放因子名称,数值,单位,来源,发布年份,适用地区,DQR,适用范围,方法学,Scope,类别,溯源链接\n';
+  let csv='排放因子名称,数值,单位,来源,发布年份,适用地区,DQR,适用范围,方法学,Scope,类别,溯源链接\n';
   FACTOR_DB.forEach(f=>{csv+=`"${f.name}",${f.value},"${f.unit}","${f.source}",${f.year},"${f.region}",${f.dqr},"${f.geo}","${f.methodology}","${f.scope}","${f.category}","${f.link||''}"\n`;});
   const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');
   a.href=u;a.download='排放因子库_溯源数据_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(u);
@@ -1858,9 +1837,8 @@ function renderFactorCharts(){
 
 // ==================== AI CHAT ====================
 const AI_API_URL = 'https://api.deepseek.com/anthropic';
-const AI_DEMO_KEY = 'sk-5259fbcb7bf34839bda846931ddccf62';
-// Backend proxy: set to true to route requests through server.py (no user key needed)
-const AI_USE_BACKEND = false; // set true when deploying with server.py /api/ai/chat endpoint
+const AI_DEFAULT_URL = 'https://api.deepseek.com/v1/chat/completions';
+const AI_DEFAULT_KEY = 'sk-5259fbcb7bf34839bda846931ddccf62';
 const AI_SYSTEM_PROMPT = `你是 CarbonAI 平台的首席时空碳管理顾问。你精通碳盘查、ESG 政策，并具备空间分析思维。当用户询问某区域排放时，请结合地理视角回答。如果需要，你可以输出格式化的地理数据（如 GeoJSON）或指挥前端页面的指令，请严格使用 Markdown 进行结构化排版。
 
 ## 你的核心能力：
@@ -1890,11 +1868,23 @@ let chatHistory = [];
 let chatWelcomeEl = null;
 
 function initChat(){
-  chatWelcomeEl = document.getElementById('quickActions') ? document.querySelector('.chat-welcome') : null;
+  chatWelcomeEl = document.querySelector('.chat-welcome');
   const saved = localStorage.getItem('carbonai_chat_history');
   if(saved){ try{ chatHistory = JSON.parse(saved); }catch(e){ chatHistory = []; } }
-  const savedKey = localStorage.getItem('carbonai_api_key');
-  if(savedKey){ document.getElementById('aiApiKey').value = savedKey; }
+  // Load saved API config or use defaults
+  const urlInput = document.getElementById('aiApiUrl');
+  const keyInput = document.getElementById('aiApiKey');
+  if(urlInput && !urlInput.value){
+    urlInput.value = localStorage.getItem('carbonai_api_url') || AI_DEFAULT_URL;
+  }
+  if(keyInput && !keyInput.value){
+    keyInput.value = localStorage.getItem('carbonai_api_key') || AI_DEFAULT_KEY;
+  }
+  const modelInput = document.getElementById('aiModel');
+  if(modelInput && !modelInput.value){
+    modelInput.value = localStorage.getItem('carbonai_model') || 'deepseek-v4-pro';
+  }
+  if(keyInput && keyInput.value){ document.getElementById('apiStatus').textContent = '🟢'; }
 }
 
 function saveChatHistory(){
@@ -1914,7 +1904,7 @@ function clearChatHistory(){
     <div class="welcome-avatar"><i class="ri-robot-line"></i></div>
     <h4>您好，我是 CarbonAI 碳管理顾问</h4>
     <p>我可以帮您完成：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导 · 碳足迹分析</p>
-    <div class="quick-actions" id="quickActions">
+    <div class="quick-actions">
       <button onclick="sendQuickMsg('请根据我当前的碳排放数据，自动生成一份详细的碳盘查分析报告，包含排放结构、减排建议和合规评估')"><i class="ri-file-chart-line"></i> 分析我的碳数据</button>
       <button onclick="sendQuickMsg('2026年中国碳配额分配方案有哪些最新变化？第三履约周期有什么需要注意的？')"><i class="ri-scales-line"></i> 配额政策解读</button>
       <button onclick="sendQuickMsg('欧盟CBAM碳关税正式实施后，中国企业需要如何应对？请给出详细的合规步骤')"><i class="ri-global-line"></i> CBAM合规指导</button>
@@ -1932,17 +1922,25 @@ function sendQuickMsg(msg){
   sendChatMessage();
 }
 
-function addMessage(role, content){
+function addMessage(role, content, usage){
   const container = document.getElementById('aiChatMessages');
   if(chatWelcomeEl){ chatWelcomeEl.classList.add('hidden'); chatWelcomeEl = null; }
   const div = document.createElement('div');
   div.className = 'chat-msg ' + role;
   const avatarIcon = role === 'user' ? 'ri-user-line' : 'ri-robot-line';
   const time = new Date().toLocaleTimeString('zh-CN', {hour:'2-digit',minute:'2-digit'});
+  var usageHtml = '';
+  if(usage && (usage.total_tokens || usage.totalTokens)){
+    var total = usage.total_tokens || usage.totalTokens || 0;
+    var prompt = usage.prompt_tokens || usage.promptTokens || 0;
+    var completion = usage.completion_tokens || usage.completionTokens || 0;
+    usageHtml = '<div class="msg-usage">🪙 ' + total + ' tokens (提示' + prompt + ' + 回复' + completion + ')</div>';
+  }
   div.innerHTML = `
     <div class="msg-avatar"><i class="${avatarIcon}"></i></div>
     <div>
       <div class="msg-bubble">${role === 'assistant' ? renderMarkdown(content) : escapeHtml(content)}</div>
+      ${usageHtml}
       <div class="msg-time">${time}</div>
     </div>`;
   container.appendChild(div);
@@ -2055,7 +2053,7 @@ function renderMarkdown(text){
    *
    * 【升级提示】如需要完整 GFM 支持（任务列表、脚注、HTML标签清洗等），
    * 请引入 marked.js (https://github.com/markedjs/marked):
-   *   <script src="https://cdn.jsdelivr.net/npm/marked@12.0/marked.min.js"></script>
+   *   &lt;script src=&quot;https://cdn.jsdelivr.net/npm/marked@12.0/marked.min.js&quot;&gt;&lt;/script&gt;
    *   然后替换本函数为:
    *     function renderMarkdown(text){ return marked.parse(text); }
    */
@@ -2111,11 +2109,11 @@ async function sendChatMessage(){
     const byScope = {};
     currentRecords.forEach(r => { byScope[r.scope] = (byScope[r.scope] || 0) + r.emission; });
     const topSources = [...currentRecords].sort((a,b) => b.emission - a.emission).slice(0, 5);
-    dataContext = `\n\n【用户当前碳核算数据上下文】总排放: ${currentTotal.toFixed(2)} tCO₂e。`;
+    dataContext = '\n\n【用户当前碳核算数据上下文】总排放: ' + currentTotal.toFixed(2) + ' tCO₂e。';
     for(const [s,v] of Object.entries(byScope)){
-      dataContext += ` ${s}: ${v.toFixed(2)} tCO₂e (${(v/currentTotal*100).toFixed(1)}%)。`;
+      dataContext += ' ' + s + ': ' + v.toFixed(2) + ' tCO₂e (' + (v/currentTotal*100).toFixed(1) + '%)。';
     }
-    dataContext += ` 排放源Top5: ${topSources.map(r => r.source+'('+r.emission.toFixed(1)+'t)').join('、')}。`;
+    dataContext += ' 排放源Top5: ' + topSources.map(function(r){return r.source+'('+r.emission.toFixed(1)+'t)';}).join('、') + '。';
   }
 
   addMessage('user', msg);
@@ -2124,140 +2122,128 @@ async function sendChatMessage(){
   sendBtn.disabled = true;
   addLoading();
 
-  const apiKey = document.getElementById('aiApiKey').value.trim() || AI_DEMO_KEY;
-  // Save API key
-  if(apiKey !== AI_DEMO_KEY){
-    localStorage.setItem('carbonai_api_key', apiKey);
-    document.getElementById('apiStatus').textContent = '🟢';
-  } else {
-    document.getElementById('apiStatus').textContent = '🟡';
-  }
+  // Get API config from UI inputs, save to localStorage
+  const apiUrl = document.getElementById('aiApiUrl').value.trim() || AI_DEFAULT_URL;
+  const apiKey = document.getElementById('aiApiKey').value.trim() || AI_DEFAULT_KEY;
+  const model = document.getElementById('aiModel').value;
+  localStorage.setItem('carbonai_api_url', apiUrl);
+  localStorage.setItem('carbonai_api_key', apiKey);
+  localStorage.setItem('carbonai_model', model);
 
   const messages = [];
-  // Add recent chat history (last 20 messages)
   const recentHistory = chatHistory.slice(-20);
   for(const h of recentHistory){
     messages.push({ role: h.role, content: h.content });
   }
   messages.push({ role: 'user', content: msg });
-
   chatHistory.push({ role: 'user', content: msg });
+
+  // Auto-detect: if running from file://, route through local server proxy
+  var useProxy = (window.location.protocol === 'file:');
+  const LOCAL_PROXY = 'http://localhost:8800/api/ai/chat';
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 90000);
-    let resp, reply;
+    const timeout = setTimeout(function(){ controller.abort(); }, 90000);
+    let resp;
 
-    if(AI_USE_BACKEND){
-      // ===== Backend Proxy Mode =====
-      // Route through server.py /api/ai/chat — no user API key needed
+    if(useProxy){
+      // Route through local server.py proxy (no CORS, no user key needed)
       const token = localStorage.getItem('carbonai_token') || '';
-      const body = {
-        model: document.getElementById('aiModel').value,
+      const proxyBody = {
+        model: model,
         messages: messages,
         data_context: dataContext,
       };
-
-      resp = await fetch('/api/ai/chat', {
+      resp = await fetch(LOCAL_PROXY, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + token,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(proxyBody),
         signal: controller.signal,
       });
-
-      clearTimeout(timeout);
-      removeLoading();
-
-      if(!resp.ok){
-        const errText = await resp.text();
-        let errMsg = '';
-        if(resp.status === 401){
-          errMsg = '请先登录后再使用AI顾问功能';
-        } else if(resp.status === 502){
-          errMsg = 'AI服务连接失败，请稍后重试';
-        } else if(resp.status === 504){
-          errMsg = 'AI服务响应超时，请稍后重试';
-        } else {
-          errMsg = '后端请求失败 (' + resp.status + '): ' + (errText.length > 200 ? errText.substring(0,200)+'...' : errText);
-        }
-        addError(errMsg);
-        sendBtn.disabled = false;
-        return;
-      }
-
-      const data = await resp.json();
-      reply = data.reply || '(AI未返回有效回复)';
     } else {
-      // ===== Direct API Mode =====
-      const apiKey = document.getElementById('aiApiKey').value.trim() || AI_DEMO_KEY;
-      if(apiKey !== AI_DEMO_KEY){
-        localStorage.setItem('carbonai_api_key', apiKey);
-        document.getElementById('apiStatus').textContent = '🟢';
-      } else {
-        document.getElementById('apiStatus').textContent = '🟡';
+      // Direct API call (works when served from http:// origin)
+      const allMessages = [
+        { role: 'system', content: AI_SYSTEM_PROMPT + dataContext },
+      ];
+      for(const h of messages){
+        allMessages.push(h);
       }
-
       const body = {
-        model: document.getElementById('aiModel').value,
+        model: model,
         max_tokens: 4096,
         temperature: 0.7,
-        system: AI_SYSTEM_PROMPT + dataContext,
-        messages: messages,
+        messages: allMessages,
       };
-
-      resp = await fetch(AI_API_URL, {
+      resp = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + apiKey,
-          'anthropic-version': '2023-06-01',
         },
         body: JSON.stringify(body),
         signal: controller.signal,
       });
-
-      clearTimeout(timeout);
-      removeLoading();
-
-      if(!resp.ok){
-        const errText = await resp.text();
-        let errMsg = '';
-        if(resp.status === 401){
-          errMsg = 'API密钥无效或未配置，请在顶部输入有效的DeepSeek API Key，或前往 platform.deepseek.com 获取';
-        } else if(resp.status === 429){
-          errMsg = 'API调用频率超限，请稍后重试';
-        } else if(resp.status === 503){
-          errMsg = 'AI服务暂时不可用，请稍后重试';
-        } else {
-          errMsg = 'API请求失败 (' + resp.status + '): ' + (errText.length > 200 ? errText.substring(0,200)+'...' : errText);
-        }
-        addError(errMsg);
-        sendBtn.disabled = false;
-        return;
-      }
-
-      const data = await resp.json();
-      reply = data.content && data.content[0] && data.content[0].text ?
-        data.content[0].text : '(AI未返回有效回复)';
     }
 
+    clearTimeout(timeout);
+    removeLoading();
+
+    if(!resp.ok){
+      const errText = await resp.text();
+      var errMsg = '';
+      if(resp.status === 401){
+        errMsg = 'API Key 无效 (401)。获取地址: platform.deepseek.com';
+      } else if(resp.status === 403){
+        errMsg = '无权限 (403)，请检查API Key是否有该模型的访问权限';
+      } else if(resp.status === 404){
+        errMsg = 'API地址不存在 (404)，请检查请求地址是否正确，或模型名是否被该端点支持';
+      } else if(resp.status === 400){
+        errMsg = '请求参数错误 (400): ' + (errText.length > 300 ? errText.substring(0,300)+'...' : errText);
+      } else if(resp.status === 429){
+        errMsg = 'API调用频率超限 (429)，请稍后重试';
+      } else {
+        errMsg = 'API错误 (' + resp.status + '): ' + (errText.length > 300 ? errText.substring(0,300)+'...' : errText);
+      }
+      addError(errMsg);
+      sendBtn.disabled = false;
+      document.getElementById('apiStatus').textContent = '🔴';
+      return;
+    }
+
+    const data = await resp.json();
+    // Proxy response: {reply: "..."} | Direct API: {choices: [{message: {content: "..."}}]}
+    var reply = data.reply;  // from backend proxy
+    if(!reply && data.choices && data.choices[0] && data.choices[0].message){
+      reply = data.choices[0].message.content;  // from direct API
+    }
+    if(!reply){ reply = '(AI未返回有效回复)'; }
+
+    // Extract token usage
+    var usage = data.usage || {};
+    document.getElementById('apiStatus').textContent = '🟢';
     chatHistory.push({ role: 'assistant', content: reply });
     saveChatHistory();
-    addMessage('assistant', reply);
+    addMessage('assistant', reply, usage);
     handleSpatialCommand(reply);
 
   } catch(err){
     removeLoading();
     if(err.name === 'AbortError'){
       addError('请求超时（90秒），请检查网络连接后重试');
-    } else if(err.message.includes('Failed to fetch') || err.message.includes('NetworkError')){
-      addError('网络连接失败，请检查网络后重试。如持续失败，可能是API地址不可达');
+    } else if(err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'))){
+      if(useProxy){
+        addError('无法连接到本地服务器。请先在终端运行: python server.py，然后刷新页面');
+      } else {
+        addError('网络连接失败，请检查：1) 请求地址是否正确 2) 网络是否可访问该地址');
+      }
     } else {
-      addError('请求异常: ' + escapeHtml(err.message));
+      addError('请求异常: ' + escapeHtml(err.message || '未知错误'));
     }
+    document.getElementById('apiStatus').textContent = '🔴';
   }
 
   sendBtn.disabled = false;
