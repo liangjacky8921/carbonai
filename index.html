@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.2/dist/html2pdf.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
 <script>window._leaflet_ok=!1;window._turf_ok=!1;</script>
@@ -1746,8 +1746,9 @@ function exportCSV() {
 
 function exportPDF() {
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
+  if(typeof html2pdf === 'undefined'){showToast('❌ PDF库未加载，请刷新页面重试','error');return}
   const el=document.createElement('div');
-  el.style.cssText='position:fixed;top:0;left:50%;margin-left:-400px;width:800px;min-height:100vh;background:#fff;z-index:99999;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;line-height:1.8;color:#1e293b;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,.3)';
+  el.style.cssText='position:absolute;top:0;left:0;width:800px;height:auto;min-height:600px;background:#fff;z-index:99999;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;line-height:1.8;color:#1e293b;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,.3)';
   var reportDate=new Date().toLocaleDateString('zh-CN');
   var totalFmt=fmt(currentTotal);
   var byScope={}; currentRecords.forEach(function(r){ byScope[r.scope]=(byScope[r.scope]||0)+r.emission; });
@@ -1762,14 +1763,13 @@ function exportPDF() {
     return '<tr><td style="padding:7px 10px;border:1px solid #e2e8f0">'+r.source+'</td><td style="padding:7px 10px;border:1px solid #e2e8f0">'+r.scope+'</td><td style="padding:7px 10px;border:1px solid #e2e8f0">'+fmt(r.activity)+' '+r.unit+'</td><td style="padding:7px 10px;border:1px solid #e2e8f0">'+r.factor+'</td><td style="padding:7px 10px;border:1px solid #e2e8f0;font-weight:600">'+fmt(r.emission)+'</td><td style="padding:7px 10px;border:1px solid #e2e8f0">'+pct+'%</td></tr>';
   }).join('');
 
-  var pageNum=1; var pageHtml=function(p){ return '<div style="position:absolute;bottom:12px;right:20px;font-size:9px;color:#94a3b8">- '+p+' -</div>'; };
-  var headerHtml='<div style="position:running(header);text-align:right;font-size:8px;color:#94a3b8;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:16px">CarbonAI v5.0 · 碳核算报告 · '+reportDate+'</div>';
+  var headerHtml='<div style="text-align:right;font-size:8px;color:#94a3b8;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:16px">CarbonAI v5.0 · 碳核算报告 · '+reportDate+'</div>';
   var footerHtml='<div style="text-align:center;font-size:8px;color:#94a3b8;margin-top:20px;border-top:1px solid #e2e8f0;padding-top:6px">CarbonAI v5.0 · 时空智能碳管理平台 · 本报告由AI辅助生成，仅供参考</div>';
 
   el.innerHTML='<div style="padding:60px 50px 30px">'
     +headerHtml
     +'<div style="text-align:center;padding:60px 0 20px;border-bottom:3px solid #059669;margin-bottom:20px">'
-    +'<img src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 60 60%22%3E%3Ccircle cx=%2230%22 cy=%2230%22 r=%2228%22 fill=%22%23059669%22/%3E%3Ctext x=%2230%22 y=%2238%22 text-anchor=%22middle%22 fill=%22white%22 font-size=%2228%22%3E🌱%3C/text%3E%3C/svg%3E" style="width:60px;height:60px;margin-bottom:12px" onerror="this.style.display=\'none\'">'
+    +'<div style="width:60px;height:60px;margin:0 auto 12px;background:#059669;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:700">C</div>'
     +'<h1 style="color:#059669;font-size:28px;letter-spacing:2px">碳排放核算报告</h1>'
     +'<p style="color:#64748b;margin-top:8px">Carbon Emission Accounting Report</p>'
     +'<p style="color:#94a3b8;font-size:11px;margin-top:4px">报告日期：'+reportDate+' | 数据年份：'+currentYear+'年</p>'
@@ -3523,6 +3523,7 @@ function buildOfficialReport(type){
 
 function exportReportPDF(){
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
+  if(typeof html2pdf === 'undefined'){showToast('❌ PDF库未加载，请刷新页面重试','error');return}
   const total=currentTotal;const byScope={};currentRecords.forEach(r=>{byScope[r.scope]=(byScope[r.scope]||0)+r.emission;});
   const s1=byScope['Scope 1']||0,s2=byScope['Scope 2']||0,s3=byScope['Scope 3']||0;
   const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol','cn-sse':'CN_SSE','cn-gb':'CN_GB','cn-mee':'CN_MEE','hk-esg':'HKEX_ESG','tw-ghg':'TW_GHG','eu-csrd':'EU_CSRD','us-sec':'US_SEC',issb:'ISSB',gri:'GRI'};
@@ -3537,7 +3538,7 @@ function exportReportPDF(){
   }).join('');
 
   const el=document.createElement('div');
-  el.style.cssText='position:fixed;top:0;left:50%;margin-left:-400px;width:800px;min-height:100vh;background:#fff;z-index:99999;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;line-height:1.8;color:#1e293b;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,.3)';
+  el.style.cssText='position:absolute;top:0;left:0;width:800px;height:auto;min-height:600px;background:#fff;z-index:99999;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;line-height:1.8;color:#1e293b;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,.3)';
 
   el.innerHTML='<div style="padding:50px 50px 30px;color:#1e293b">'
     +'<div style="text-align:right;font-size:8px;color:#94a3b8;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:16px">CarbonAI v5.0 · '+(lang==='en'?'Compliance Report':'合规报告')+' · '+reportDate+'</div>'
