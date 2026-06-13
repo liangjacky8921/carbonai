@@ -9,11 +9,12 @@
 <script src="https://cdn.jsdelivr.net/npm/echarts@5.6.0/dist/echarts.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://unpkg.com/@turf/turf@7/turf.min.js"></script>
-<script src="https://unpkg.com/shpjs@6.1.0/dist/shp.min.js"></script>
-<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<script>window._leaflet_ok=!1;window._turf_ok=!1;</script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js" onload="window._leaflet_ok=!0" onerror="document.write('<script src=\'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js\'><\/script>')"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js" onload="window._turf_ok=!0"></script>
+<script src="https://cdn.jsdelivr.net/npm/shpjs@6.1.0/dist/shp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="https://js.puter.com/v2/"></script>
 <style>
 :root {
@@ -1656,37 +1657,54 @@ function renderHistory(){
 
 // ==================== NEW MODULE 1: GIS遥感监测 ====================
 const GIS_CENTER=[22.65,114.05];
-let gisSatelliteLayer=null,gisOSMLayer=null,gisCurrentBase='osm';
 
 function initGISMap(){
   if(gisMapObj) return;
+  if(typeof L === 'undefined'){ showToast('地图库加载失败，请刷新页面重试','error'); return; }
   const isMobile = window.innerWidth < 768;
   gisMapObj=L.map('gisMap',{
     center: GIS_CENTER, zoom: 13,
-    tap: !isMobile, // Prevent 300ms delay on mobile, but allow tap for popups
+    tap: !isMobile,
     dragging: true,
     touchZoom: true,
-    scrollWheelZoom: !isMobile, // Disable scroll zoom on mobile to prevent accidental zoom while scrolling
+    scrollWheelZoom: !isMobile,
     zoomControl: true
   });
-  // OSM 默认底图
-  gisOSMLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(gisMapObj);
-  // NASA GIBS 卫星影像 (免费, 无需Key, 每日更新)
-  gisSatelliteLayer=L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/{date}/GoogleMapsCompatible/{z}/{y}/{x}.jpg',{attribution:'© NASA GIBS | VIIRS SNPP | Near Real-Time',maxZoom:18,date:new Date().toISOString().split('T')[0]});
-  // NDVI tile layer (MODIS Terra)
-  const ndviLayer=L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/{date}/GoogleMapsCompatible/{z}/{y}/{x}.png',{attribution:'© NASA GIBS | MODIS NDVI 8-Day',maxZoom:14,opacity:0.5,date:new Date().toISOString().split('T')[0]});
+  // 高德地图瓦片 (国内秒开，无需Key) — 默认底图
+  var gaodeLayer = L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',{
+    subdomains: ['1','2','3','4'],
+    attribution: '© 高德地图 | CarbonAI',
+    maxZoom: 18
+  }).addTo(gisMapObj);
+  // OSM 底图 (海外备用)
+  var osmFallback = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution: '© OpenStreetMap', maxZoom: 19
+  });
+  // NASA GIBS 卫星影像
+  var satDate = new Date().toISOString().split('T')[0];
+  var satLayer = L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/'+satDate+'/GoogleMapsCompatible/{z}/{y}/{x}.jpg',{
+    attribution: '© NASA GIBS | Near Real-Time', maxZoom: 18
+  });
+  // NDVI tile layer
+  var ndviLayer = L.tileLayer('https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Terra_NDVI_8Day/default/'+satDate+'/GoogleMapsCompatible/{z}/{y}/{x}.png',{
+    attribution: '© NASA GIBS | MODIS NDVI 8-Day', maxZoom: 14, opacity: 0.5
+  });
   // 底图切换控件
-  const baseMaps={'🗺️ OSM标准':gisOSMLayer,'🛰️ NASA卫星(近实时)':gisSatelliteLayer,'🌿 NDVI覆盖':ndviLayer};
+  var baseMaps = {
+    '🗺️ 高德地图(国内)': gaodeLayer,
+    '🌍 OSM国际': osmFallback,
+    '🛰️ NASA卫星': satLayer,
+    '🌿 NDVI覆盖': ndviLayer
+  };
   L.control.layers(baseMaps,null,{position:'topright',collapsed:true}).addTo(gisMapObj);
 
   gisDrawnItems=new L.FeatureGroup();gisMapObj.addLayer(gisDrawnItems);
-  // Polygon drawing: click adds vertex, dblclick finishes (desktop) or "完成" button (mobile)
   gisMapObj.on('click',function(e){if(!drawMode||!gisPolygon)return;gisPolygon.addLatLng(e.latlng);});
   gisMapObj.on('dblclick',function(e){if(drawMode&&gisPolygon){completeDrawing();}});
-  document.getElementById('gisUploadZone').addEventListener('click',function(){document.getElementById('gisFileInput').click()});
+  var uploadZone = document.getElementById('gisUploadZone');
+  if(uploadZone) uploadZone.addEventListener('click',function(){ document.getElementById('gisFileInput').click(); });
 
-  // Fix map size when container becomes visible (tab switch / orientation change)
-  setTimeout(function(){ if(gisMapObj) gisMapObj.invalidateSize(); }, 300);
+  setTimeout(function(){ if(gisMapObj) gisMapObj.invalidateSize(); }, 400);
 }
 
 function toggleDrawMode(){
@@ -1994,13 +2012,19 @@ document.addEventListener('DOMContentLoaded',function(){
 // ==================== NEW MODULE 2: 轨迹碳核算 ====================
 function initTrajMap(){
   if(trajMapObj)return;
+  if(typeof L === 'undefined'){ showToast('地图库加载失败，请刷新页面重试','error'); return; }
   const isMobile = window.innerWidth < 768;
   trajMapObj=L.map('trajMap',{
     center: [22.75,114.15], zoom: 12,
     tap: !isMobile, dragging: true, touchZoom: true,
     scrollWheelZoom: !isMobile, zoomControl: true
   });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM | GPS/BeiDou Trajectory',maxZoom:19}).addTo(trajMapObj);
+  // 高德地图瓦片 (国内秒开)
+  L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',{
+    subdomains: ['1','2','3','4'],
+    attribution: '© 高德地图 | 轨迹碳核算',
+    maxZoom: 18
+  }).addTo(trajMapObj);
 }
 
 const TRAJ_DEMO=`timestamp,lat,lon,speed,load,vehicle_type,fuel_type
@@ -2076,6 +2100,7 @@ function calculateTrajCarbon(){
 // ==================== NEW MODULE 3: 网格化排放监测 ====================
 function initGridMap(){
   if(gridMapObj)return;
+  if(typeof L === 'undefined'){ showToast('地图库加载失败，请刷新页面重试','error'); return; }
   const isMobile = window.innerWidth < 768;
   const defReg=GRID_REGIONS[document.getElementById('gridRegion').value]||GRID_REGIONS.sz_gm;
   gridMapObj=L.map('gridMap',{
@@ -2083,7 +2108,12 @@ function initGridMap(){
     tap: !isMobile, dragging: true, touchZoom: true,
     scrollWheelZoom: !isMobile, zoomControl: true
   });
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM | Grid Emission Monitoring',maxZoom:19}).addTo(gridMapObj);
+  // 高德地图瓦片 (国内秒开)
+  L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',{
+    subdomains: ['1','2','3','4'],
+    attribution: '© 高德地图 | 网格监测',
+    maxZoom: 18
+  }).addTo(gridMapObj);
   renderGridLayers(defReg);
 }
 
@@ -3483,9 +3513,18 @@ document.addEventListener('DOMContentLoaded',function(){
   filterFactors();
   renderFactorCharts();
   renderAssetCharts();
-  document.querySelector('[data-tab="gis"]').addEventListener('click',function(){setTimeout(function(){initGISMap();if(gisMapObj)gisMapObj.invalidateSize();},200);});
-  document.querySelector('[data-tab="trajectory"]').addEventListener('click',function(){setTimeout(function(){initTrajMap();if(trajMapObj)trajMapObj.invalidateSize();},200);});
-  document.querySelector('[data-tab="grid"]').addEventListener('click',function(){setTimeout(function(){initGridMap();if(gridMapObj)gridMapObj.invalidateSize();updateAQIIndicator();updateGridWind();},200);});
+  document.querySelector('[data-tab="gis"]').addEventListener('click',function(){
+    if(typeof L === 'undefined'){ showToast('⚠️ 地图库(Leaflet)未加载，请检查网络后刷新页面','error'); return; }
+    setTimeout(function(){initGISMap();if(gisMapObj)gisMapObj.invalidateSize();},250);
+  });
+  document.querySelector('[data-tab="trajectory"]').addEventListener('click',function(){
+    if(typeof L === 'undefined'){ showToast('⚠️ 地图库(Leaflet)未加载，请检查网络后刷新页面','error'); return; }
+    setTimeout(function(){initTrajMap();if(trajMapObj)trajMapObj.invalidateSize();},250);
+  });
+  document.querySelector('[data-tab="grid"]').addEventListener('click',function(){
+    if(typeof L === 'undefined'){ showToast('⚠️ 地图库(Leaflet)未加载，请检查网络后刷新页面','error'); return; }
+    setTimeout(function(){initGridMap();if(gridMapObj)gridMapObj.invalidateSize();updateAQIIndicator();updateGridWind();},250);
+  });
   document.querySelector('[data-tab="news"]').addEventListener('click',function(){loadNewsToPanel();});
   document.querySelector('[data-tab="asset"]').addEventListener('click',function(){refreshPrices();});
   initChat();
