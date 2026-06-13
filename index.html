@@ -167,7 +167,12 @@ tr:hover td{background:#f8fafc}
 .heatmap-gradient{width:120px;height:10px;border-radius:5px;background:linear-gradient(to right,#22c55e,#eab308,#f97316,#ef4444);margin:4px 0}
 .api-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:4px;font-size:9px;background:linear-gradient(135deg,#dbeafe,#ede9fe);color:#3730a3;border:1px solid #c4b5fd;font-weight:600}
 
-@media(max-width:768px){.gba-map-wrap{grid-template-columns:1fr;height:auto}.gba-sidebar{max-height:200px}}
+@media(max-width:768px){
+  .gba-map-wrap{grid-template-columns:1fr;height:auto}
+  .gba-sidebar{max-height:200px}
+  #gbaSidebar{position:static!important;width:100%!important;max-height:220px;border-left:none!important;border-top:1px solid var(--border)}
+  #gisMapArea{position:relative!important}
+}
 .form-group{margin-bottom:10px}
 .form-group label{display:block;font-size:11px;color:var(--text2);margin-bottom:4px;font-weight:500}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -346,6 +351,13 @@ body.dark .msg-bubble th{background:#0f172a}
 body.dark .chat-error{background:rgba(220,38,38,.1)}
 
 @media print{body{background:#fff}.header,.tab-nav,.btn-group,.upload-zone,.footer{display:none!important}.main{padding:0}.tab-panel{border:none;box-shadow:none}.tab-panel.active{display:block}}
+/* ===== Leaflet 移动端触屏优化 ===== */
+@media(max-width:768px){
+  .leaflet-control-zoom a{width:34px!important;height:34px!important;line-height:34px!important;font-size:18px!important}
+  .leaflet-control-layers-toggle{width:34px!important;height:34px!important}
+  .leaflet-control-attribution{font-size:8px!important;max-width:60%}
+  .leaflet-popup-content{font-size:12px!important;max-width:200px!important}
+}
 @media(max-width:768px){.chart-row,.form-row{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr 1fr}.tab-btn{font-size:11px;padding:7px 10px}.map-container{height:320px}}
 /* ===== 移动端适配 ===== */
 @media(max-width:1024px){
@@ -383,9 +395,20 @@ body.dark .chat-error{background:rgba(220,38,38,.1)}
   .stat-box .num{font-size:18px}
   .chart-box{padding:14px}
   .chart-box h4{font-size:12px}
-  .map-container{height:260px!important}
-  .map-container.large{height:320px!important}
-  .form-row{grid-template-columns:1fr}
+  .map-container{height:280px!important;min-height:280px}
+  .map-container.large{height:360px!important;min-height:360px}
+  .form-row{grid-template-columns:1fr;gap:4px}
+  /* GIS controls on mobile */
+  .map-mode-toggle{flex-wrap:wrap}
+  .map-mode-btn{padding:5px 10px;font-size:10px}
+  .legend-bar,.grid-legend{flex-wrap:wrap;gap:4px;font-size:9px;padding:6px 8px}
+  .legend-item{font-size:9px}
+  /* Upload zones more tap-friendly */
+  .upload-zone{padding:18px 12px;min-height:80px}
+  .upload-zone h3{font-size:12px}
+  .upload-zone .hint{font-size:10px}
+  /* Grid controls */
+  #gridRegion,#gridTime{font-size:11px;padding:6px 8px}
   .price-ticker{grid-template-columns:1fr;gap:6px}
   .news-grid{grid-template-columns:1fr;gap:8px}
   .tool-grid{grid-template-columns:1fr;gap:8px}
@@ -425,9 +448,15 @@ body.dark .chat-error{background:rgba(220,38,38,.1)}
   .tab-btn i{font-size:11px}
   .tab-panel{padding:10px}
   .stats-row{grid-template-columns:1fr;gap:4px}
-  .map-container{height:220px!important}
-  .map-container.large{height:260px!important}
+  .map-container{height:240px!important;min-height:240px}
+  .map-container.large{height:300px!important;min-height:300px}
   .btn{padding:5px 10px;font-size:10px}
+  .map-mode-btn{padding:4px 8px;font-size:9px}
+  .legend-bar,.grid-legend{font-size:8px;gap:2px}
+  .legend-item{font-size:8px}
+  .upload-zone{padding:14px 10px;min-height:60px}
+  .upload-zone h3{font-size:11px}
+  .leaflet-control-zoom a{width:30px!important;height:30px!important;line-height:30px!important}
 }
 </style>
 </head>
@@ -1250,6 +1279,25 @@ if (localStorage.getItem('carbonai_dark') === '1') {
 }
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applySystemTheme);
 
+// Handle orientation change / resize for all Leaflet maps
+window.addEventListener('orientationchange', function(){
+  setTimeout(function(){
+    if(gisMapObj) gisMapObj.invalidateSize();
+    if(trajMapObj) trajMapObj.invalidateSize();
+    if(gridMapObj) gridMapObj.invalidateSize();
+  }, 300);
+});
+// Also handle resize for desktop-to-mobile transitions (e.g. devtools)
+var _resizeTimer;
+window.addEventListener('resize', function(){
+  clearTimeout(_resizeTimer);
+  _resizeTimer = setTimeout(function(){
+    if(gisMapObj) gisMapObj.invalidateSize();
+    if(trajMapObj) trajMapObj.invalidateSize();
+    if(gridMapObj) gridMapObj.invalidateSize();
+  }, 400);
+});
+
 // ==================== TABS ====================
 document.querySelectorAll('.tab-btn').forEach(btn => {
   btn.addEventListener('click', function() {
@@ -1612,7 +1660,15 @@ let gisSatelliteLayer=null,gisOSMLayer=null,gisCurrentBase='osm';
 
 function initGISMap(){
   if(gisMapObj) return;
-  gisMapObj=L.map('gisMap').setView(GIS_CENTER,13);
+  const isMobile = window.innerWidth < 768;
+  gisMapObj=L.map('gisMap',{
+    center: GIS_CENTER, zoom: 13,
+    tap: !isMobile, // Prevent 300ms delay on mobile, but allow tap for popups
+    dragging: true,
+    touchZoom: true,
+    scrollWheelZoom: !isMobile, // Disable scroll zoom on mobile to prevent accidental zoom while scrolling
+    zoomControl: true
+  });
   // OSM 默认底图
   gisOSMLayer=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(gisMapObj);
   // NASA GIBS 卫星影像 (免费, 无需Key, 每日更新)
@@ -1624,20 +1680,41 @@ function initGISMap(){
   L.control.layers(baseMaps,null,{position:'topright',collapsed:true}).addTo(gisMapObj);
 
   gisDrawnItems=new L.FeatureGroup();gisMapObj.addLayer(gisDrawnItems);
+  // Polygon drawing: click adds vertex, dblclick finishes (desktop) or "完成" button (mobile)
   gisMapObj.on('click',function(e){if(!drawMode||!gisPolygon)return;gisPolygon.addLatLng(e.latlng);});
-  gisMapObj.on('dblclick',function(e){if(drawMode&&gisPolygon){gisMapObj.removeLayer(gisPolygon);gisDrawnItems.addLayer(gisPolygon);finishDrawing();}});
+  gisMapObj.on('dblclick',function(e){if(drawMode&&gisPolygon){completeDrawing();}});
   document.getElementById('gisUploadZone').addEventListener('click',function(){document.getElementById('gisFileInput').click()});
+
+  // Fix map size when container becomes visible (tab switch / orientation change)
+  setTimeout(function(){ if(gisMapObj) gisMapObj.invalidateSize(); }, 300);
 }
 
 function toggleDrawMode(){
   drawMode=!drawMode;const btn=document.getElementById('drawPolygonBtn');
-  if(drawMode){btn.innerHTML='<i class="ri-check-line"></i> 点击地图添加顶点，双击完成';btn.style.background='var(--green-bg)';gisPolygon=L.polygon([],{color:'#059669',weight:2,fillColor:'#10B981',fillOpacity:0.2});gisMapObj.addLayer(gisPolygon);}
-  else{btn.innerHTML='<i class="ri-pencil-line"></i> 开始绘制多边形';btn.style.background='';if(gisPolygon){gisMapObj.removeLayer(gisPolygon);gisPolygon=null;}}
+  const isMobile = window.innerWidth < 768;
+  if(drawMode){
+    btn.innerHTML='<i class="ri-check-line"></i> '+(isMobile?'点击地图添加顶点，点此完成':'点击地图添加顶点，双击完成');
+    btn.style.background='var(--green-bg)';
+    gisPolygon=L.polygon([],{color:'#059669',weight:2,fillColor:'#10B981',fillOpacity:0.2});gisMapObj.addLayer(gisPolygon);
+    // On mobile, clicking the button again finishes drawing
+    if(isMobile){ btn.title = '再次点击完成绘制'; btn.setAttribute('data-drawing','1'); } else { btn.removeAttribute('data-drawing'); }
+  } else {
+    if(btn.getAttribute('data-drawing')==='1' && gisPolygon && gisPolygon.getLatLngs()[0].length>0){
+      completeDrawing(); return; // Mobile: clicking while drawing = finish
+    }
+    btn.innerHTML='<i class="ri-pencil-line"></i> 开始绘制多边形';
+    btn.style.background='';btn.removeAttribute('data-drawing');
+    if(gisPolygon){gisMapObj.removeLayer(gisPolygon);gisPolygon=null;}
+  }
 }
 
-function finishDrawing(){
-  drawMode=false;document.getElementById('drawPolygonBtn').innerHTML='<i class="ri-pencil-line"></i> 开始绘制多边形';document.getElementById('drawPolygonBtn').style.background='';
-  if(!gisPolygon)return;
+function completeDrawing(){
+  if(!gisPolygon||gisPolygon.getLatLngs()[0].length<3){showToast('至少需要3个顶点','error');return;}
+  gisMapObj.removeLayer(gisPolygon);gisDrawnItems.addLayer(gisPolygon);
+  drawMode=false;
+  var btn=document.getElementById('drawPolygonBtn');
+  btn.innerHTML='<i class="ri-pencil-line"></i> 开始绘制多边形';btn.style.background='';
+  btn.removeAttribute('data-drawing');
   const coords=gisPolygon.getLatLngs()[0].map(ll=>[ll.lng,ll.lat]);coords.push(coords[0]);
   processGIS({type:'Polygon',coordinates:[coords]});
 }
@@ -1917,7 +1994,12 @@ document.addEventListener('DOMContentLoaded',function(){
 // ==================== NEW MODULE 2: 轨迹碳核算 ====================
 function initTrajMap(){
   if(trajMapObj)return;
-  trajMapObj=L.map('trajMap').setView([22.75,114.15],12);
+  const isMobile = window.innerWidth < 768;
+  trajMapObj=L.map('trajMap',{
+    center: [22.75,114.15], zoom: 12,
+    tap: !isMobile, dragging: true, touchZoom: true,
+    scrollWheelZoom: !isMobile, zoomControl: true
+  });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM | GPS/BeiDou Trajectory',maxZoom:19}).addTo(trajMapObj);
 }
 
@@ -1994,8 +2076,13 @@ function calculateTrajCarbon(){
 // ==================== NEW MODULE 3: 网格化排放监测 ====================
 function initGridMap(){
   if(gridMapObj)return;
+  const isMobile = window.innerWidth < 768;
   const defReg=GRID_REGIONS[document.getElementById('gridRegion').value]||GRID_REGIONS.sz_gm;
-  gridMapObj=L.map('gridMap').setView([defReg.lat,defReg.lon],defReg.zoom);
+  gridMapObj=L.map('gridMap',{
+    center: [defReg.lat,defReg.lon], zoom: defReg.zoom,
+    tap: !isMobile, dragging: true, touchZoom: true,
+    scrollWheelZoom: !isMobile, zoomControl: true
+  });
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM | Grid Emission Monitoring',maxZoom:19}).addTo(gridMapObj);
   renderGridLayers(defReg);
 }
