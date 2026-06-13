@@ -3539,90 +3539,28 @@ function exportReportPDF(){
   const el=document.createElement('div');
   el.style.cssText='position:fixed;top:0;left:50%;margin-left:-400px;width:800px;min-height:100vh;background:#fff;z-index:99999;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;line-height:1.8;color:#1e293b;overflow:visible;box-shadow:0 20px 60px rgba(0,0,0,.3)';
 
-  var touch='<div style="padding:10px 100% 0 0"></div>'; // null-op spacer
-  el.innerHTML='<div style="padding:60px 50px 30px">'
-    // Header
-    +'<div style="text-align:right;font-size:8px;color:#94a3b8;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:16px">CarbonAI v5.0 · 合规报告 · '+reportDate+'</div>'
-
-    // Cover page
+  el.innerHTML='<div style="padding:50px 50px 30px;color:#1e293b">'
+    +'<div style="text-align:right;font-size:8px;color:#94a3b8;border-bottom:1px solid #e2e8f0;padding-bottom:4px;margin-bottom:16px">CarbonAI v5.0 · '+(lang==='en'?'Compliance Report':'合规报告')+' · '+reportDate+'</div>'
     +'<div style="text-align:center;padding:50px 0 30px;border-bottom:3px solid #059669;margin-bottom:20px">'
     +'<h1 style="color:#059669;font-size:26px;letter-spacing:2px">'+reportName+'</h1>'
-    +'<p style="color:#64748b;margin-top:8px;font-size:13px">合规碳排放报告 | '+regionLabel+'</p>'
-    +'<p style="color:#94a3b8;font-size:11px;margin-top:4px">报告日期：'+reportDate+' | 数据年份：'+currentYear+'年</p>'
-    +'<p style="color:#94a3b8;font-size:10px">生成工具：CarbonAI v5.0 · 时空智能碳管理平台</p>'
-    +'<div style="margin:30px auto;width:200px;height:4px;background:linear-gradient(90deg,#059669,#0EA5E9);border-radius:2px"></div>'
-    +'<p style="font-size:11px;color:var(--text2);margin-top:12px">合规声明：本报告参考'+reportName+'模板生成，所含数据均基于用户上传核算数据。<br>正式提交前请由第三方核查机构审核确认。</p>'
+    +'<p style="color:#64748b;margin-top:8px;font-size:13px">'+(lang==='en'?'Compliance Carbon Report | ':'合规碳排放报告 | ')+regionLabel+'</p>'
+    +'<p style="color:#94a3b8;font-size:11px;margin-top:4px">'+(lang==='en'?'Date: ':'报告日期：')+reportDate+' | '+(lang==='en'?'Data Year: ':'数据年份：')+currentYear+'</p>'
+    +'<p style="color:#94a3b8;font-size:10px">CarbonAI v5.0 · '+(lang==='en'?'Spatiotemporal Smart Carbon Platform':'时空智能碳管理平台')+'</p>'
+    +'<div style="margin:30px auto;width:200px;height:4px;background:#059669;border-radius:2px"></div>'
     +'</div>'
-
     +'<div style="page-break-after:always"></div>'
-
-    // TOC
-    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin:30px 0 16px">目  录</h2>'
-    +['1. 报告基本信息','2. 排放汇总','3. Scope分析','4. 排放源明细','5. 合规对照','6. 碳管理建议'].map(function(t,i){
-      return '<div style="padding:8px 0;border-bottom:1px dotted #cbd5e1;font-size:13px"><span style="color:#059669;font-weight:600">'+(i+1)+'.</span> '+t+'<span style="float:right;color:#94a3b8;font-size:11px">见下页</span></div>';
-    }).join('')
-
+    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin:30px 0 16px">'+(lang==='en'?'Contents':'目  录')+'</h2>'
+    +(function(){
+      var items=currentReport==='cn-sse'?['报告总则','四要素框架','环境信息-气候变化','社会信息','治理信息','排放源明细']
+      :currentReport==='hk-esg'?['管治(§D19)','策略(§D20-26)','风险管理(§D27)','指标与目标(§D28-40)','排放源明细']
+      :currentReport==='eu-csrd'?['转型计划(E1-1)','气候政策与行动(E1-2~5)','GHG排放(E1-6)','碳移除与碳定价(E1-7~8)','财务影响(E1-9)','排放源明细']
+      :currentReport==='cbam'?['子表A-基础信息','子表B-直接排放','子表C-间接排放','子表D-产量分摊','子表E-前体产品','排放源明细']
+      :['报告基本信息','排放汇总','Scope分析','排放源明细','合规对照','碳管理建议'];
+      return items.map(function(t,i){return '<div style="padding:8px 0;border-bottom:1px dotted #cbd5e1;font-size:13px;color:#1e293b"><span style="color:#059669;font-weight:600">'+(i+1)+'.</span> '+t+'</div>';}).join('');
+    })()
     +'<div style="page-break-after:always"></div>'
-
-    // Section 1 - Basic info
-    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin-bottom:14px">1. 报告基本信息</h2>'
-    +'<table style="width:100%;border-collapse:collapse;font-size:11px"><tbody>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;background:#f8fafc;width:180px">报告标准</td><td style="padding:8px 12px;border:1px solid #e2e8f0">'+reportName+'</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;background:#f8fafc">适用区域</td><td style="padding:8px 12px;border:1px solid #e2e8f0">'+regionLabel+'</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;background:#f8fafc">报告年度</td><td style="padding:8px 12px;border:1px solid #e2e8f0">'+currentYear+'年</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;background:#f8fafc">核算方法</td><td style="padding:8px 12px;border:1px solid #e2e8f0">活动数据×排放因子法 (AD×EF)</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;background:#f8fafc">排放因子来源</td><td style="padding:8px 12px;border:1px solid #e2e8f0">国家GHG排放因子数据库第二版(576因子) / IPCC / Ecoinvent 3.9</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0;font-weight:600;background:#f8fafc">DQR评级</td><td style="padding:8px 12px;border:1px solid #e2e8f0">★★★★☆ (高置信度)</td></tr>'
-    +'</tbody></table>'
-
-    // Section 2 - Emission summary
-    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin:30px 0 14px">2. 排放汇总</h2>'
-    +'<div style="display:flex;gap:12px;margin:16px 0;flex-wrap:wrap">'
-    +'<div style="background:#ecfdf5;padding:14px 20px;border-radius:10px;text-align:center;flex:1;min-width:120px;border:2px solid #059669"><div style="font-size:24px;font-weight:800;color:#059669">'+fmt(total)+'</div><div style="font-size:10px;color:#64748b">总排放(tCO₂e)</div></div>'
-    +'<div style="background:#fef2f2;padding:14px 20px;border-radius:10px;text-align:center;flex:1;min-width:120px"><div style="font-size:20px;font-weight:800;color:#dc2626">'+fmt(s1)+'</div><div style="font-size:10px;color:#64748b">Scope 1</div></div>'
-    +'<div style="background:#fffbeb;padding:14px 20px;border-radius:10px;text-align:center;flex:1;min-width:120px"><div style="font-size:20px;font-weight:800;color:#d97706">'+fmt(s2)+'</div><div style="font-size:10px;color:#64748b">Scope 2</div></div>'
-    +'<div style="background:#eff6ff;padding:14px 20px;border-radius:10px;text-align:center;flex:1;min-width:120px"><div style="font-size:20px;font-weight:800;color:#2563eb">'+fmt(s3)+'</div><div style="font-size:10px;color:#64748b">Scope 3</div></div>'
-    +'</div>'
-
-    // Section 3 - Scope analysis
-    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin:30px 0 14px">3. Scope分析</h2>'
-    +'<table style="width:100%;border-collapse:collapse;margin:12px 0;font-size:11px"><thead><tr style="background:#059669;color:#fff"><th style="padding:8px 12px;text-align:left">范围</th><th style="padding:8px 12px;text-align:right">排放量(tCO₂e)</th><th style="padding:8px 12px;text-align:right">占比</th><th style="padding:8px 12px;text-align:left">主要覆盖内容</th></tr></thead>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0"><strong>Scope 1</strong></td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right">'+fmt(s1)+'</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right">'+(total>0?(s1/total*100).toFixed(1):0)+'%</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">固定燃烧、移动燃烧、工业过程、逸散排放</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0"><strong>Scope 2</strong></td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right">'+fmt(s2)+'</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right">'+(total>0?(s2/total*100).toFixed(1):0)+'%</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">外购电力(区域电网因子)、外购热力/蒸汽</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0"><strong>Scope 3</strong></td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right">'+fmt(s3)+'</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right">'+(total>0?(s3/total*100).toFixed(1):0)+'%</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">运输、商务差旅、废弃物、供应链上下游</td></tr>'
-    +'</table>'
-
-    // Section 4 - Detail
-    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin:30px 0 14px">4. 排放源明细</h2>'
-    +'<table style="width:100%;border-collapse:collapse;font-size:10px"><thead><tr style="background:#059669;color:#fff"><th style="padding:7px 10px;text-align:left">排放源</th><th style="padding:7px 10px;text-align:left">Scope</th><th style="padding:7px 10px;text-align:right">活动数据</th><th style="padding:7px 10px;text-align:right">排放因子</th><th style="padding:7px 10px;text-align:right">排放量(tCO₂e)</th><th style="padding:7px 10px;text-align:right">占比</th></tr></thead><tbody>'+detailRows+'</tbody>'
-    +'<tfoot><tr style="font-weight:700;background:#f0fdf4"><td colspan="4" style="padding:8px 12px;border:1px solid #e2e8f0">合  计</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right;color:#059669;font-size:13px">'+fmt(total)+'</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:right">100%</td></tr></tfoot></table>'
-
-    // Section 5 - Compliance checklist
-    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin:30px 0 14px">5. 合规对照</h2>'
-    +'<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#f1f5f9"><th style="padding:8px 12px;text-align:left">披露要求</th><th style="padding:8px 12px;text-align:center;width:60px">状态</th><th style="padding:8px 12px;text-align:left">备注</th></tr></thead>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0">组织边界确认</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:center;color:#059669">✅</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">运营控制法</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0">基准年设定</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:center;color:#059669">✅</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">'+currentYear+'年</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0">Scope 1核算</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:center;color:#059669">✅</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">'+fmt(s1)+' tCO₂e</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0">Scope 2核算</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:center;color:#059669">✅</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">区域电网因子</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0">Scope 3核算</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:center;color:'+(s3>0?'#059669':'#f59e0b')+'">'+(s3>0?'✅':'⚠️')+'</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">'+(s3>0?'部分覆盖(运输/差旅)':'建议补充')+'</td></tr>'
-    +'<tr><td style="padding:8px 12px;border:1px solid #e2e8f0">第三方核查</td><td style="padding:8px 12px;border:1px solid #e2e8f0;text-align:center;color:#f59e0b">⚠️</td><td style="padding:8px 12px;border:1px solid #e2e8f0;font-size:10px">建议选择EU认证核查机构</td></tr>'
-    +'</table>'
-
-    // Section 6 - Recommendations
-    +'<h2 style="color:#059669;border-bottom:2px solid #059669;padding-bottom:6px;margin:30px 0 14px">6. 碳管理建议</h2>'
-    +'<div style="background:#f0fdf4;border-radius:8px;padding:16px;border:1px solid #bbf7d0;margin-bottom:12px">'
-    +'<h3 style="color:#059669;font-size:14px;margin-bottom:6px">近 期 (1年内)</h3>'
-    +'<p style="font-size:11px">完成能源审计、替换高耗能设备、建立GHG数据管理系统</p></div>'
-    +'<div style="background:#f0fdf4;border-radius:8px;padding:16px;border:1px solid #bbf7d0;margin-bottom:12px">'
-    +'<h3 style="color:#059669;font-size:14px;margin-bottom:6px">中 期 (1-3年)</h3>'
-    +'<p style="font-size:11px">屋顶光伏+储能系统、供应链绿色采购、ISO 50001能源管理体系认证</p></div>'
-    +'<div style="background:#f0fdf4;border-radius:8px;padding:16px;border:1px solid #bbf7d0">'
-    +'<h3 style="color:#059669;font-size:14px;margin-bottom:6px">远 期 (3-5年)</h3>'
-    +'<p style="font-size:11px">100%绿电采购、CCUS试点、林业碳汇+CCER组合抵消、碳中和认证</p></div>'
-
-    // Footer
-    +'<div style="text-align:center;font-size:8px;color:#94a3b8;margin-top:30px;border-top:1px solid #e2e8f0;padding-top:6px">CarbonAI v5.0 · 时空智能碳管理平台 · 本报告由AI辅助生成，正式提交前须经第三方核查机构审核</div>'
-    +'</div>';
+    +buildOfficialReport(currentReport)
+    +'<div style="text-align:center;font-size:8px;color:#94a3b8;margin-top:30px;border-top:1px solid #e2e8f0;padding-top:6px">CarbonAI v5.0 · '+(lang==='en'?'AI-generated report. Verify before official submission.':'本报告由AI辅助生成，正式提交前须经第三方核查机构审核')+'</div></div>';
 
   document.body.appendChild(el);
   showToast(t('toast.generating_report'), 'info');
