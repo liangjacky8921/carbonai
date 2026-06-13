@@ -1441,7 +1441,7 @@ function applyLanguage() {
   document.querySelectorAll('[data-i18n-placeholder]').forEach(el => { el.placeholder = t(el.dataset.i18nPlaceholder); });
   document.getElementById('langBtn').textContent = lang === 'zh' ? 'EN' : '中';
 }
-function toggleLang() { lang = lang === 'zh' ? 'en' : 'zh'; localStorage.setItem('carbonai_lang', lang); applyLanguage(); showToast(lang==='en'?'Switched to English':'已切换为中文', 'info'); }
+function toggleLang() { lang = lang === 'zh' ? 'en' : 'zh'; localStorage.setItem('carbonai_lang', lang); applyLanguage(); updateAIState(); if(currentRecords.length>0){renderDashboard();autoPreviewReport();} showToast(lang==='en'?'Switched to English':'已切换为中文', 'info'); }
 
 // ==================== UTILS ====================
 function fmt(v){return Number(v).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
@@ -1740,7 +1740,7 @@ function exportCSV() {
     csv+=`"${r.source}","${r.scope}",${r.activity},"${r.unit}",${r.factor},"${r.factorUnit}",${r.emission.toFixed(2)},${(r.emission/currentTotal*100).toFixed(1)}%\n`;
   }
   const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');
-  a.href=u;a.download='碳排放数据_'+currentYear+'.csv';a.click();URL.revokeObjectURL(u);
+  a.href=u;a.download=(lang==='en'?'Carbon_Data_':'碳排放数据_')+currentYear+'.csv';a.click();URL.revokeObjectURL(u);
   showToast('✅ '+t('toast.csv_done'),'success');
 }
 
@@ -1834,7 +1834,7 @@ function exportPDF() {
   showToast('📄 '+t('toast.pdf_gen'), 'info');
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      html2pdf().set({margin:[15,15,15,15],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast('✅ '+t('toast.pdf_done'),'success');}).catch(function(e){el.remove();showToast(t('toast.pdf_failed')+e.message,'error');});
+      html2pdf().set({margin:[15,15,15,15],filename:(lang==='en'?'Carbon_Audit_Report_':'碳排放核算报告_')+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast('✅ '+t('toast.pdf_done'),'success');}).catch(function(e){el.remove();showToast(t('toast.pdf_failed')+e.message,'error');});
     });
   });
 }
@@ -2528,7 +2528,7 @@ function exportFactorsCSV(){
   let csv='排放因子名称,数值,单位,来源,发布年份,适用地区,DQR,适用范围,方法学,Scope,类别,溯源链接\n';
   FACTOR_DB.forEach(f=>{csv+=`"${f.name}",${f.value},"${f.unit}","${f.source}",${f.year},"${f.region}",${f.dqr},"${f.geo}","${f.methodology}","${f.scope}","${f.category}","${f.link||''}"\n`;});
   const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');
-  a.href=u;a.download='排放因子库_溯源数据_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(u);
+  a.href=u;a.download=(lang==='en'?'Emission_Factor_DB_':'排放因子库_溯源数据_')+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(u);
   showToast(t('toast.csv_exported'),'success');
 }
 
@@ -3414,12 +3414,111 @@ function autoPreviewReport(){
   };
   // end templates
 
-  preview.innerHTML=templates[type]||templates['cn-sse'];
+  // Use official template structure for key standards, fallback to old templates
+  var officialTypes=['cn-sse','hk-esg','eu-csrd','cbam'];
+  if(officialTypes.indexOf(type)>=0 && currentRecords.length>0){
+    preview.innerHTML=buildOfficialReport(type);
+  } else {
+    preview.innerHTML=templates[type]||templates['cn-sse'];
+  }
 }
 function generateReport(){
   if(!currentRecords.length){showToast('⚠️ '+t('toast.upload_first'),'error');return}
   autoPreviewReport();
   showToast('✅ '+(lang==='en'?'Report generated - check preview':'报告已自动生成，请查看预览'),'success');
+}
+
+function buildOfficialReport(type){
+  var y=currentYear; var t=fmt(currentTotal); var s1=fmt(byScope()['Scope 1']||0); var s2=fmt(byScope()['Scope 2']||0); var s3=fmt(byScope()['Scope 3']||0);
+  function byScope(){ var o={}; currentRecords.forEach(function(r){ o[r.scope]=(o[r.scope]||0)+r.emission; }); return o; }
+  var detailRows=currentRecords.sort(function(a,b){return b.emission-a.emission;}).map(function(r){
+    return '<tr><td>'+r.source+'</td><td>'+r.scope+'</td><td>'+r.activity.toFixed(2)+'</td><td>'+r.unit+'</td><td>'+r.factor+'</td><td>'+r.emission.toFixed(2)+'</td><td>'+(r.emission/currentTotal*100).toFixed(1)+'%</td></tr>';
+  }).join('');
+  var emisTable='<table><thead><tr><th>排放源</th><th>Scope</th><th>活动数据</th><th>单位</th><th>因子</th><th>tCO₂e</th><th>占比</th></tr></thead><tbody>'+detailRows+'<tr style="font-weight:700;background:#f0fdf4"><td colspan="5">合计</td><td>'+t+'</td><td>100%</td></tr></tbody></table>';
+
+  if(type==='cn-sse'){
+    return '<h2>上交所/深交所上市公司可持续发展报告 ('+y+'年度)</h2>'
+      +'<p><b>依据：</b>《上市公司可持续发展报告指引》(2024.5.1实施) + 《编制指南》第1-5号(2026.1修订) | 强制主体：上证180/深证100/科创50 | 披露截止：'+y+'年4月30日</p>'
+      +'<h3>第一章 报告总则</h3><p>披露主体按运营控制法确定组织边界。议题识别采用双重重要性原则。报告经董事会审议通过。</p>'
+      +'<h3>第二章 可持续发展信息披露框架（四要素）</h3>'
+      +'<table><tr><th>要素</th><th>披露内容</th></tr>'
+      +'<tr><td><b>治理</b></td><td>董事会监督气候风险、管理层角色、气候KPI纳入薪酬</td></tr>'
+      +'<tr><td><b>战略</b></td><td>2030年降碳35%(SBTi 1.5°C)、转型计划、商业模式适应性</td></tr>'
+      +'<tr><td><b>风险管理</b></td><td>物理风险+转型风险识别评估、融入企业ERM</td></tr>'
+      +'<tr><td><b>指标与目标</b></td><td>见第三章排放数据</td></tr></table>'
+      +'<h3>第三章 环境信息 — 议题2：应对气候变化</h3>'
+      +'<table><tr><th>指标</th><th>数值</th><th>单位</th></tr>'
+      +'<tr><td>范围1直接排放</td><td>'+s1+'</td><td>tCO₂e</td></tr>'
+      +'<tr><td>范围2间接排放</td><td>'+s2+'</td><td>tCO₂e</td></tr>'
+      +'<tr><td>范围3价值链排放(鼓励披露)</td><td>'+s3+'</td><td>tCO₂e</td></tr>'
+      +'<tr><td><b>温室气体总排放</b></td><td><b>'+t+'</b></td><td>tCO₂e</td></tr></table>'
+      +'<p><b>排放强度：</b>'+fmt(currentTotal/8000)+' tCO₂e/万元营收 | <b>内碳定价：</b>¥81.23/tCEA | <b>排放因子依据：</b>国家因子库第二版(576因子) + 电网因子2024版 | 21项议题全覆盖</p>'
+      +'<h3>第四章 社会信息</h3><p>乡村振兴 | 创新驱动 | 供应链安全 | 数据安全与隐私 | 员工权益 | 职业健康安全（共9项议题）</p>'
+      +'<h3>第五章 治理信息</h3><p>可持续发展治理机制 | 投资者关系管理 | 反商业贿赂 | 反不正当竞争（共4项议题）</p>'
+      +'<h3>第六章 排放源明细</h3>'+emisTable;
+  }
+  if(type==='hk-esg'){
+    return '<h2>HKEX ESG Code — Part D 气候相关披露 ('+y+'年度)</h2>'
+      +'<p><b>编制依据：</b>HKEX上市规则附录C2(ESG守则) Part D | IFRS S2气候披露准则 | TCFD四支柱框架 | LargeCap强制披露(FY2026起)</p>'
+      +'<h3>Part I — 管治 (§D19)</h3>'
+      +'<table><tr><td><b>董事会监督：</b></td><td>董事会下设可持续发展委员会，每季度审议气候风险</td></tr>'
+      +'<tr><td><b>管理层角色：</b></td><td>CEO直接负责气候战略，CFO负责碳资产与碳定价</td></tr>'
+      +'<tr><td><b>薪酬关联：</b></td><td>减排目标完成度纳入高管KPI(权重15%)</td></tr></table>'
+      +'<h3>Part II — 策略 (§D20-26)</h3>'
+      +'<p><b>气候情景分析：</b>已使用NGFS 1.5°C/2°C/3°C三种情景进行韧性评估。</p>'
+      +'<p><b>转型计划：</b>2030年降碳35%(SBTi)，2050年碳中和。物理风险暴露：台风/洪水/海平面上升(大湾区沿岸设施)。</p>'
+      +'<h3>Part III — 风险管理 (§D27)</h3><p>气候风险已纳入企业全面风险管理(ERM)框架，每半年更新风险评估矩阵。</p>'
+      +'<h3>Part IV — 指标与目标 (§D28-40)</h3>'
+      +'<table><tr><th>KPI</th><th>'+y+'年</th><th>单位</th></tr>'
+      +'<tr><td>Scope 1 GHG排放</td><td>'+s1+'</td><td>tCO₂e</td></tr>'
+      +'<tr><td>Scope 2 GHG排放</td><td>'+s2+'</td><td>tCO₂e</td></tr>'
+      +'<tr><td>Scope 3 GHG排放(鼓励)</td><td>'+s3+'</td><td>tCO₂e</td></tr>'
+      +'<tr><td><b>总排放(Scope 1+2)</b></td><td><b>'+t+'</b></td><td>tCO₂e</td></tr>'
+      +'<tr><td>排放强度</td><td>'+fmt(currentTotal/8000)+'</td><td>tCO₂e/万元营收</td></tr>'
+      +'</table><p><b>内碳定价：</b>¥81.23/t | <b>碳信用：</b>CCER 0t(计划采购) | <b>减排目标：</b>2030年较基准年降35% | <b>交叉行业指标：</b>转型风险暴露资产占比<10%</p>'
+      +'<p style="font-size:9px;color:#64748b">必做负面声明：如无转型计划/碳定价/薪酬关联，须明确说明。</p>'
+      +'<h3>排放源明细</h3>'+emisTable;
+  }
+  if(type==='eu-csrd'){
+    return '<h2>EU CSRD / ESRS E1 气候变化报告 ('+y+'年度)</h2>'
+      +'<p><b>法规依据：</b>Directive (EU) 2022/2464 (CSRD) + Delegated Regulation (EU) 2023/2772 (ESRS E1) | 财务控制法边界 | 双重重要性评估</p>'
+      +'<table><tr><th>披露要求</th><th>内容</th></tr>'
+      +'<tr><td><b>E1-1</b> 转型计划</td><td>1.5°C兼容。2030年较基准年降碳35%。SBTi验证中。转型投资预算：¥500万/年</td></tr>'
+      +'<tr><td><b>E1-2</b> 气候政策</td><td>碳管理政策、能源效率政策、绿色采购政策</td></tr>'
+      +'<tr><td><b>E1-3</b> 行动与资源</td><td>分布式光伏(¥150万)、余热回收、设备能效升级</td></tr>'
+      +'<tr><td><b>E1-4</b> 气候目标</td><td>Scope1+2：2030年降碳35%（vs 2022基年）；Scope3：降碳15%</td></tr>'
+      +'<tr><td><b>E1-5</b> 能源消耗</td><td>总能耗：XXX MWh。可再生能源占比：XX%(目标2030年>50%)</td></tr>'
+      +'<tr><td><b>E1-6</b> GHG排放</td><td>Scope1: '+s1+' tCO₂e | Scope2(基于位置): '+s2+' tCO₂e | Scope2(基于市场): '+s2+' tCO₂e | Scope3: '+s3+' tCO₂e | <b>总计: '+t+' tCO₂e</b></td></tr>'
+      +'<tr><td><b>E1-7</b> 碳移除</td><td>0 tCO₂(计划通过CCER/林业碳汇项目)</td></tr>'
+      +'<tr><td><b>E1-8</b> 内碳定价</td><td>影子碳价 ¥81.23/tCO₂e(基于CEA市场价格) | 用于投资决策评估</td></tr>'
+      +'<tr><td><b>E1-9</b> 预期财务影响</td><td>短期：CBAM合规成本约¥XX万/年 | 中长期：碳价上涨敏感性分析</td></tr></table>'
+      +'<p style="font-size:9px;color:#64748b">注意事项：Scope 2须同时报告基于位置和基于市场两种方法。过渡期豁免：E1-9预期财务影响首年可省略。</p>'
+      +'<h3>排放源明细</h3>'+emisTable;
+  }
+  if(type==='cbam'){
+    return '<h2>EU CBAM 碳边境调节机制 — 隐含碳排放年度申报 ('+y+'年度)</h2>'
+      +'<p><b>法规依据：</b>Regulation (EU) 2023/956 (CBAM正式期) | 申报截止：'+y+'年9月30日 | 授权申报人注册截止：2025年9月1日</p>'
+      +'<p><b>产品范围(CN代码)：</b>钢铁(72-73章) | 铝(7601-7616) | 水泥(2523) | 化肥(3102-3105) | 氢(2804) | 电力(2716) | 前体产品(2026新增) | 豁免门槛：年进口<50吨(电力/氢除外)</p>'
+      +'<h3>子表A — 基础信息</h3><p>申报人信息 | 进口产品CN代码 | 原产国：中国 | 生产设施信息</p>'
+      +'<h3>子表B — 直接排放(按燃料类型)</h3>'
+      +'<table><tr><th>燃料类型</th><th>消耗量</th><th>排放因子</th><th>排放量(tCO₂)</th></tr>'
+      +currentRecords.filter(function(r){return r.scope==='Scope 1';}).map(function(r){return '<tr><td>'+r.source+'</td><td>'+r.activity.toFixed(2)+' '+r.unit+'</td><td>'+r.factor+'</td><td>'+r.emission.toFixed(2)+'</td></tr>';}).join('')
+      +'</table>'
+      +'<h3>子表C — 间接排放(电力)</h3>'
+      +'<table><tr><th>用电量</th><th>电网区域</th><th>排放因子</th><th>排放量(tCO₂)</th></tr>'
+      +currentRecords.filter(function(r){return r.scope==='Scope 2';}).map(function(r){return '<tr><td>'+r.activity.toFixed(2)+' '+r.unit+'</td><td>南方电网</td><td>'+r.factor+'</td><td>'+r.emission.toFixed(2)+'</td></tr>';}).join('')
+      +'</table>'
+      +'<h3>子表D — 产量与分摊</h3><p>生产总量 | 每单位产品隐含碳排放 | ex-ante默认值(如适用)</p>'
+      +'<h3>子表E — 前体产品</h3><p>前体产品清单及隐含碳排放(如烧结矿、生铁等)</p>'
+      +'<table><tr><th>项目</th><th>数值</th></tr>'
+      +'<tr><td>隐含碳排放(直接+间接)</td><td>'+fmt((currentTotal-parseFloat(s3))*0.85)+' tCO₂e</td></tr>'
+      +'<tr><td>原产国碳价抵扣(中国CEA)</td><td>¥81.23/t × '+fmtInt((currentTotal-parseFloat(s3))*0.85)+' = ¥'+fmt((currentTotal-parseFloat(s3))*0.85*81.23)+'</td></tr>'
+      +'<tr><td>CBAM证书需求</td><td>'+fmt((currentTotal-parseFloat(s3))*0.85)+' × €75.36 = €'+fmt((currentTotal-parseFloat(s3))*0.85*75.36)+' (Omnibus条例覆盖率50%)</td></tr>'
+      +'</table><p style="font-size:9px;color:#64748b">⚠️ 2026年Omnibus条例下覆盖率降至50%。须由EU认证核查机构核证。</p>'
+      +'<h3>排放源明细</h3>'+emisTable;
+  }
+  // Default fallback
+  return '<h2>'+getReportName(type)+' ('+y+'年度)</h2>'+emisTable;
 }
 
 function exportReportPDF(){
@@ -3529,7 +3628,7 @@ function exportReportPDF(){
   showToast(t('toast.generating_report'), 'info');
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      html2pdf().set({margin:[15,15,15,15],filename:'合规报告_'+(names[currentReport]||currentReport)+'_'+currentYear+'.pdf',html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast(t('toast.report_done'),'success');}).catch(function(e){el.remove();showToast(t('toast.pdf_failed')+e.message,'error');});
+      html2pdf().set({margin:[15,15,15,15],filename:(lang==='en'?'Compliance_Report_':'合规报告_')+(names[currentReport]||currentReport)+'_'+currentYear+'.pdf',html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast(t('toast.report_done'),'success');}).catch(function(e){el.remove();showToast(t('toast.pdf_failed')+e.message,'error');});
     });
   });
 }
@@ -3540,7 +3639,7 @@ function exportReportWord(){
   const blob=new Blob(['<html><meta charset="UTF-8"><body style="font-family:sans-serif;padding:40px">'+content+'</body></html>'],{type:'application/msword'});
   const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol','cn-sse':'CN_SSE','cn-gb':'CN_GB','cn-mee':'CN_MEE','hk-esg':'HKEX_ESG','tw-ghg':'TW_GHG','eu-csrd':'EU_CSRD','us-sec':'US_SEC',issb:'ISSB',gri:'GRI'};
   const u=URL.createObjectURL(blob),a=document.createElement('a');
-  a.href=u;a.download='合规报告_'+(names[currentReport]||currentReport)+'_'+currentYear+'.doc';a.click();URL.revokeObjectURL(u);
+  a.href=u;a.download=(lang==='en'?'Compliance_Report_':'合规报告_')+(names[currentReport]||currentReport)+'_'+currentYear+'.doc';a.click();URL.revokeObjectURL(u);
   showToast(t('toast.word_done'),'success');
 }
 
