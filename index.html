@@ -1923,17 +1923,17 @@ function showHeatmapTable(){
 
 // ===== GBA 11-CITY DASHBOARD =====
 const GBA_CITIES=[
-  {name:'广州',lat:23.129,lon:113.264,pop:1881,area:7434,gdp:30356,co2PerGDP:0.42,keyIndustries:'汽车制造、电子信息、商贸物流',carbonMarket:'广州碳排放权交易所',carbonNote:'GDEA碳配额 ¥37.62/t'},
-  {name:'深圳',lat:22.543,lon:114.058,pop:1779,area:1997,gdp:34606,co2PerGDP:0.31,keyIndustries:'高新技术、金融服务、现代物流',carbonMarket:'深圳绿色交易所',carbonNote:'SZEA碳配额 ¥47.05/t(年内+23.8%)'},
-  {name:'珠海',lat:22.271,lon:113.577,pop:246,area:1736,gdp:4045,co2PerGDP:0.38,keyIndustries:'家电电气、生物医药、旅游',carbonMarket:'横琴粤澳碳交易所(筹建)',carbonNote:'大湾区碳足迹认证试点'},
-  {name:'佛山',lat:23.022,lon:113.122,pop:955,area:3797,gdp:13276,co2PerGDP:0.65,keyIndustries:'装备制造、陶瓷建材、家电',carbonMarket:'',carbonNote:'工业降碳潜力大(碳强度0.65)'},
-  {name:'惠州',lat:23.112,lon:114.416,pop:607,area:11347,gdp:5639,co2PerGDP:0.52,keyIndustries:'电子信息、石化、清洁能源',carbonMarket:'',carbonNote:'大亚湾石化区碳捕集示范'},
-  {name:'东莞',lat:23.021,lon:113.752,pop:1048,area:2460,gdp:11438,co2PerGDP:0.58,keyIndustries:'电子信息、纺织服装、家具',carbonMarket:'',carbonNote:'松山湖零碳园区试点'},
-  {name:'中山',lat:22.516,lon:113.393,pop:447,area:1784,gdp:3850,co2PerGDP:0.48,keyIndustries:'灯饰照明、五金制品、家电',carbonMarket:'',carbonNote:'低碳制造转型中'},
-  {name:'江门',lat:22.579,lon:113.082,pop:482,area:9505,gdp:4022,co2PerGDP:0.55,keyIndustries:'摩托车、不锈钢、食品加工',carbonMarket:'',carbonNote:'林业碳汇资源丰富'},
-  {name:'肇庆',lat:23.047,lon:112.465,pop:413,area:14891,gdp:2792,co2PerGDP:0.71,keyIndustries:'金属加工、建材、林产化工',carbonMarket:'',carbonNote:'碳强度最高，生态补偿需求大'},
-  {name:'香港',lat:22.319,lon:114.169,pop:750,area:1106,gdp:26927,co2PerGDP:0.18,keyIndustries:'国际金融中心、贸易物流、专业服务',carbonMarket:'港交所 Core Climate',carbonNote:'跨境碳交易结算试点(2026) | 累计交易>100万tCO₂ | 代币化碳信用(Ensemble)'},
-  {name:'澳门',lat:22.199,lon:113.545,pop:69,area:33,gdp:2369,co2PerGDP:0.22,keyIndustries:'旅游博彩、会展、金融',carbonMarket:'澳门国际碳交所(2025)',carbonNote:'葡语国家碳市场桥头堡'}
+  {name:'深圳',lat:22.543,lon:114.058,pop:1806,area:1997,gdp:38732,co2PerGDP:0.28,keyIndustries:'高新技术、金融服务、现代物流',carbonMarket:'深圳绿色交易所',carbonNote:'SZEA碳配额 ¥47.05/t | 湾区GDP第一 | 全国第三'},
+  {name:'广州',lat:23.129,lon:113.264,pop:1898,area:7434,gdp:32039,co2PerGDP:0.38,keyIndustries:'汽车制造、电子信息、商贸物流',carbonMarket:'广州碳排放权交易所',carbonNote:'GDEA碳配额 ¥37.62/t | 实际增速4.0%'},
+  {name:'香港',lat:22.319,lon:114.169,pop:753,area:1106,gdp:30500,co2PerGDP:0.16,keyIndustries:'国际金融中心、贸易物流、专业服务',carbonMarket:'港交所 Core Climate',carbonNote:'🆕新晋3万亿 | 增速3.5%(近5年最强) | 跨境碳交易结算试点(2026) | 累计交易>100万tCO₂'},
+  {name:'佛山',lat:23.022,lon:113.122,pop:961,area:3797,gdp:13157,co2PerGDP:0.60,keyIndustries:'装备制造、陶瓷建材、家电',carbonMarket:'',carbonNote:'工业降碳转型中 | 增速承压(-0.55%)'},
+  {name:'东莞',lat:23.021,lon:113.752,pop:1053,area:2460,gdp:12760,co2PerGDP:0.53,keyIndustries:'电子信息、纺织服装、家具',carbonMarket:'',carbonNote:'紧追佛山(差距仅397亿) | 松山湖零碳园区'},
+  {name:'惠州',lat:23.112,lon:114.416,pop:610,area:11347,gdp:6364,co2PerGDP:0.49,keyIndustries:'电子信息、石化、清洁能源',carbonMarket:'',carbonNote:'大亚湾石化区碳捕集示范 | 增速稳健'},
+  {name:'珠海',lat:22.271,lon:113.577,pop:249,area:1736,gdp:4573,co2PerGDP:0.35,keyIndustries:'家电电气、生物医药、旅游',carbonMarket:'横琴粤澳碳交所(筹建)',carbonNote:'大湾区碳足迹认证试点'},
+  {name:'江门',lat:22.579,lon:113.082,pop:484,area:9505,gdp:4294,co2PerGDP:0.52,keyIndustries:'摩托车、不锈钢、食品加工',carbonMarket:'',carbonNote:'林业碳汇资源丰富 | 稳健增长'},
+  {name:'中山',lat:22.516,lon:113.393,pop:449,area:1784,gdp:4261,co2PerGDP:0.45,keyIndustries:'灯饰照明、五金制品、家电',carbonMarket:'',carbonNote:'深中通道红利初显 | 增速3.09%'},
+  {name:'澳门',lat:22.199,lon:113.545,pop:70,area:33,gdp:3200,co2PerGDP:0.20,keyIndustries:'旅游博彩、会展、金融',carbonMarket:'澳门国际碳交所(2025)',carbonNote:'增速4.7%领跑湾区 | 葡语国家碳市场桥头堡'},
+  {name:'肇庆',lat:23.047,lon:112.465,pop:415,area:14891,gdp:2975,co2PerGDP:0.66,keyIndustries:'金属加工、建材、林产化工',carbonMarket:'',carbonNote:'碳强度最高 | 生态补偿需求大 | 先进制造业+17.6%'}
 ];
 
 function renderGBADashboard(){
