@@ -822,7 +822,7 @@ body.dark .chat-error{background:rgba(220,38,38,.1)}
 <div class="tab-panel" id="panel-factorlib">
   <div class="section-title"><span class="icon"><i class="ri-database-2-line"></i></span>排放因子库 · 强溯源与空间化 · 满足DQR核查要求</div>
   <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
-    <input type="text" id="factorSearch" placeholder="搜索排放因子（能源品种/行业/地区）..." style="width:260px;margin-bottom:0" oninput="filterFactors()">
+    <input type="text" id="factorSearch" data-i18n-placeholder="factor.search_placeholder" placeholder="搜索排放因子（能源品种/行业/地区）..." style="width:260px;margin-bottom:0" oninput="filterFactors()">
     <select id="factorSource" onchange="filterFactors()" style="width:160px;margin-bottom:0">
       <option value="all">全部来源</option><option value="ecoinvent">Ecoinvent 3.9</option><option value="ipcc">IPCC 2006/2019</option><option value="china_grid">中国电网2023</option><option value="ndefc">国家发改委气候司</option>
     </select>
@@ -1238,6 +1238,202 @@ const I18N = {
   'toolbox.fuel':['燃料燃烧排放','Fuel Combustion'],
   'toolbox.commute':['通勤碳足迹','Commute Carbon'],
   'toolbox.flight':['差旅飞行','Flight Carbon'],
+  // ===== Toast messages =====
+  'toast.imported':['已导入 ','Imported '],
+  'toast.records':[' 条记录',' records'],
+  'toast.pdf_failed':['PDF生成失败: ','PDF generation failed: '],
+  'toast.gis_loaded':['已加载 ','Loaded '],
+  'toast.emission_points':[' 个排放点位',' emission points'],
+  'toast.forest_done':['✅ 林地碳汇盘查完成：','✅ Forest carbon sink assessment: '],
+  'toast.gis_cleared':['GIS图层已清除','GIS layers cleared'],
+  'toast.heatmap_cleared':['热力图已清除','Heatmap cleared'],
+  'toast.traj_demo':['✅ 已加载演示轨迹数据','✅ Demo trajectory loaded'],
+  'toast.traj_load_first':['请先加载轨迹数据','Load trajectory data first'],
+  'toast.traj_done':['✅ 轨迹碳核算完成：','✅ Trajectory carbon accounting: '],
+  'toast.grid_refreshed':['✅ 网格监测已刷新','✅ Grid monitoring refreshed'],
+  'toast.chat_cleared':['对话历史已清空','Chat history cleared'],
+  'toast.logout':['已退出登录','Logged out'],
+  'toast.login_required':['⚠️ 请先登录后使用 AI 顾问','⚠️ Please login to use AI Advisor'],
+  'toast.generating_report':['📄 正在生成合规报告PDF...','📄 Generating compliance report PDF...'],
+  'toast.report_done':['✅ PDF报告已导出','✅ PDF report exported'],
+  'toast.word_done':['✅ Word报告已导出','✅ Word report exported'],
+  'toast.gis_parse_failed':['GIS文件解析失败: ','GIS file parse failed: '],
+  'toast.geo_only':['仅支持Polygon/MultiPolygon','Only Polygon/MultiPolygon supported'],
+  'toast.geo_parse_failed':['几何解析失败','Geometry parse failed'],
+  'toast.need_3_points':['至少需要3个顶点','At least 3 vertices required'],
+  'toast.map_lib_failed':['⚠️ 地图库(Leaflet)未加载，请检查网络后刷新页面','⚠️ Map library not loaded. Check network and refresh.'],
+  'toast.map_load_failed':['地图库加载失败，请刷新页面重试','Map library failed to load. Please refresh.'],
+  'toast.csv_exported':['✅ 因子表已导出（含溯源链接与版本号）','✅ Factor table exported (with traceability)'],
+  'toast.prices_refreshed':['✅ 碳价数据已刷新','✅ Carbon prices refreshed'],
+  'toast.pcf_done':['✅ 产品碳足迹核算完成','✅ PCF calculation completed'],
+  'toast.pcf_demo':['✅ 已加载产品碳足迹演示数据','✅ PCF demo data loaded'],
+  'toast.file_parsing':['正在解析文件...','Parsing file...'],
+  'toast.cannot_identify':['未识别到排放源/活动数据列，请检查Excel格式','Cannot identify source/activity columns. Check Excel format.'],
+  'toast.no_valid_data':['未解析到有效数据行','No valid data rows found'],
+  'toast.parse_failed':['解析失败: ','Parse failed: '],
+  'toast.cannot_identify_coords':['未识别到经纬度列(lat/lon)','Cannot identify lat/lon columns'],
+  'toast.no_valid_points':['未解析到有效点位','No valid points parsed'],
+  'toast.gis_file_parsing':['正在解析GIS文件...','Parsing GIS file...'],
+  'toast.heatmap_parsing':['正在解析碳排放点位数据...','Parsing emission point data...'],
+  'toast.welcome':['欢迎，','Welcome, '],
+  'toast.switched_lang':['已切换为中文','Switched to English'],
+  'toast.copied':['已复制命令','Command copied'],
+  // ===== UI labels =====
+  'ui.cancel':['取消','Cancel'],
+  'ui.confirm':['确认','Confirm'],
+  'ui.save':['保存','Save'],
+  'ui.close':['关闭','Close'],
+  'ui.search':['搜索','Search'],
+  'ui.calculate':['计算','Calculate'],
+  'ui.refresh':['刷新','Refresh'],
+  'ui.clear':['清除','Clear'],
+  'ui.export':['导出','Export'],
+  'ui.import':['导入','Import'],
+  'ui.upload':['上传','Upload'],
+  'ui.download':['下载','Download'],
+  'ui.total':['合计','Total'],
+  'ui.source':['排放源','Source'],
+  'ui.activity':['活动数据','Activity'],
+  'ui.unit':['单位','Unit'],
+  'ui.factor':['排放因子','Factor'],
+  'ui.emission':['排放量(tCO₂e)','Emission(tCO₂e)'],
+  'ui.scope':['Scope','Scope'],
+  'ui.ratio':['占比','Ratio'],
+  'ui.confidence':['置信度','Confidence'],
+  'ui.year':['年份','Year'],
+  // ===== Dashboard indicators =====
+  'dash.indicator.focus':['🔍 <strong>重点关注：</strong>','🔍 <strong>Focus: </strong>'],
+  'dash.indicator.scope1_high':['⚠️ Scope 1占比超50%，建议优先推进燃料替代/工艺优化','⚠️ Scope 1 exceeds 50%, prioritize fuel substitution/process optimization'],
+  'dash.indicator.scope2_hint':['💡 Scope 2电力排放可通过绿电采购(PPA)或分布式光伏降低','💡 Scope 2 can be reduced via green power PPA or rooftop solar'],
+  'dash.indicator.low_conf':['📋 存在低置信度条目，建议人工复核排放因子','📋 Low-confidence records exist; review emission factors manually'],
+  'dash.indicator.intensity':['📊 排放强度：','📊 Emission intensity: '],
+  'dash.indicator.per_revenue':[' tCO₂e/万元营收(按行业均值)',' tCO₂e/10k CNY revenue (industry avg)'],
+  // ===== History =====
+  'history.need_two_years':['需要至少两个年份的数据才能对比','Need at least two years of data for comparison'],
+  'history.year':['年份','Year'],
+  'history.scope1':['Scope 1','Scope 1'],
+  'history.scope2':['Scope 2','Scope 2'],
+  'history.scope3':['Scope 3','Scope 3'],
+  'history.total':['总排放','Total Emission'],
+  'history.change':['同比变化','YoY Change'],
+  // ===== Report preview =====
+  'report.no_data_hint':['请先在"碳核算"页面上传数据，系统将自动填充报告内容','Upload data in Accounting tab to auto-fill report content'],
+  // ===== Onboarding =====
+  'onboarding.welcome_title':['欢迎使用 CarbonAI v5.0','Welcome to CarbonAI v5.0'],
+  'onboarding.welcome_desc':['时空智能碳管理平台 — 一站式完成碳盘查、核算、报告与合规管理','Spatiotemporal Smart Carbon Platform — accounting, reporting & compliance'],
+  'onboarding.step1_title':['Step 1: 上传数据','Step 1: Upload Data'],
+  'onboarding.step1_desc':['在「碳核算」面板上传Excel数据，AI自动识别排放源与排放因子','Upload Excel in Accounting tab; AI auto-detects sources & factors'],
+  'onboarding.step2_title':['Step 2: 查看分析','Step 2: View Analysis'],
+  'onboarding.step2_desc':['切换到「数据大屏」查看Scope分布与排放趋势，AI顾问提供深度解读','Switch to Dashboard to view Scope distribution & emission trends'],
+  'onboarding.step3_title':['Step 3: 生成报告','Step 3: Generate Report'],
+  'onboarding.step3_desc':['在「合规报告」面板选择报告标准，一键导出专业PDF/Word合规报告','Select standard in Compliance tab; one-click PDF/Word export'],
+  'onboarding.step4_title':['准备好了吗？','Ready?'],
+  'onboarding.step4_desc':['点击"开始使用"进入平台，右上角🌓可切换深色模式，点击EN切换中英文','Click Get Started. Toggle dark mode via 🌓, switch language via EN button'],
+  'onboarding.prev':['上一步','Previous'],
+  'onboarding.next':['下一步','Next'],
+  'onboarding.start_btn':['开始使用','Get Started'],
+  'onboarding.skip_btn':['跳过引导','Skip Tour'],
+  // ===== AI Chat =====
+  'chat.welcome_title':['您好，我是 CarbonAI 碳管理顾问','Hello, I am CarbonAI Advisor'],
+  'chat.welcome_hint':['我可以帮您完成：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导 · 碳足迹分析','I can help with: carbon accounting, quota, ESG policy, CBAM compliance, carbon footprint'],
+  'chat.login_title':['请先登录','Please Login First'],
+  'chat.login_hint':['登录后可使用 AI 碳管理顾问','Login to use the AI carbon management advisor'],
+  'chat.ai_thinking':['AI顾问正在分析中...','AI advisor is analyzing...'],
+  'chat.ai_error':['AI服务暂不可用。请尝试：1) 检查网络 2) 点击⚙️切换自定义API模式','AI service unavailable. Try: 1) Check network 2) Toggle custom API mode'],
+  'chat.input_placeholder_logged_in':['输入碳管理相关问题...','Ask about carbon management...'],
+  'chat.input_placeholder_logged_out':['登录后即可提问...','Login to ask questions...'],
+  'chat.ai_not_loaded':['AI服务暂不可用（Puter.js 未加载）。请确保：1) 网络可访问 js.puter.com 2) 使用 http:// 协议打开页面','AI unavailable. Ensure: 1) js.puter.com is reachable 2) Use http:// protocol'],
+  'chat.custom_mode':['🔧 自定义 API 模式','🔧 Custom API Mode'],
+  'chat.puter_mode':['⚡ Puter.js · 免费AI引擎','⚡ Puter.js · Free AI Engine'],
+  // ===== Login =====
+  'login.logged_in_as':['✅ ','✅ '],
+  'login.please_login':['🔒 请先登录后使用AI顾问','🔒 Please login to use AI Advisor'],
+  'login.logout_btn':['退出','Logout'],
+  // ===== Carbon accounting results =====
+  'accounting.results_title':['核算结果明细','Emission Accounting Details'],
+  'accounting.no_data_year':['年暂无数据','No data for '],
+  'accounting.upload_for_year':['请上传该年份的Excel数据','Please upload Excel data for this year'],
+  // ===== GIS =====
+  'gis.forest_title':['🌳 林地碳汇','🌳 Forest Carbon Sink'],
+  'gis.heatmap_title':['🔥 碳源热力图','🔥 Carbon Heatmap'],
+  'gis.gba_title':['🏙️ GBA看板','🏙️ GBA Dashboard'],
+  'gis.upload_hint':['上传林地边界文件','Upload forest boundary file'],
+  'gis.format_hint':['支持 GeoJSON (.geojson) 或 Shapefile (.zip)','Supports GeoJSON (.geojson) or Shapefile (.zip)'],
+  'gis.or_draw':['或手动圈定边界','Or draw boundary manually'],
+  'gis.start_draw':['开始绘制多边形','Start Drawing'],
+  'gis.draw_hint_desktop':['点击地图添加顶点，双击完成','Click map to add vertices, double-click to finish'],
+  'gis.draw_hint_mobile':['点击地图添加顶点，点此完成','Click map to add vertices, tap here to finish'],
+  'gis.clear_layers':['清除图层','Clear Layers'],
+  'gis.upload_heatmap':['上传碳排放点位数据 (Excel)','Upload emission point data (Excel)'],
+  'gis.heatmap_format':['Excel格式：企业名称 | 纬度(lat) | 经度(lon) | 排放量(tCO₂e) | 所属行业','Format: Name | lat | lon | tCO₂e | Industry'],
+  'gis.heatmap_settings':['热力图设置','Heatmap Settings'],
+  'gis.heatmap_radius':['热力半径 (m)','Heat Radius (m)'],
+  'gis.heatmap_blur':['模糊度','Blur'],
+  'gis.load_demo':['加载演示数据','Load Demo'],
+  // ===== Grid =====
+  'grid.monitor_region':['监测区域','Monitor Region'],
+  'grid.time_window':['时间窗口','Time Window'],
+  'grid.realtime':['实时监测','Real-time'],
+  'grid.last_hour':['近1小时','Last 1h'],
+  'grid.last_24h':['近24小时','Last 24h'],
+  'grid.last_7d':['近7天','Last 7d'],
+  'grid.display_layers':['显示图层','Display Layers'],
+  'grid.heatmap_layer':['排放热力图','Emission Heatmap'],
+  'grid.grid_layer':['1km网格','1km Grid'],
+  'grid.wind_layer':['风向扩散','Wind Diffusion'],
+  'grid.source_layer':['排放源','Emission Source'],
+  'grid.alert_threshold':['预警阈值 (tCO₂/km²·h)','Alert Threshold (tCO₂/km²·h)'],
+  'grid.yellow_warn':['黄色预警','Yellow Alert'],
+  'grid.red_warn':['红色预警','Red Alert'],
+  'grid.refresh_monitor':['刷新监测','Refresh Monitor'],
+  'grid.wind_info':['| 风向: ','| Wind: '],
+  'grid.wind_speed':[' 风速: ',' Speed: '],
+  'grid.wind_source':['来源: Open-Meteo 实时气象','Source: Open-Meteo'],
+  'grid.red_alert_label':['🔴 红色预警','🔴 Red Alert'],
+  'grid.yellow_alert_label':['🟡 黄色预警','🟡 Yellow Alert'],
+  'grid.normal_label':['🟢 正常','🟢 Normal'],
+  'grid.emission_exceed':[' 排放超标 ',' exceeded '],
+  'grid.emission_high':[' 排放偏高 ',' elevated '],
+  'grid.emission_normal':['其余排放源均在限值内','Other sources within limits'],
+  // ===== Factor library =====
+  'factor.search_placeholder':['搜索排放因子（能源品种/行业/地区）...','Search factors (energy/industry/region)...'],
+  'factor.compare_btn':['区域因子对比','Regional Factor Compare'],
+  'factor.factor_source_dist':['因子来源分布','Factor Source Distribution'],
+  'factor.grid_compare':['各电网排放因子对比','Grid Emission Factor Comparison'],
+  'factor.no_match':['未找到匹配的排放因子','No matching emission factors found'],
+  // ===== Carbon asset =====
+  'asset.cea_label':['CEA 全国碳配额','CEA National Carbon Allowance'],
+  'asset.ccer_label':['CCER 核证自愿减排量','CCER Verified Emission Reduction'],
+  'asset.eua_label':['EUA 欧盟碳配额','EUA EU Carbon Allowance'],
+  'asset.fudan_label':['复旦碳价指数','Fudan Carbon Price Index'],
+  'asset.gdea_label':['GDEA 广东碳配额','GDEA Guangdong Carbon Allowance'],
+  'asset.szea_label':['SZEA 深圳碳配额','SZEA Shenzhen Carbon Allowance'],
+  'asset.portfolio':['碳资产组合结构','Carbon Portfolio Structure'],
+  'asset.price_trend':['CEA碳价走势 & 复旦碳价指数预测','CEA Price Trend & Fudan Index Forecast'],
+  'asset.quota_analysis':['配额盈缺分析','Quota Surplus/Deficit Analysis'],
+  'asset.compliance_calendar':['碳市场履约日历','Carbon Market Compliance Calendar'],
+  // ===== PCF =====
+  'pcf.product_name':['产品名称','Product Name'],
+  'pcf.product_unit':['产品单位','Product Unit'],
+  'pcf.calc_standard':['核算标准','Calculation Standard'],
+  'pcf.calc_btn':['计算产品碳足迹','Calculate PCF'],
+  'pcf.result_title':['碳足迹核算结果','PCF Result'],
+  'pcf.stage_raw':['原材料获取','Raw Materials'],
+  'pcf.stage_mfg':['生产制造','Manufacturing'],
+  'pcf.stage_tpt':['运输分销','Transport & Distribution'],
+  'pcf.stage_use':['使用阶段','Use Phase'],
+  'pcf.stage_eol':['废弃回收','End of Life'],
+  'pcf.benchmark_title':['与行业基准值对比','Benchmark Comparison'],
+  // ===== Report =====
+  'report.region_label':['选择区域自动匹配对应报告标准模板与核算规则','Select region to auto-match report standard template & rules'],
+  'report.preview':['报告预览','Report Preview'],
+  'report.generate':['一键生成报告','Generate Report'],
+  'report.export_pdf':['导出PDF','Export PDF'],
+  'report.export_word':['导出Word','Export Word'],
+  'report.history':['历史报告','Report History'],
+  // ===== Footer =====
+  'footer.tagline':['时空智能碳管理平台','Spatiotemporal Smart Carbon Platform'],
+  'footer.creator':['Creator: Jacky Liang (Jiashen Liang)','Creator: Jacky Liang (Jiashen Liang)'],
 };
 function t(key) { const v = I18N[key]; if (!v) return key; const idx = lang === 'en' ? 1 : 0; return v[idx] || key; }
 function applyLanguage() {
@@ -1407,7 +1603,7 @@ function confirmAIImport(){
   renderResults(records);
   setTimeout(()=>renderDashboard(),300);
   autoSave();
-  showToast('✅ '+(lang==='en'?'Imported ':'已导入 ')+records.length+(lang==='en'?' records':' 条记录')+' · '+fmt(currentTotal)+' tCO₂e','success');
+  showToast('✅ '+t('toast.imported')+records.length+t('toast.records')+' · '+fmt(currentTotal)+' tCO₂e','success');
 }
 
 function renderResults(records) {
@@ -1456,11 +1652,11 @@ function renderDashboard() {
   const ind=document.getElementById('dashIndicators');
   if(ind && currentRecords.length>0){
     var hints=[],maxSrc=currentRecords.reduce((a,b)=>a.emission>b.emission?a:b);
-    hints.push('🔍 <strong>重点关注：</strong>'+maxSrc.source+' 排放占比最高('+(maxSrc.emission/total*100).toFixed(1)+'%)');
-    if(s1/total>0.5) hints.push('⚠️ Scope 1占比超50%，建议优先推进燃料替代/工艺优化');
-    if(s2>0) hints.push('💡 Scope 2电力排放可通过绿电采购(PPA)或分布式光伏降低');
-    if(currentRecords.filter(r=>r.confidence==='low').length>0) hints.push('📋 存在低置信度条目，建议人工复核排放因子');
-    hints.push('📊 排放强度：'+fmt(total/8000)+' tCO₂e/万元营收(按行业均值)');
+    hints.push(t('dash.indicator.focus')+maxSrc.source+' '+(lang==='en'?'has highest share(':'排放占比最高(')+(maxSrc.emission/total*100).toFixed(1)+'%)');
+    if(s1/total>0.5) hints.push(t('dash.indicator.scope1_high'));
+    if(s2>0) hints.push(t('dash.indicator.scope2_hint'));
+    if(currentRecords.filter(r=>r.confidence==='low').length>0) hints.push(t('dash.indicator.low_conf'));
+    hints.push(t('dash.indicator.intensity')+fmt(total/8000)+t('dash.indicator.per_revenue'));
     ind.innerHTML=hints.map(h=>'<div style="padding:8px;background:var(--green-bg);border-radius:6px;margin-bottom:6px;border-left:3px solid var(--green-light)">'+h+'</div>').join('');
   }
   // Price chart
@@ -1528,7 +1724,7 @@ function refreshDashboardPrices(){
   document.getElementById('tickerContent').innerHTML = '<span>'+tickItems[0]+'</span>'+html;
   renderDashPriceChart();
   renderDashMarketPie();
-  showToast('✅ 碳价数据已刷新 · '+now, 'success');
+  showToast(t('toast.prices_refreshed')+' · '+now, 'success');
 }
 
 function loadDemoData() {
@@ -1638,7 +1834,7 @@ function exportPDF() {
   showToast('📄 '+t('toast.pdf_gen'), 'info');
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      html2pdf().set({margin:[15,15,15,15],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast('✅ '+t('toast.pdf_done'),'success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
+      html2pdf().set({margin:[15,15,15,15],filename:'碳排放核算报告_'+currentYear+'.pdf',image:{type:'jpeg',quality:0.98},html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast('✅ '+t('toast.pdf_done'),'success');}).catch(function(e){el.remove();showToast(t('toast.pdf_failed')+e.message,'error');});
     });
   });
 }
@@ -1648,7 +1844,7 @@ function clearData(){currentRecords=[];currentTotal=0;allRecords={};localStorage
 // ==================== HISTORY ====================
 function renderHistory(){
   const years=Object.keys(allRecords).sort();
-  if(years.length<2){document.getElementById('historyBar').innerHTML='<p style="color:var(--text2);text-align:center;padding:40px">需要至少两个年份的数据才能对比</p>';return}
+  if(years.length<2){document.getElementById('historyBar').innerHTML='<p style="color:var(--text2);text-align:center;padding:40px">'+t('history.need_two_years')+'</p>';return}
   let html='<table><thead><tr><th>年份</th><th>Scope 1</th><th>Scope 2</th><th>Scope 3</th><th>总排放</th><th>同比变化</th></tr></thead><tbody>';
   let prevTotal=0;
   years.forEach((y,i)=>{const rs=allRecords[y];let s1=0,s2=0,s3=0;rs.forEach(r=>{if(r.scope==='Scope1')s1+=r.emission;else if(r.scope==='Scope2')s2+=r.emission;else s3+=r.emission;});const tot=s1+s2+s3;const chg=i>0&&prevTotal>0?((tot-prevTotal)/prevTotal*100).toFixed(1):'-';html+=`<tr><td><strong>${y}</strong></td><td>${fmt(s1)}</td><td>${fmt(s2)}</td><td>${fmt(s3)}</td><td style="font-weight:600">${fmt(tot)}</td><td style="color:${chg>0?'#dc2626':'#059669'}">${chg>0?'+'+chg:chg}%</td></tr>`;prevTotal=tot;});
@@ -1660,7 +1856,7 @@ const GIS_CENTER=[22.65,114.05];
 
 function initGISMap(){
   if(gisMapObj) return;
-  if(typeof L === 'undefined'){ showToast('地图库加载失败，请刷新页面重试','error'); return; }
+  if(typeof L === 'undefined'){ showToast(t('toast.map_load_failed'),'error'); return; }
   const isMobile = window.innerWidth < 768;
   gisMapObj=L.map('gisMap',{
     center: GIS_CENTER, zoom: 13,
@@ -1727,7 +1923,7 @@ function toggleDrawMode(){
 }
 
 function completeDrawing(){
-  if(!gisPolygon||gisPolygon.getLatLngs()[0].length<3){showToast('至少需要3个顶点','error');return;}
+  if(!gisPolygon||gisPolygon.getLatLngs()[0].length<3){showToast(t('toast.need_3_points'),'error');return;}
   gisMapObj.removeLayer(gisPolygon);gisDrawnItems.addLayer(gisPolygon);
   drawMode=false;
   var btn=document.getElementById('drawPolygonBtn');
@@ -1738,7 +1934,7 @@ function completeDrawing(){
 }
 
 async function handleGISFile(file){
-  if(!file)return;showToast('正在解析GIS文件...','info');
+  if(!file)return;showToast(t('toast.gis_file_parsing'),'info');
   try{
     let geojson;
     if(file.name.endsWith('.zip')){const buf=await file.arrayBuffer();geojson=await shp(buf);}
@@ -1747,7 +1943,7 @@ async function handleGISFile(file){
     const layer=L.geoJSON(geojson,{style:{color:'#059669',weight:2,fillColor:'#10B981',fillOpacity:0.2}}).addTo(gisDrawnItems);
     gisMapObj.fitBounds(layer.getBounds());
     processGIS(geojson.geometry||geojson);
-  }catch(e){showToast('GIS文件解析失败: '+e.message,'error');}
+  }catch(e){showToast(t('toast.gis_parse_failed')+e.message,'error');}
 }
 
 function processGIS(geometry){
@@ -1755,8 +1951,8 @@ function processGIS(geometry){
   try{
     if(geometry.type==='Polygon')poly=turf.polygon(geometry.coordinates);
     else if(geometry.type==='MultiPolygon')poly=turf.multiPolygon(geometry.coordinates);
-    else{showToast('仅支持Polygon/MultiPolygon','error');return;}
-  }catch(e){showToast('几何解析失败','error');return;}
+    else{showToast(t('toast.geo_only'),'error');return;}
+  }catch(e){showToast(t('toast.geo_parse_failed'),'error');return;}
   const areaHa=turf.area(poly)/10000;
 
   // Simulate NDVI from Sentinel-2
@@ -1787,7 +1983,7 @@ function processGIS(geometry){
   let gisHTML='<table><thead><tr><th>年份</th><th>NDVI</th><th>AGB (t/ha)</th><th>碳储量 (tC)</th><th>碳汇量 (tCO₂e)</th><th>碳信用价值 (¥)</th></tr></thead><tbody>';
   biomassData.forEach(d=>{gisHTML+=`<tr><td>${d.year}</td><td>${ndviData.find(n=>n.year===d.year).ndvi.toFixed(3)}</td><td>${(d.agb/areaHa).toFixed(1)}</td><td>${d.carbon.toFixed(1)}</td><td>${d.co2e.toFixed(1)}</td><td>¥${(d.co2e*89.5).toFixed(0)}</td></tr>`;});
   gisHTML+='</tbody></table>';document.getElementById('gisTable').innerHTML=gisHTML;
-  showToast('✅ 林地碳汇盘查完成：'+areaHa.toFixed(1)+' ha，碳汇量 '+co2eStock.toFixed(0)+' tCO₂e','success');
+  showToast(t('toast.forest_done')+areaHa.toFixed(1)+' ha, '+co2eStock.toFixed(0)+' tCO₂e','success');
 }
 
 function renderNDVIChart(){
@@ -1802,7 +1998,7 @@ function renderBiomassChart(){
   window._biomassChart=new Chart(ctx,{type:'bar',data:{labels:biomassData.map(d=>d.year),datasets:[{label:'碳储量(tC)',data:biomassData.map(d=>d.carbon),backgroundColor:'#10B981'},{label:'碳汇量(tCO₂e)',data:biomassData.map(d=>d.co2e),backgroundColor:'#0EA5E9'}]}});
 }
 
-function clearGIS(){if(gisDrawnItems)gisDrawnItems.clearLayers();document.getElementById('gisResults').classList.add('hidden');ndviData=[];biomassData=[];showToast('GIS图层已清除','info');}
+function clearGIS(){if(gisDrawnItems)gisDrawnItems.clearLayers();document.getElementById('gisResults').classList.add('hidden');ndviData=[];biomassData=[];showToast(t('toast.gis_cleared'),'info');}
 
 // ===== GIS MODE SWITCHING =====
 let gisMode='forest', heatmapPoints=[], heatmapLayer=null, gbaMarkers=[];
@@ -1834,7 +2030,7 @@ function switchGISMode(mode){
 // ===== CARBON HEATMAP =====
 function handleHeatmapFile(file){
   if(!file)return;
-  showToast('正在解析碳排放点位数据...','info');
+  showToast(t('toast.heatmap_parsing'),'info');
   const reader=new FileReader();
   reader.onload=function(e){
     try{
@@ -1853,7 +2049,7 @@ function handleHeatmapFile(file){
           if(c.includes('行业'))ii=j;
         }
       }
-      if(li<0||ai<0){showToast('未识别到经纬度列(lat/lon)','error');return}
+      if(li<0||ai<0){showToast(t('toast.cannot_identify_coords'),'error');return}
       heatmapPoints=[];
       for(let i=(rows[0]&&String(rows[0][0]).includes('纬度')?1:0);i<rows.length;i++){
         const r=rows[i];const lat=parseFloat(r[li]),lon=parseFloat(r[ai]);
@@ -1863,11 +2059,11 @@ function handleHeatmapFile(file){
         const industry=ii>=0?String(r[ii]||'').trim():'';
         heatmapPoints.push({name,lat,lon,emission,industry});
       }
-      if(heatmapPoints.length===0){showToast('未解析到有效点位','error');return}
+      if(heatmapPoints.length===0){showToast(t('toast.no_valid_points'),'error');return}
       renderHeatmap();
       showHeatmapTable();
-      showToast('✅ 已加载 '+heatmapPoints.length+' 个排放点位','success');
-    }catch(ex){showToast('解析失败: '+ex.message,'error')}
+      showToast('✅ '+t('toast.gis_loaded')+heatmapPoints.length+t('toast.emission_points'),'success');
+    }catch(ex){showToast(t('toast.parse_failed')+ex.message,'error')}
   };
   reader.readAsArrayBuffer(file);
 }
@@ -1883,7 +2079,7 @@ function loadHeatmapDemo(){
     heatmapPoints.push({name:'企业'+(i+1),lat,lon,emission,industry:industries[Math.floor(Math.random()*industries.length)]});
   }
   renderHeatmap();showHeatmapTable();
-  showToast('✅ 已加载 25 个演示排放点位','success');
+  showToast('✅ '+t('toast.gis_loaded')+'25'+t('toast.emission_points'),'success');
 }
 
 function renderHeatmap(){
@@ -1908,7 +2104,7 @@ function renderHeatmap(){
 }
 
 function refreshHeatmap(){if(gisMode==='heatmap')renderHeatmap();}
-function clearHeatmap(){heatmapPoints=[];if(heatmapLayer&&gisMapObj)gisMapObj.removeLayer(heatmapLayer);heatmapLayer=null;document.getElementById('heatmapResults').classList.add('hidden');showToast('热力图已清除','info');}
+function clearHeatmap(){heatmapPoints=[];if(heatmapLayer&&gisMapObj)gisMapObj.removeLayer(heatmapLayer);heatmapLayer=null;document.getElementById('heatmapResults').classList.add('hidden');showToast(t('toast.heatmap_cleared'),'info');}
 
 function showHeatmapTable(){
   document.getElementById('heatmapResults').classList.remove('hidden');
@@ -2012,7 +2208,7 @@ document.addEventListener('DOMContentLoaded',function(){
 // ==================== NEW MODULE 2: 轨迹碳核算 ====================
 function initTrajMap(){
   if(trajMapObj)return;
-  if(typeof L === 'undefined'){ showToast('地图库加载失败，请刷新页面重试','error'); return; }
+  if(typeof L === 'undefined'){ showToast(t('toast.map_load_failed'),'error'); return; }
   const isMobile = window.innerWidth < 768;
   trajMapObj=L.map('trajMap',{
     center: [22.75,114.15], zoom: 12,
@@ -2040,7 +2236,7 @@ const TRAJ_DEMO=`timestamp,lat,lon,speed,load,vehicle_type,fuel_type
 2026-06-10 10:15:00,22.81,114.30,42,15,重型柴油车,diesel`;
 
 function handleTrajFile(file){if(!file)return;const r=new FileReader();r.onload=function(e){parseTrajCSV(e.target.result);};r.readAsText(file);}
-function loadTrajDemo(){parseTrajCSV(TRAJ_DEMO);showToast('✅ 已加载演示轨迹数据','success');}
+function loadTrajDemo(){parseTrajCSV(TRAJ_DEMO);showToast(t('toast.traj_demo'),'success');}
 
 function parseTrajCSV(csv){
   const lines=csv.trim().split('\n');trajData=[];
@@ -2062,7 +2258,7 @@ function renderTrajOnMap(){
 }
 
 function calculateTrajCarbon(){
-  if(!trajData.length){showToast('请先加载轨迹数据','error');return}
+  if(!trajData.length){showToast(t('toast.traj_load_first'),'error');return}
   document.getElementById('trajResults').classList.remove('hidden');
   let totalDist=0,totalTonKm=0,totalCarbon=0;
   const segments=[];
@@ -2094,13 +2290,13 @@ function calculateTrajCarbon(){
   segments.forEach((s,i)=>{html+=`<tr><td>段${i+1}</td><td>${s.from}→${s.to}</td><td>${s.dist}</td><td>${s.tonKm}</td><td>${s.terrainFactor}</td><td>${s.speedFactor}</td><td>${s.ef}</td><td style="font-weight:600">${s.carbon}</td></tr>`;});
   html+=`<tr style="font-weight:700;background:#f0fdf4"><td colspan="7">合计</td><td style="color:var(--green)">${totalCarbon.toFixed(2)}</td></tr></tbody></table>`;
   document.getElementById('trajTable').innerHTML=html;
-  showToast('✅ 轨迹碳核算完成：'+totalCarbon.toFixed(1)+' kgCO₂','success');
+  showToast(t('toast.traj_done')+totalCarbon.toFixed(1)+' kgCO₂','success');
 }
 
 // ==================== NEW MODULE 3: 网格化排放监测 ====================
 function initGridMap(){
   if(gridMapObj)return;
-  if(typeof L === 'undefined'){ showToast('地图库加载失败，请刷新页面重试','error'); return; }
+  if(typeof L === 'undefined'){ showToast(t('toast.map_load_failed'),'error'); return; }
   const isMobile = window.innerWidth < 768;
   const defReg=GRID_REGIONS[document.getElementById('gridRegion').value]||GRID_REGIONS.sz_gm;
   gridMapObj=L.map('gridMap',{
@@ -2273,7 +2469,7 @@ function refreshGrid(){
   }else{
     renderGridLayers();
   }
-  showToast('✅ 网格监测已刷新 · '+((reg&&reg.name)||'当前区域'),'success');
+  showToast(t('toast.grid_refreshed')+' · '+((reg&&reg.name)||''),'success');
 }
 
 // ==================== NEW MODULE 4: 排放因子库 ====================
@@ -2333,7 +2529,7 @@ function exportFactorsCSV(){
   FACTOR_DB.forEach(f=>{csv+=`"${f.name}",${f.value},"${f.unit}","${f.source}",${f.year},"${f.region}",${f.dqr},"${f.geo}","${f.methodology}","${f.scope}","${f.category}","${f.link||''}"\n`;});
   const b=new Blob([csv],{type:'text/csv;charset=utf-8'}),u=URL.createObjectURL(b),a=document.createElement('a');
   a.href=u;a.download='排放因子库_溯源数据_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(u);
-  showToast('✅ 因子表已导出（含溯源链接与版本号）','success');
+  showToast(t('toast.csv_exported'),'success');
 }
 
 function compareFactors(){
@@ -2456,20 +2652,20 @@ function updateAIState(){
   const customCfg = document.getElementById('customApiConfig');
 
   if(isLoggedIn){
-    if(inputEl){ inputEl.disabled = false; inputEl.placeholder = '输入碳管理相关问题...'; }
-    if(sendBtn){ sendBtn.disabled = false; sendBtn.title = '发送消息'; }
-    if(loginHint){ loginHint.textContent = '✅ '+currentUserEmail; loginHint.style.color = 'var(--green)'; }
+    if(inputEl){ inputEl.disabled = false; inputEl.placeholder = t('chat.input_placeholder_logged_in'); }
+    if(sendBtn){ sendBtn.disabled = false; sendBtn.title = t('chat.input_placeholder_logged_in'); }
+    if(loginHint){ loginHint.textContent = t('login.logged_in_as')+currentUserEmail; loginHint.style.color = 'var(--green)'; }
     if(quickActions) quickActions.style.display = 'flex';
-    if(welcomeTitle) welcomeTitle.textContent = '您好，我是 CarbonAI 碳管理顾问';
-    if(welcomeHint) welcomeHint.textContent = '我可以帮您完成：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导 · 碳足迹分析';
+    if(welcomeTitle) welcomeTitle.textContent = t('chat.welcome_title');
+    if(welcomeHint) welcomeHint.textContent = t('chat.welcome_hint');
     if(toggleBtn) toggleBtn.style.display = 'inline-flex';
   } else {
-    if(inputEl){ inputEl.disabled = true; inputEl.placeholder = '登录后即可提问...'; }
-    if(sendBtn){ sendBtn.disabled = true; sendBtn.title = '请先登录'; }
-    if(loginHint){ loginHint.textContent = '🔒 请先登录后使用AI顾问'; loginHint.style.color = 'var(--red)'; }
+    if(inputEl){ inputEl.disabled = true; inputEl.placeholder = t('chat.input_placeholder_logged_out'); }
+    if(sendBtn){ sendBtn.disabled = true; sendBtn.title = t('chat.input_placeholder_logged_out'); }
+    if(loginHint){ loginHint.textContent = t('login.please_login'); loginHint.style.color = 'var(--red)'; }
     if(quickActions) quickActions.style.display = 'none';
-    if(welcomeTitle) welcomeTitle.textContent = '请先登录';
-    if(welcomeHint) welcomeHint.textContent = '登录后可使用 AI 碳管理顾问：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导';
+    if(welcomeTitle) welcomeTitle.textContent = t('chat.login_title');
+    if(welcomeHint) welcomeHint.textContent = t('chat.login_hint');
     if(toggleBtn) toggleBtn.style.display = 'none';
     if(customCfg) customCfg.style.display = 'none';
     // Reset badge to default
@@ -2571,7 +2767,7 @@ function clearChatHistory(){
   }
   container.appendChild(welcome);
   chatWelcomeEl = welcome;
-  showToast('对话历史已清空', 'info');
+  showToast(t('toast.chat_cleared'), 'info');
 }
 
 function sendQuickMsg(msg){
@@ -2786,7 +2982,7 @@ async function sendChatMessage(){
   if(!isLoggedIn){
     removeLoading();
     sendBtn.disabled = false;
-    showToast('⚠️ 请先登录后使用 AI 顾问','error');
+    showToast(t('toast.login_required'),'error');
     return;
   }
 
@@ -2891,7 +3087,7 @@ async function sendChatMessage(){
 
 // Migrate old aiQuestion key behavior: Enter key in old input now handled via new chat
 function runAIAnalysis(){
-  if(!currentRecords.length){showToast('请先上传碳排放数据','error');return}
+  if(!currentRecords.length){showToast(t('toast.upload_first'),'error');return}
   const total=currentTotal;const byScope={};currentRecords.forEach(r=>{byScope[r.scope]=(byScope[r.scope]||0)+r.emission;});
   const top5=[...currentRecords].sort((a,b)=>b.emission-a.emission).slice(0,5).map(r=>r.source+'('+r.emission.toFixed(1)+'t)').join('、');
   const prompt=`请根据以下碳排放数据进行专业分析并给出减排建议：\n\n总排放: ${total.toFixed(2)} tCO₂e\nScope 1: ${(byScope['Scope 1']||0).toFixed(2)} tCO₂e\nScope 2: ${(byScope['Scope 2']||0).toFixed(2)} tCO₂e\nScope 3: ${(byScope['Scope 3']||0).toFixed(2)} tCO₂e\n主要排放源: ${top5}`;
@@ -2964,7 +3160,7 @@ function doLogout(){
   document.getElementById('headerLoginBtn').innerHTML='<span data-i18n="login.btn">登录</span>';
   updateAIState();
   clearChatHistory();
-  showToast(lang==='en'?'Logged out':'已退出登录','info');
+  showToast(t('toast.logout'),'info');
 }
 
 // ==================== NEW: 碳资产管理 ====================
@@ -2973,7 +3169,7 @@ let currentReport='iso';
 function refreshPrices(){
   const prices=getSmartCarbonPrices();
   updatePriceTicker(prices);
-  showToast('✅ 碳价数据已刷新 · '+new Date().toLocaleTimeString('zh-CN'),'success');
+  showToast(t('toast.prices_refreshed')+' · '+new Date().toLocaleTimeString(lang==='en'?'en-US':'zh-CN'),'success');
 }
 
 function renderAssetCharts(){
@@ -3010,7 +3206,7 @@ function loadPCFDemo(){
   document.getElementById('pcfProductName').value='XX电子元器件';
   pcfData={raw:12.5,mfg:28.3,tpt:5.7,use:18.2,eol:3.1};
   renderPCFResults();
-  showToast('✅ 已加载产品碳足迹演示数据','success');
+  showToast(t('toast.pcf_demo'),'success');
 }
 
 function calcPCF(){
@@ -3019,7 +3215,7 @@ function calcPCF(){
   const base=20+Math.random()*40;
   pcfData={raw:base*0.2*Math.random(),mfg:base*0.42*Math.random(),tpt:base*0.08*Math.random(),use:base*0.25*Math.random(),eol:base*0.05*Math.random()};
   renderPCFResults();
-  showToast('✅ '+name+' 碳足迹核算完成','success');
+  showToast('✅ '+name+' '+t('toast.pcf_done'),'success');
 }
 
 function renderPCFResults(){
@@ -3114,7 +3310,7 @@ function onRegionChange(){
 
 function autoPreviewReport(){
   const preview=document.getElementById('reportPreview');
-  if(!currentRecords.length){preview.innerHTML='<p style="color:var(--text2);text-align:center;padding:20px">请先在"碳核算"页面上传数据，系统将自动填充报告内容</p>';return}
+  if(!currentRecords.length){preview.innerHTML='<p style="color:var(--text2);text-align:center;padding:20px">'+t('report.no_data_hint')+'</p>';return}
   const total=currentTotal;const byScope={};currentRecords.forEach(r=>{byScope[r.scope]=(byScope[r.scope]||0)+r.emission;});
   const s1=byScope['Scope 1']||0,s2=byScope['Scope 2']||0,s3=byScope['Scope 3']||0;
   const templates={
@@ -3330,10 +3526,10 @@ function exportReportPDF(){
     +'</div>';
 
   document.body.appendChild(el);
-  showToast('📄 正在生成合规报告PDF...', 'info');
+  showToast(t('toast.generating_report'), 'info');
   requestAnimationFrame(function(){
     requestAnimationFrame(function(){
-      html2pdf().set({margin:[15,15,15,15],filename:'合规报告_'+(names[currentReport]||currentReport)+'_'+currentYear+'.pdf',html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast('✅ PDF报告已导出','success');}).catch(function(e){el.remove();showToast('PDF生成失败: '+e.message,'error');});
+      html2pdf().set({margin:[15,15,15,15],filename:'合规报告_'+(names[currentReport]||currentReport)+'_'+currentYear+'.pdf',html2canvas:{scale:2,logging:false,useCORS:true},jsPDF:{unit:'mm',format:'a4'},pagebreak:{mode:['avoid-all','css','legacy']}}).from(el).save().then(function(){el.remove();showToast(t('toast.report_done'),'success');}).catch(function(e){el.remove();showToast(t('toast.pdf_failed')+e.message,'error');});
     });
   });
 }
@@ -3345,7 +3541,7 @@ function exportReportWord(){
   const names={iso:'ISO14064',cbam:'CBAM',esg:'ESG',ghg:'GHGProtocol','cn-sse':'CN_SSE','cn-gb':'CN_GB','cn-mee':'CN_MEE','hk-esg':'HKEX_ESG','tw-ghg':'TW_GHG','eu-csrd':'EU_CSRD','us-sec':'US_SEC',issb:'ISSB',gri:'GRI'};
   const u=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=u;a.download='合规报告_'+(names[currentReport]||currentReport)+'_'+currentYear+'.doc';a.click();URL.revokeObjectURL(u);
-  showToast('✅ Word报告已导出','success');
+  showToast(t('toast.word_done'),'success');
 }
 
 // ==================== REALTIME DATA ENGINE v1.0 ====================
@@ -3437,11 +3633,11 @@ function startRealtimeEngine(){
 function startOnboarding(){
   if(localStorage.getItem('carbonai_onboarded')) return;
   const steps = [
-    {title:'欢迎使用 CarbonAI v5.0',desc:'时空智能碳管理平台 — 一站式完成碳盘查、核算、报告与合规管理',icon:'🌱',highlight:null},
-    {title:'Step 1: 上传数据',desc:'在「碳核算」面板上传Excel数据，AI自动识别排放源与排放因子',icon:'📤',highlight:'[data-tab="accounting"]'},
-    {title:'Step 2: 查看分析',desc:'切换到「数据大屏」查看Scope分布与排放趋势，AI顾问提供深度解读',icon:'📊',highlight:'[data-tab="dashboard"]'},
-    {title:'Step 3: 生成报告',desc:'在「合规报告」面板选择报告标准，一键导出专业PDF/Word合规报告',icon:'📋',highlight:'[data-tab="report"]'},
-    {title:'准备好了吗？',desc:'点击"开始使用"进入平台，右上角🌓可切换深色模式，点击EN切换中英文',icon:'🚀',highlight:null}
+    {title:'onboarding.welcome_title',desc:'onboarding.welcome_desc',icon:'🌱',highlight:null},
+    {title:'onboarding.step1_title',desc:'onboarding.step1_desc',icon:'📤',highlight:'[data-tab="accounting"]'},
+    {title:'onboarding.step2_title',desc:'onboarding.step2_desc',icon:'📊',highlight:'[data-tab="dashboard"]'},
+    {title:'onboarding.step3_title',desc:'onboarding.step3_desc',icon:'📋',highlight:'[data-tab="report"]'},
+    {title:'onboarding.step4_title',desc:'onboarding.step4_desc',icon:'🚀',highlight:null}
   ];
   var currentStep = 0;
   var overlay = document.createElement('div');
@@ -3457,13 +3653,13 @@ function startOnboarding(){
       +'<div style="font-size:48px;margin-bottom:12px">'+s.icon+'</div>'
       +'<div style="margin-bottom:8px">'+dots+'</div>'
       +'<div style="width:100%;height:3px;background:var(--border);border-radius:2px;margin-bottom:16px"><div style="width:'+progress+';height:100%;background:linear-gradient(90deg,#059669,#10B981);border-radius:2px;transition:width .4s"></div></div>'
-      +'<h3 style="color:var(--text);margin-bottom:8px;font-size:16px">'+s.title+'</h3>'
-      +'<p style="color:var(--text2);font-size:12px;line-height:1.7">'+s.desc+'</p>'
+      +'<h3 style="color:var(--text);margin-bottom:8px;font-size:16px">'+t(s.title)+'</h3>'
+      +'<p style="color:var(--text2);font-size:12px;line-height:1.7">'+t(s.desc)+'</p>'
       +'<div style="display:flex;gap:8px;justify-content:center;margin-top:20px">'
-      +(i>0?'<button class="btn btn-secondary btn-sm" onclick="document.getElementById(\'onboardingOverlay\').onboardingPrev()">上一步</button>':'')
-      +(i<steps.length-1?'<button class="btn btn-primary" onclick="document.getElementById(\'onboardingOverlay\').onboardingNext()">下一步</button>':'<button class="btn btn-primary" onclick="document.getElementById(\'onboardingOverlay\').onboardingDone()">开始使用</button>')
+      +(i>0?'<button class="btn btn-secondary btn-sm" onclick="document.getElementById(\'onboardingOverlay\').onboardingPrev()">'+t('onboarding.prev')+'</button>':'')
+      +(i<steps.length-1?'<button class="btn btn-primary" onclick="document.getElementById(\'onboardingOverlay\').onboardingNext()">'+t('onboarding.next')+'</button>':'<button class="btn btn-primary" onclick="document.getElementById(\'onboardingOverlay\').onboardingDone()">'+t('onboarding.start_btn')+'</button>')
       +'</div>'
-      +'<button onclick="document.getElementById(\'onboardingOverlay\').onboardingSkip()" style="border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:10px;margin-top:10px">跳过引导</button>';
+      +'<button onclick="document.getElementById(\'onboardingOverlay\').onboardingSkip()" style="border:none;background:transparent;color:var(--text3);cursor:pointer;font-size:10px;margin-top:10px">'+t('onboarding.skip_btn')+'</button>';
   }
   overlay.onboardingNext = function(){
     currentStep = Math.min(currentStep+1, steps.length-1);
@@ -3514,15 +3710,15 @@ document.addEventListener('DOMContentLoaded',function(){
   renderFactorCharts();
   renderAssetCharts();
   document.querySelector('[data-tab="gis"]').addEventListener('click',function(){
-    if(typeof L === 'undefined'){ showToast('⚠️ 地图库(Leaflet)未加载，请检查网络后刷新页面','error'); return; }
+    if(typeof L === 'undefined'){ showToast(t('toast.map_lib_failed'),'error'); return; }
     setTimeout(function(){initGISMap();if(gisMapObj)gisMapObj.invalidateSize();},250);
   });
   document.querySelector('[data-tab="trajectory"]').addEventListener('click',function(){
-    if(typeof L === 'undefined'){ showToast('⚠️ 地图库(Leaflet)未加载，请检查网络后刷新页面','error'); return; }
+    if(typeof L === 'undefined'){ showToast(t('toast.map_lib_failed'),'error'); return; }
     setTimeout(function(){initTrajMap();if(trajMapObj)trajMapObj.invalidateSize();},250);
   });
   document.querySelector('[data-tab="grid"]').addEventListener('click',function(){
-    if(typeof L === 'undefined'){ showToast('⚠️ 地图库(Leaflet)未加载，请检查网络后刷新页面','error'); return; }
+    if(typeof L === 'undefined'){ showToast(t('toast.map_lib_failed'),'error'); return; }
     setTimeout(function(){initGridMap();if(gridMapObj)gridMapObj.invalidateSize();updateAQIIndicator();updateGridWind();},250);
   });
   document.querySelector('[data-tab="news"]').addEventListener('click',function(){loadNewsToPanel();});
