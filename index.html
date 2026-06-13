@@ -1024,7 +1024,26 @@ body.dark .chat-error{background:rgba(220,38,38,.1)}
         <span class="puter-badge" id="puterBadge" title="Puter.js 免费AI引擎">⚡ Puter.js · 免费AI引擎</span>
         <span class="api-status" id="apiStatus">🟢</span>
         <span style="font-size:9px;color:var(--text3);">免Key · 免配置</span>
-        <span style="font-size:9px;color:var(--green);margin-left:auto;font-weight:600" id="aiLoginRequired">🔒 请先登录后使用AI顾问</span>
+        <span style="font-size:9px;margin-left:auto;font-weight:600" id="aiLoginRequired">🔒 请先登录后使用AI顾问</span>
+        <button class="btn btn-sm btn-secondary" id="aiCustomToggleBtn" onclick="toggleCustomApi()" style="font-size:9px;display:none;margin-left:6px">⚙️ 自定义API</button>
+      </div>
+      <!-- Custom API config (hidden by default, requires login) -->
+      <div id="customApiConfig" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+        <div class="api-config-row">
+          <div class="api-field" style="flex:1;">
+            <label>自定义请求地址</label>
+            <input type="text" id="aiApiUrl" placeholder="https://api.deepseek.com/anthropic 或兼容OpenAI格式" style="font-size:10px;font-family:monospace;" value="">
+          </div>
+          <div class="api-field" style="flex:1;">
+            <label>自定义 API Key</label>
+            <input type="password" id="aiApiKey" placeholder="输入你自己的 Key..." style="font-size:10px;font-family:monospace;" value="">
+          </div>
+          <div class="api-field" style="min-width:100px;">
+            <label>模型名</label>
+            <input type="text" id="aiCustomModel" placeholder="deepseek-chat" style="font-size:10px;width:140px" value="deepseek-chat">
+          </div>
+        </div>
+        <div style="font-size:9px;color:var(--text3);margin-top:4px">⚠️ 你的 API Key 仅存储在本浏览器 localStorage 中，不会上传到任何服务器</div>
       </div>
     </div>
     <!-- Chat Messages -->
@@ -2316,6 +2335,8 @@ function updateAIState(){
   const quickActions = document.getElementById('quickActions');
   const welcomeTitle = document.getElementById('chatWelcomeTitle');
   const welcomeHint = document.getElementById('chatWelcomeHint');
+  const toggleBtn = document.getElementById('aiCustomToggleBtn');
+  const customCfg = document.getElementById('customApiConfig');
 
   if(isLoggedIn){
     if(inputEl){ inputEl.disabled = false; inputEl.placeholder = '输入碳管理相关问题...'; }
@@ -2324,6 +2345,7 @@ function updateAIState(){
     if(quickActions) quickActions.style.display = 'flex';
     if(welcomeTitle) welcomeTitle.textContent = '您好，我是 CarbonAI 碳管理顾问';
     if(welcomeHint) welcomeHint.textContent = '我可以帮您完成：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导 · 碳足迹分析';
+    if(toggleBtn) toggleBtn.style.display = 'inline-flex';
   } else {
     if(inputEl){ inputEl.disabled = true; inputEl.placeholder = '登录后即可提问...'; }
     if(sendBtn){ sendBtn.disabled = true; sendBtn.title = '请先登录'; }
@@ -2331,6 +2353,27 @@ function updateAIState(){
     if(quickActions) quickActions.style.display = 'none';
     if(welcomeTitle) welcomeTitle.textContent = '请先登录';
     if(welcomeHint) welcomeHint.textContent = '登录后可使用 AI 碳管理顾问：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导';
+    if(toggleBtn) toggleBtn.style.display = 'none';
+    if(customCfg) customCfg.style.display = 'none';
+    // Reset badge to default
+    usePuterAI = true;
+    var badge = document.getElementById('puterBadge');
+    if(badge){ badge.textContent = '⚡ Puter.js · 免费AI引擎'; badge.style.background = '#ecfdf5'; badge.style.color = '#059669'; }
+  }
+}
+
+function toggleCustomApi(){
+  if(!isLoggedIn) return;
+  const el = document.getElementById('customApiConfig');
+  const badge = document.getElementById('puterBadge');
+  if(!el.style.display || el.style.display === 'none'){
+    el.style.display = 'block';
+    usePuterAI = false;
+    if(badge){ badge.textContent = '🔧 自定义 API 模式'; badge.style.background = '#f0f9ff'; badge.style.color = '#0EA5E9'; }
+  } else {
+    el.style.display = 'none';
+    usePuterAI = true;
+    if(badge){ badge.textContent = '⚡ Puter.js · 免费AI引擎'; badge.style.background = '#ecfdf5'; badge.style.color = '#059669'; }
   }
 }
 
@@ -2357,6 +2400,22 @@ function initChat(){
     if(badge3){ badge3.textContent = '🌐 离线 (Puter.js未加载)'; badge3.style.background = '#f0f9ff'; badge3.style.color = '#0EA5E9'; }
     document.getElementById('apiStatus').textContent = '🟡';
   }
+
+  // Restore user's OWN saved custom API settings (if they configured it before)
+  var savedKey = localStorage.getItem('carbonai_api_key');
+  var savedUrl = localStorage.getItem('carbonai_api_url');
+  if(savedKey && savedUrl && isLoggedIn){
+    var keyInput = document.getElementById('aiApiKey');
+    var urlInput = document.getElementById('aiApiUrl');
+    if(keyInput) keyInput.value = savedKey;
+    if(urlInput) urlInput.value = savedUrl;
+    // Auto-enable custom API mode if user has saved credentials
+    var cfg = document.getElementById('customApiConfig');
+    var badge = document.getElementById('puterBadge');
+    if(cfg){ cfg.style.display = 'block'; usePuterAI = false; }
+    if(badge){ badge.textContent = '🔧 自定义 API 模式'; badge.style.background = '#f0f9ff'; badge.style.color = '#0EA5E9'; }
+  }
+
   updateAIState();
 }
 
@@ -2632,22 +2691,50 @@ async function sendChatMessage(){
     var reply = '';
     var usage = {};
 
-    if(typeof puter !== 'undefined' && puter.ai){
-      // ===== Puter.js (free, no API key, no CORS issues) =====
+    if(!usePuterAI){
+      // ===== Custom API mode =====
+      const apiUrl = document.getElementById('aiApiUrl').value.trim();
+      const apiKey = document.getElementById('aiApiKey').value.trim();
+      const customModel = document.getElementById('aiCustomModel').value.trim() || 'deepseek-chat';
+      if(!apiUrl){ addError('请填写 API 请求地址'); sendBtn.disabled = false; return; }
+      if(!apiKey){ addError('请填写 API Key'); sendBtn.disabled = false; return; }
+
+      // Save user's own credentials for next session (only after they confirm by using it)
+      localStorage.setItem('carbonai_api_url', apiUrl);
+      localStorage.setItem('carbonai_api_key', apiKey);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(function(){ controller.abort(); }, 120000);
+      const resp = await fetch(apiUrl, {
+        method: 'POST', headers: {'Content-Type':'application/json','Authorization':'Bearer '+apiKey},
+        body: JSON.stringify({model:customModel,max_tokens:4096,temperature:0.7,messages:[{role:'system',content:fullPrompt},{role:'user',content:msg}]}),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if(!resp.ok){
+        const et = await resp.text();
+        addError('API错误 ('+resp.status+'): '+(et.length>200?et.substring(0,200)+'...':et));
+        sendBtn.disabled = false; document.getElementById('apiStatus').textContent = '🔴'; return;
+      }
+      const data = await resp.json();
+      if(data.choices && data.choices[0] && data.choices[0].message){ reply = data.choices[0].message.content; }
+      usage = data.usage || {};
+      document.getElementById('apiStatus').textContent = '🟢';
+    } else if(typeof puter !== 'undefined' && puter.ai){
+      // ===== Puter.js (free, no API key) =====
       var raw = await puter.ai.chat(fullPrompt);
-      // Puter.js returns various formats - extract text robustly
       if(typeof raw === 'string'){ reply = raw; }
       else if(raw && typeof raw.message === 'string'){ reply = raw.message; }
       else if(raw && raw.message && typeof raw.message.content === 'string'){ reply = raw.message.content; }
       else if(raw && raw.message && raw.message.content && raw.message.content[0] && raw.message.content[0].text){ reply = raw.message.content[0].text; }
       else if(raw && raw.text && typeof raw.text === 'string'){ reply = raw.text; }
       else if(raw && raw.content && typeof raw.content === 'string'){ reply = raw.content; }
-      else if(raw && raw.toString && raw.toString() !== '[object Object]' && raw.toString() !== '[object Message]'){ reply = raw.toString(); }
-      else { reply = JSON.stringify(raw); console.warn('[Puter.js] Unknown format, using JSON fallback'); }
+      else if(raw && raw.toString && raw.toString() !== '[object Object]'){ reply = raw.toString(); }
+      else { reply = JSON.stringify(raw); }
       if(raw && raw.usage){ usage = raw.usage; }
       document.getElementById('apiStatus').textContent = '🟢';
     } else {
-      addError('AI服务暂不可用（Puter.js 未加载）。请确保：1) 网络可访问 js.puter.com 2) 使用 http:// 协议打开页面');
+      addError('AI服务暂不可用。请尝试：1) 检查网络 2) 点击⚙️切换自定义API模式');
       sendBtn.disabled = false;
       return;
     }
@@ -3289,10 +3376,12 @@ function unhighlightTab(){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
-  // Clean up old API keys from localStorage (security)
-  localStorage.removeItem('carbonai_api_key');
-  localStorage.removeItem('carbonai_api_url');
-  localStorage.removeItem('carbonai_model');
+  // Clean up OLD hardcoded API key if it matches the known default
+  // (only removes the developer's key, not the user's own saved key)
+  var oldKey = localStorage.getItem('carbonai_api_key');
+  if(oldKey && oldKey.indexOf('sk-5259fbcb7bf34839bda846931ddccf62') === 0){
+    localStorage.removeItem('carbonai_api_key');
+  }
 
   // Restore login state
   if(localStorage.getItem('carbonai_logged_in') === '1'){
