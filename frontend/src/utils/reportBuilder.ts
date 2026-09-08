@@ -1,0 +1,370 @@
+/**
+ * CarbonAI V5.2 — 报告生成引擎（纯前端）
+ * ① 产品碳足迹 LCA 中英文双语报告（PDF via html2canvas+jsPDF / Word via docx）
+ * ② 多标准披露报告（CBAM / HKEX ESG / ISSB / ISO 14064-1 等 12 标准）
+ * ③ 报告历史记录（localStorage 持久化）
+ */
+import type { EmissionRecord } from '@/stores/data'
+import { STANDARD_NAMES } from '@/data/reportStandards'
+import { fmt } from './format'
+
+export interface PcfData {
+  productName: string
+  unit: string
+  standard: string
+  stages: { stage: string; name: string; nameEn: string; emission: number; mainSource: string }[]
+}
+
+export interface ReportRecord {
+  id: string
+  name: string
+  standard: string
+  region: string
+  date: string
+  format: 'PDF' | 'Word'
+  type: 'pcf' | 'standard'
+}
+
+// ================================================================
+// 一、产品碳足迹双语报告
+// ================================================================
+
+const STAGE_ICON: Record<string, string> = { raw: '⛏️', mfg: '🏭', tpt: '🚛', use: '⚡', eol: '♻️' }
+
+export function buildPcfHtml(d: PcfData, lang: 'zh' | 'en' | 'both' = 'both'): string {
+  const total = d.stages.reduce((s, x) => s + x.emission, 0)
+  const zh = lang !== 'en'
+  const en = lang !== 'zh'
+  const t = (z: string, e: string) => (zh && en ? `${z}<span style="color:#64748b"> / ${e}</span>` : zh ? z : e)
+
+  const rows = d.stages.map((s) => {
+    const pct = total ? ((s.emission / total) * 100).toFixed(1) : '0'
+    return `<tr>
+      <td>${STAGE_ICON[s.stage] || ''} <b>${zh ? s.name : ''}${en ? (zh ? ' ' + s.nameEn : s.nameEn) : ''}</b></td>
+      <td class="num">${s.emission.toFixed(2)}</td>
+      <td class="num">${pct}%</td>
+      <td style="font-size:11px">${s.mainSource}</td>
+    </tr>`
+  }).join('')
+
+  const bars = d.stages.map((s) => {
+    const pct = total ? (s.emission / total) * 100 : 0
+    const colors: Record<string, string> = { raw: '#8b5cf6', mfg: '#ef4444', tpt: '#f59e0b', use: '#0ea5e9', eol: '#10b981' }
+    return `<div style="margin:6px 0">
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:2px">
+        <span>${zh ? s.name : s.nameEn}</span><span class="num">${s.emission.toFixed(2)} kgCO₂e (${pct.toFixed(1)}%)</span>
+      </div>
+      <div style="background:#e2e8f0;border-radius:4px;height:10px;overflow:hidden">
+        <div style="width:${pct}%;height:100%;background:${colors[s.stage] || '#10b981'};border-radius:4px"></div>
+      </div>
+    </div>`
+  }).join('')
+
+  return `
+  <div style="text-align:center;padding:34px 0 22px;border-bottom:3px solid #059669;margin-bottom:18px">
+    <h1 style="color:#059669;font-size:22px;margin:0 0 6px">${t('产品碳足迹核算报告', 'Product Carbon Footprint Report')}</h1>
+    <p style="color:#334155;font-size:13px;margin:4px 0">${t('产品', 'Product')}: <b>${d.productName}</b></p>
+    <p style="color:#64748b;font-size:11px;margin:4px 0">
+      ${t('核算标准', 'Standard')}: ${d.standard} | ${t('功能单位', 'Functional Unit')}: 1 ${d.unit} |
+      ${t('报告日期', 'Date')}: ${new Date().toLocaleDateString('zh-CN')}
+    </p>
+  </div>
+
+  <h2 style="color:#059669;font-size:15px">${t('一、核算结果总览', '1. Summary of Results')}</h2>
+  <p style="font-size:13px;line-height:2">${t('本产品全生命周期温室气体排放量为', 'The cradle-to-grave GHG emissions of this product amount to')}
+    <b style="font-size:20px;color:#059669"> ${total.toFixed(2)} kgCO₂e</b> / ${d.unit}，
+    ${t('核算依据', 'in accordance with')} ${d.standard}，${t('覆盖原材料获取、生产制造、运输分销、使用阶段与废弃回收五个生命周期阶段。', 'covering five life cycle stages: raw materials, manufacturing, transport & distribution, use, and end-of-life.')}</p>
+
+  <h2 style="color:#059669;font-size:15px">${t('二、各阶段排放分布', '2. Emissions by Life Cycle Stage')}</h2>
+  ${bars}
+
+  <h2 style="color:#059669;font-size:15px">${t('三、LCA 明细表', '3. LCA Detail Table')}</h2>
+  <table style="width:100%;border-collapse:collapse;font-size:12px">
+    <thead><tr style="background:#f0fdf4;color:#166534">
+      <th style="padding:8px;text-align:left;border:1px solid #d1d5db">${t('阶段', 'Stage')}</th>
+      <th style="padding:8px;text-align:right;border:1px solid #d1d5db">${t('排放量 (kgCO₂e)', 'Emissions')}</th>
+      <th style="padding:8px;text-align:right;border:1px solid #d1d5db">${t('占比', 'Share')}</th>
+      <th style="padding:8px;text-align:left;border:1px solid #d1d5db">${t('主要排放源', 'Main Source')}</th>
+    </tr></thead>
+    <tbody>${rows}
+      <tr style="background:#f0fdf4;font-weight:700;color:#166534">
+        <td style="padding:8px;border:1px solid #d1d5db">${t('合计', 'Total')}</td>
+        <td style="padding:8px;text-align:right;border:1px solid #d1d5db" class="num">${total.toFixed(2)}</td>
+        <td style="padding:8px;text-align:right;border:1px solid #d1d5db">100%</td>
+        <td style="padding:8px;border:1px solid #d1d5db">kgCO₂e / ${d.unit}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="text-align:center;font-size:9px;color:#94a3b8;margin-top:26px;border-top:1px solid #e2e8f0;padding-top:8px">
+    CarbonAI v5.2 · ${t('本报告由 CarbonAI 平台辅助生成，正式披露前建议经第三方核查（ISO 14064-3 / ISO 14067 核查）',
+    'Generated by CarbonAI Platform. Third-party verification recommended before official disclosure.')}
+  </div>`
+}
+
+// ================================================================
+// 二、多标准披露报告（HTML 构建，源自 v5.2 逻辑并增强）
+// ================================================================
+
+export function buildStandardReportHtml(type: string, records: EmissionRecord[], year: number): string {
+  const name = STANDARD_NAMES[type] || type
+  const total = records.reduce((s, r) => s + r.emission, 0)
+  const scope: Record<string, number> = {}
+  records.forEach((r) => { scope[r.scope] = (scope[r.scope] || 0) + r.emission })
+  const s1 = scope['Scope 1'] || 0, s2 = scope['Scope 2'] || 0, s3 = scope['Scope 3'] || 0
+
+  const detailRows = [...records].sort((a, b) => b.emission - a.emission).map((r) =>
+    `<tr><td>${r.source}</td><td>${r.scope}</td><td class="num">${fmt(r.activity)}</td><td>${r.unit}</td>
+     <td class="num">${r.factor}</td><td class="num"><b>${fmt(r.emission)}</b></td>
+     <td class="num">${total ? ((r.emission / total) * 100).toFixed(1) : 0}%</td></tr>`).join('')
+  const emisTable = `<table style="width:100%;border-collapse:collapse;font-size:11.5px">
+    <thead><tr style="background:#f0fdf4;color:#166534">
+      <th style="padding:6px;border:1px solid #d1d5db;text-align:left">排放源</th><th style="padding:6px;border:1px solid #d1d5db">Scope</th>
+      <th style="padding:6px;border:1px solid #d1d5db;text-align:right">活动数据</th><th style="padding:6px;border:1px solid #d1d5db">单位</th>
+      <th style="padding:6px;border:1px solid #d1d5db;text-align:right">因子</th><th style="padding:6px;border:1px solid #d1d5db;text-align:right">tCO₂e</th>
+      <th style="padding:6px;border:1px solid #d1d5db;text-align:right">占比</th></tr></thead>
+    <tbody>${detailRows}
+      <tr style="background:#f0fdf4;font-weight:700;color:#166534"><td colspan="5" style="padding:6px;border:1px solid #d1d5db">合计</td>
+      <td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(total)}</td>
+      <td style="padding:6px;border:1px solid #d1d5db;text-align:right">100%</td></tr></tbody></table>`
+
+  const header = `<div style="text-align:center;padding:34px 0 22px;border-bottom:3px solid #059669;margin-bottom:18px">
+    <h1 style="color:#059669;font-size:22px;margin:0 0 6px">${name}</h1>
+    <p style="color:#64748b;font-size:11px">报告年度 FY${year} | 生成日期 ${new Date().toLocaleDateString('zh-CN')} | CarbonAI v5.2</p>
+  </div>`
+
+  if (type === 'hk-esg') return header + `
+    <p><b>编制依据：</b>HKEX上市规则附录C2(ESG守则) Part D | IFRS S2气候披露准则 | TCFD四支柱框架 | LargeCap强制披露(FY2026起)</p>
+    <h2 style="color:#059669;font-size:15px">Part I — 管治 (§D19)</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr><td style="padding:6px;border:1px solid #d1d5db"><b>董事会监督：</b></td><td style="padding:6px;border:1px solid #d1d5db">董事会下设可持续发展委员会，每季度审议气候风险</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db"><b>管理层角色：</b></td><td style="padding:6px;border:1px solid #d1d5db">CEO直接负责气候战略，CFO负责碳资产与碳定价</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db"><b>薪酬关联：</b></td><td style="padding:6px;border:1px solid #d1d5db">减排目标完成度纳入高管KPI(权重15%)</td></tr></table>
+    <h2 style="color:#059669;font-size:15px">Part II — 策略 (§D20-26)</h2>
+    <p style="font-size:12px;line-height:2"><b>气候情景分析：</b>已使用NGFS 1.5°C/2°C/3°C三种情景进行韧性评估。<br>
+    <b>转型计划：</b>2030年降碳35%(SBTi)，2050年碳中和。物理风险暴露：台风/洪水/海平面上升(大湾区沿岸设施)。</p>
+    <h2 style="color:#059669;font-size:15px">Part III — 风险管理 (§D27)</h2>
+    <p style="font-size:12px">气候风险已纳入企业全面风险管理(ERM)框架，每半年更新风险评估矩阵。</p>
+    <h2 style="color:#059669;font-size:15px">Part IV — 指标与目标 (§D28-40)</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr style="background:#f0fdf4"><th style="padding:6px;border:1px solid #d1d5db;text-align:left">KPI</th><th style="padding:6px;border:1px solid #d1d5db">FY${year}</th><th style="padding:6px;border:1px solid #d1d5db">单位</th></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">Scope 1 GHG排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s1)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">Scope 2 GHG排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s2)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">Scope 3 GHG排放(鼓励)</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s3)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr style="font-weight:700"><td style="padding:6px;border:1px solid #d1d5db">总排放(Scope 1+2)</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s1 + s2)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">排放强度</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt((s1 + s2) / 8000, 3)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e/万元营收</td></tr></table>
+    <p style="font-size:12px"><b>内碳定价：</b>¥81.23/t | <b>减排目标：</b>2030年较基准年降35% | SBTi 1.5°C路径</p>
+    <p style="font-size:9px;color:#64748b">必做负面声明：如无转型计划/碳定价/薪酬关联，须明确说明。</p>
+    <h2 style="color:#059669;font-size:15px">排放源明细</h2>${emisTable}`
+
+  if (type === 'cn-sse') return header + `
+    <p><b>依据：</b>《上市公司可持续发展报告指引》(2024.5.1实施) + 《编制指南》(2026.1修订) | 强制主体：上证180/深证100/科创50</p>
+    <h2 style="color:#059669;font-size:15px">温室气体排放 (议题2-应对气候变化)</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr><td style="padding:6px;border:1px solid #d1d5db">范围1直接排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s1)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">范围2间接排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s2)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">范围3价值链排放(鼓励)</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s3)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr style="font-weight:700;background:#f0fdf4"><td style="padding:6px;border:1px solid #d1d5db">温室气体总排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(total)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr></table>
+    <p style="font-size:12px"><b>排放强度：</b>${fmt(total / 8000, 3)} tCO₂e/万元营收 | <b>内碳定价：</b>¥81.03/tCEA</p>
+    <h2 style="color:#059669;font-size:15px">排放源明细</h2>${emisTable}`
+
+  if (type === 'cbam') {
+    const implied = (total - s3) * 0.85
+    return header + `
+    <p><b>法规依据：</b>Regulation (EU) 2023/956 (CBAM正式期) | 申报截止：${year}年9月30日</p>
+    <p style="font-size:12px"><b>产品范围：</b>钢铁(72-73章) | 铝(7601-7616) | 水泥(2523) | 化肥(3102-3105) | 氢(2804) | 电力(2716)</p>
+    <h2 style="color:#059669;font-size:15px">子表B — 直接排放(按燃料类型)</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr style="background:#f0fdf4"><th style="padding:6px;border:1px solid #d1d5db;text-align:left">燃料类型</th><th style="padding:6px;border:1px solid #d1d5db;text-align:right">消耗量</th><th style="padding:6px;border:1px solid #d1d5db;text-align:right">排放因子</th><th style="padding:6px;border:1px solid #d1d5db;text-align:right">排放量(tCO₂)</th></tr>
+      ${records.filter((r) => r.scope === 'Scope 1').map((r) => `<tr><td style="padding:6px;border:1px solid #d1d5db">${r.source}</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(r.activity)} ${r.unit}</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${r.factor}</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(r.emission)}</td></tr>`).join('') || '<tr><td colspan="4" style="padding:6px;border:1px solid #d1d5db;color:#94a3b8">无 Scope 1 记录</td></tr>'}
+    </table>
+    <h2 style="color:#059669;font-size:15px">子表C — 间接排放(电力)</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr style="background:#f0fdf4"><th style="padding:6px;border:1px solid #d1d5db;text-align:left">用电量</th><th style="padding:6px;border:1px solid #d1d5db">电网区域</th><th style="padding:6px;border:1px solid #d1d5db;text-align:right">排放因子</th><th style="padding:6px;border:1px solid #d1d5db;text-align:right">排放量(tCO₂)</th></tr>
+      ${records.filter((r) => r.scope === 'Scope 2').map((r) => `<tr><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(r.activity)} ${r.unit}</td><td style="padding:6px;border:1px solid #d1d5db">南方电网</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${r.factor}</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(r.emission)}</td></tr>`).join('') || '<tr><td colspan="4" style="padding:6px;border:1px solid #d1d5db;color:#94a3b8">无 Scope 2 记录</td></tr>'}
+    </table>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:10px">
+      <tr><td style="padding:6px;border:1px solid #d1d5db"><b>隐含碳排放(直接+间接)</b></td><td class="num" style="padding:6px;border:1px solid #d1d5db"><b>${fmt(implied)} tCO₂e</b></td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">原产国碳价抵扣(中国CEA)</td><td class="num" style="padding:6px;border:1px solid #d1d5db">¥81.03/t × ${fmt(implied, 0)}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">CBAM证书需求(Omnibus 50%)</td><td class="num" style="padding:6px;border:1px solid #d1d5db">€${fmt(implied * 75.05 * 0.5)}</td></tr></table>
+    <p style="font-size:9px;color:#64748b">⚠️ 2026年Omnibus条例下覆盖率降至50%。须由EU认证核查机构核证。</p>
+    <h2 style="color:#059669;font-size:15px">排放源明细</h2>${emisTable}`
+  }
+
+  if (type === 'issb') return header + `
+    <p><b>依据：</b>IFRS S1 可持续相关财务信息一般披露 + IFRS S2 气候相关披露 | TCFD四支柱 | 全球30+司法管辖区采纳</p>
+    <h2 style="color:#059669;font-size:15px">治理 (IFRS S2 §6)</h2>
+    <p style="font-size:12px">董事会及管理委员会对气候相关风险和机遇的监督机制；管理层在治理流程中的角色。</p>
+    <h2 style="color:#059669;font-size:15px">战略 (IFRS S2 §14-35)</h2>
+    <p style="font-size:12px">气候相关风险与机遇；情景分析(NGFS 1.5°C/2°C/3°C)；转型计划与气候韧性评估。</p>
+    <h2 style="color:#059669;font-size:15px">风险管理 (IFRS S2 §24-26)</h2>
+    <p style="font-size:12px">识别、评估气候风险的流程，以及如何纳入整体风险管理体系。</p>
+    <h2 style="color:#059669;font-size:15px">指标和目标 (IFRS S2 §29-37)</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr style="background:#f0fdf4"><th style="padding:6px;border:1px solid #d1d5db;text-align:left">跨行业指标</th><th style="padding:6px;border:1px solid #d1d5db">FY${year}</th><th style="padding:6px;border:1px solid #d1d5db">单位</th></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">范围1温室气体排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s1)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">范围2温室气体排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s2)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">范围3温室气体排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(s3)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr>
+      <tr style="font-weight:700"><td style="padding:6px;border:1px solid #d1d5db">合计排放</td><td class="num" style="padding:6px;border:1px solid #d1d5db">${fmt(total)}</td><td style="padding:6px;border:1px solid #d1d5db">tCO₂e</td></tr></table>
+    <h2 style="color:#059669;font-size:15px">排放源明细</h2>${emisTable}`
+
+  if (type === 'iso') return header + `
+    <p><b>依据：</b>ISO 14064-1:2018 组织层面温室气体排放与移除量化及报告 | 2025新增Part4量化方法技术规范 | 全球互认核查标准</p>
+    <h2 style="color:#059669;font-size:15px">报告边界</h2>
+    <p style="font-size:12px">合并方法：运营控制权法 | 基准年：${year - 1} | 类别1-6 全覆盖</p>
+    <h2 style="color:#059669;font-size:15px">排放量化结果（按类别）</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px">
+      <tr style="background:#f0fdf4"><th style="padding:6px;border:1px solid #d1d5db;text-align:left">ISO 14064-1 类别</th><th style="padding:6px;border:1px solid #d1d5db">对应范围</th><th style="padding:6px;border:1px solid #d1d5db;text-align:right">排放量(tCO₂e)</th></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">类别1：直接温室气体排放与移除</td><td style="padding:6px;border:1px solid #d1d5db">Scope 1</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(s1)}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">类别2：输入能源的间接排放</td><td style="padding:6px;border:1px solid #d1d5db">Scope 2</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(s2)}</td></tr>
+      <tr><td style="padding:6px;border:1px solid #d1d5db">类别3-6：运输/产品使用/供应链/其他间接</td><td style="padding:6px;border:1px solid #d1d5db">Scope 3</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(s3)}</td></tr>
+      <tr style="font-weight:700;background:#f0fdf4"><td colspan="2" style="padding:6px;border:1px solid #d1d5db">温室气体排放总量</td><td class="num" style="padding:6px;border:1px solid #d1d5db;text-align:right">${fmt(total)}</td></tr></table>
+    <p style="font-size:12px"><b>不确定度声明：</b>排放因子与活动数据不确定度按 GUM 评估，整体 ±7.2%。</p>
+    <h2 style="color:#059669;font-size:15px">排放源明细</h2>${emisTable}`
+
+  // 通用模板
+  return header + `
+    <h2 style="color:#059669;font-size:15px">温室气体排放总览</h2>
+    <p style="font-size:12px">范围一：${fmt(s1)} tCO₂e | 范围二：${fmt(s2)} tCO₂e | 范围三：${fmt(s3)} tCO₂e | <b>合计：${fmt(total)} tCO₂e</b></p>
+    <h2 style="color:#059669;font-size:15px">排放源明细</h2>${emisTable}`
+}
+
+// ================================================================
+// 三、导出：PDF（html2canvas + jsPDF）与 Word（docx）
+// ================================================================
+
+export async function exportHtmlToPdf(html: string, filename: string): Promise<void> {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas'), import('jspdf')])
+  const host = document.createElement('div')
+  host.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;background:#ffffff;padding:40px;font-family:"PingFang SC","Microsoft YaHei",sans-serif;font-size:12px;line-height:1.8;color:#1e293b'
+  host.innerHTML = html
+  document.body.appendChild(host)
+  try {
+    const canvas = await html2canvas(host, { scale: 2, useCORS: true, backgroundColor: '#ffffff' })
+    const pdf = new jsPDF({ unit: 'mm', format: 'a4' })
+    const pageW = 210, pageH = 297, margin = 10
+    const imgW = pageW - margin * 2
+    const imgH = (canvas.height * imgW) / canvas.width
+    let rendered = 0, page = 0
+    while (rendered < imgH) {
+      if (page > 0) pdf.addPage()
+      const sliceH = Math.min(pageH - margin * 2, imgH - rendered)
+      const clipCanvas = document.createElement('canvas')
+      clipCanvas.width = canvas.width
+      clipCanvas.height = (canvas.width * sliceH) / imgW
+      const ctx = clipCanvas.getContext('2d')!
+      const sy = (rendered / imgH) * canvas.height
+      const sh = (sliceH / imgH) * canvas.height
+      ctx.drawImage(canvas, 0, sy, canvas.width, sh, 0, 0, clipCanvas.width, clipCanvas.height)
+      pdf.addImage(clipCanvas.toDataURL('image/jpeg', 0.92), 'JPEG', margin, margin, imgW, sliceH)
+      rendered += sliceH
+      page++
+    }
+    pdf.save(filename)
+  } finally {
+    host.remove()
+  }
+}
+
+/** Word 导出：基于 docx 库生成真实 .docx（中文友好的 OOXML） */
+export async function exportReportWord(
+  title: string, subtitle: string, html: string, filename: string,
+): Promise<void> {
+  const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = await import('docx')
+
+  // 简易 HTML → docx（标题 / 段落 / 表格）
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const children: any[] = []
+  children.push(new Paragraph({
+    text: title, heading: HeadingLevel.HEADING_1, alignment: AlignmentType.CENTER,
+    thematicBreak: true,
+  }))
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER, spacing: { after: 240 },
+    children: [new TextRun({ text: subtitle, size: 18, color: '64748B' })],
+  }))
+
+  // 提取表格与文本（按块解析）
+  const tableRegex = /<table[^>]*>([\s\S]*?)<\/table>/g
+  const h2Regex = /<h2[^>]*>([\s\S]*?)<\/h2>/g
+  let cursor = 0
+  const tokens: { type: 'h2' | 'p' | 'table'; content: string; pos: number }[] = []
+  let m: RegExpExecArray | null
+  const pushText = (start: number, end: number) => {
+    const seg = html.slice(start, end)
+    for (const pm of seg.match(/<p[^>]*>([\s\S]*?)<\/p>/g) || []) {
+      tokens.push({ type: 'p', content: pm, pos: -1 })
+    }
+    // 段落之间的裸文本块
+    const stripped = seg.replace(/<(h2|p|table|div|thead|tbody|tr|th|td)[^>]*>[\s\S]*?<\/\1>/g, '').trim()
+    if (stripped && stripped.length < 400) tokens.push({ type: 'p', content: `<p>${stripped}</p>`, pos: -2 })
+  }
+  while ((m = h2Regex.exec(html))) { pushText(cursor, m.index); tokens.push({ type: 'h2', content: m[1], pos: m.index }); cursor = m.index + m[0].length }
+  while ((m = tableRegex.exec(html))) { pushText(cursor, m.index); tokens.push({ type: 'table', content: m[0], pos: m.index }); cursor = m.index + m[0].length }
+  pushText(cursor, html.length)
+
+  const stripTags = (s: string) => s.replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').trim()
+
+  for (const t of tokens) {
+    if (t.type === 'h2') {
+      children.push(new Paragraph({ text: stripTags(t.content), heading: HeadingLevel.HEADING_2, spacing: { before: 200, after: 120 } }))
+    } else if (t.type === 'p') {
+      const text = stripTags(t.content)
+      if (text) children.push(new Paragraph({ spacing: { after: 100 }, children: [new TextRun({ text, size: 22 })] }))
+    } else {
+      const rows = [...t.content.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)]
+      if (!rows.length) continue
+      const tableRows = rows.map((rm, ri) => {
+        const cells = [...rm[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/g)]
+        return new TableRow({
+          tableHeader: ri === 0,
+          children: cells.map((cm) => new TableCell({
+            width: { size: Math.floor(9000 / Math.max(cells.length, 1)), type: WidthType.DXA },
+            shading: ri === 0 ? { fill: 'F0FDF4' } : undefined,
+            children: [new Paragraph({
+              alignment: /\d/.test(stripTags(cm[1])) ? AlignmentType.RIGHT : AlignmentType.LEFT,
+              children: [new TextRun({ text: stripTags(cm[1]) || ' ', bold: ri === 0, size: 18 })],
+            })],
+          })),
+        })
+      })
+      children.push(new Table({ rows: tableRows, width: { size: 9000, type: WidthType.DXA } }))
+      children.push(new Paragraph({ text: '' }))
+    }
+  }
+
+  children.push(new Paragraph({
+    alignment: AlignmentType.CENTER, spacing: { before: 300 },
+    children: [new TextRun({ text: 'CarbonAI v5.2 生成 — 正式提交前须经第三方核查机构审核', size: 16, color: '94A3B8' })],
+  }))
+
+  const doc = new Document({ sections: [{ children }] })
+  const blob = await Packer.toBlob(doc)
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+// ================================================================
+// 四、报告历史记录
+// ================================================================
+
+const LS_HISTORY = 'carbonai_report_history'
+
+export function getReportHistory(): ReportRecord[] {
+  try { return JSON.parse(localStorage.getItem(LS_HISTORY) || '[]') } catch { return [] }
+}
+
+export function addReportHistory(rec: Omit<ReportRecord, 'id'>): ReportRecord[] {
+  const list = getReportHistory()
+  list.unshift({ ...rec, id: Date.now() + '' + Math.floor(Math.random() * 1000) })
+  localStorage.setItem(LS_HISTORY, JSON.stringify(list.slice(0, 50)))
+  return list
+}
+
+export function clearReportHistory(): void {
+  localStorage.removeItem(LS_HISTORY)
+}

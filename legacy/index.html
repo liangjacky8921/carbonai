@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>CarbonAI v5.2 · 时空智能碳管理平台</title>
+<meta name="description" content="CarbonAI — 时空智能碳管理平台。碳核算·GIS遥感·轨迹核算·网格监测·因子溯源·碳资产·产品碳足迹·合规报告·HKEX导入导出·土壤高光谱SOC·污水厂运维">
+<link rel="stylesheet" href="css/main.css">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.6.0/fonts/remixicon.min.css" rel="stylesheet">
+<script src="js/lazy-loader.js"></script>
+<script src="js/api.js"></script>
+<script src="js/core.js"></script>
+<script src="js/accounting.js"></script>
+<script src="js/realtime.js"></script>
+<!-- 内嵌数据 (由 build_data.py 生成) -->
+<script src="js/data-soil_spectral.js"></script>
+<script src="js/data-sewage.js"></script>
+<!-- Heavy modules loaded on-demand via LazyLoader -->
+<script src="js/dashboard.js" defer></script>
+<script src="js/report.js" defer></script>
+<script src="js/gis.js" defer></script>
+<script src="js/trajectory.js" defer></script>
+<script src="js/grid.js" defer></script>
+<script src="js/factors.js" defer></script>
+<script src="js/asset.js" defer></script>
+<script src="js/pcf.js" defer></script>
+<script src="js/ai.js" defer></script>
+<script src="js/tools.js" defer></script>
+<script src="js/soil.js" defer></script>
+<script src="js/sewage.js" defer></script>
+</head>
+<body>
+
+<!-- Background Decorations -->
+<div class="bg-decor">
+  <div class="orb"></div><div class="orb"></div><div class="orb"></div><div class="orb"></div>
+  <div class="bg-grid"></div>
+  <svg class="bg-icon" viewBox="0 0 100 100"><path class="leaf-path" d="M50 95 C20 60 10 30 30 10 C50 -5 70 15 50 40 C65 20 85 15 80 5 C75 0 65 5 55 20 C60 35 70 55 50 95Z"/></svg>
+  <svg class="bg-icon" viewBox="0 0 120 60">
+    <circle class="c-atom" cx="25" cy="30" r="10"/><text x="20" y="34" font-size="9" fill="#059669" opacity="0.06">O</text>
+    <circle class="c-atom" cx="60" cy="30" r="8"/><text x="56" y="33" font-size="8" fill="#059669" opacity="0.06">C</text>
+    <circle class="c-atom" cx="95" cy="30" r="10"/><text x="90" y="34" font-size="9" fill="#059669" opacity="0.06">O</text>
+    <line class="c-molecule" x1="33" y1="26" x2="54" y2="30"/><line class="c-molecule" x1="66" y1="30" x2="87" y2="26"/>
+  </svg>
+  <svg class="bg-icon" viewBox="0 0 100 100">
+    <ellipse class="earth-line" cx="50" cy="50" rx="40" ry="40"/>
+    <ellipse class="earth-line" cx="50" cy="50" rx="40" ry="15"/>
+    <ellipse class="earth-line" cx="50" cy="50" rx="15" ry="40"/>
+    <line class="earth-line" x1="10" y1="50" x2="90" y2="50"/>
+    <path class="c-wave" d="M15 35 Q30 25 50 35 Q70 45 85 35"/>
+    <path class="c-wave" d="M15 65 Q30 55 50 65 Q70 75 85 65"/>
+  </svg>
+  <svg class="bg-icon" viewBox="0 0 100 100">
+    <rect x="48" y="50" width="4" height="40" fill="#94a3b8" opacity="0.04"/>
+    <g class="turbine-blade"><ellipse cx="50" cy="35" rx="5" ry="18" fill="#94a3b8" opacity="0.04"/></g>
+  </svg>
+  <svg class="bg-icon" viewBox="0 0 160 80">
+    <path class="c-wave" d="M5 50 L20 40 L25 42 L35 25 L40 27 L50 15 L55 17 L65 35 L70 33 L80 10 L85 12 L95 30 L100 28 L110 20 L115 22 L125 45 L130 43 L140 28 L155 30"/>
+  </svg>
+  <svg class="bg-icon" viewBox="0 0 150 130">
+    <polygon class="c-hex" points="25,5 45,16 45,38 25,50 5,38 5,16"/>
+    <polygon class="c-hex" points="75,5 95,16 95,38 75,50 55,38 55,16"/>
+    <polygon class="c-hex" points="50,55 70,66 70,88 50,100 30,88 30,66"/>
+  </svg>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="logo"><div class="icon">🌱</div><div class="text">CarbonAI</div><span style="font-size:10px;color:var(--text3);font-weight:400;margin-left:2px">v5.2</span></div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <div class="conn-wrap" title="后端连接状态 — 点击配置地址">
+      <span class="conn-badge offline" id="connBadge"><i class="ri-cloud-off-line"></i> 离线模式</span>
+      <button class="conn-gear" onclick="toggleConnConfig()">⚙</button>
+    </div>
+    <button onclick="toggleDarkMode()" title="深色/浅色" style="padding:5px 8px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:14px;color:var(--text2)">🌓</button>
+    <button onclick="toggleLang()" id="langBtn" title="Switch Language" style="padding:5px 9px;border-radius:6px;border:1px solid var(--border);background:transparent;cursor:pointer;font-size:11px;color:var(--text2);font-weight:600">EN</button>
+    <button class="btn btn-outline btn-sm" id="headerLoginBtn" onclick="if(isLoggedIn){doLogout();}else{showLogin();}"><span data-i18n="login.btn">登录</span></button>
+  </div>
+</div>
+
+<!-- 后端连接配置条 -->
+<div class="conn-config hidden" id="connConfig">
+  <span style="font-size:11px;color:var(--text2)">后端地址：</span>
+  <input type="text" id="apiBaseInput" placeholder="http://localhost:8000" style="flex:1;min-width:180px;font-size:11px;font-family:monospace">
+  <button class="btn btn-sm btn-primary" onclick="applyConnConfig()">连接</button>
+  <button class="btn btn-sm btn-outline" onclick="resetConnConfig()">重置</button>
+  <span style="font-size:9px;color:var(--text3)">内网穿透/阿里云填公网地址，如 https://xxx.trycloudflare.com</span>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Tab Navigation -->
+<div class="tab-nav" id="tabNav">
+  <button class="tab-btn active" data-tab="dashboard"><i class="ri-dashboard-line"></i> <span data-i18n="tab.dashboard">数据大屏</span></button>
+  <button class="tab-btn" data-tab="accounting"><i class="ri-calculator-line"></i> <span data-i18n="tab.accounting">碳核算</span><span class="badge">核心</span></button>
+  <button class="tab-btn" data-tab="history"><i class="ri-history-line"></i> <span data-i18n="tab.history">历史对比</span></button>
+  <button class="tab-btn" data-tab="gis"><i class="ri-satellite-line"></i> <span data-i18n="tab.gis">GIS遥感</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="trajectory"><i class="ri-route-line"></i> <span data-i18n="tab.trajectory">轨迹核算</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="grid"><i class="ri-stack-line"></i> <span data-i18n="tab.grid">网格监测</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="factorlib"><i class="ri-database-2-line"></i> <span data-i18n="tab.factorlib">因子库溯源</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="soil"><i class="ri-scanner-line"></i> <span data-i18n="tab.soil">土壤高光谱SOC</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="sewage"><i class="ri-water-flash-line"></i> <span data-i18n="tab.sewage">污水厂运维</span><span class="badge-new">NEW</span></button>
+  <button class="tab-btn" data-tab="asset"><i class="ri-bank-line"></i> <span data-i18n="tab.asset">碳资产</span><span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="pcf"><i class="ri-git-branch-line"></i> <span data-i18n="tab.pcf">产品碳足迹</span><span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="report"><i class="ri-file-list-3-line"></i> <span data-i18n="tab.report">合规报告</span><span class="pro-badge">PRO</span></button>
+  <button class="tab-btn" data-tab="ai"><i class="ri-robot-line"></i> <span data-i18n="tab.ai">AI顾问</span></button>
+  <button class="tab-btn" data-tab="tools"><i class="ri-tools-line"></i> <span data-i18n="tab.tools">工具箱</span></button>
+  <button class="tab-btn" data-tab="news"><i class="ri-newspaper-line"></i> <span data-i18n="tab.news">资讯</span></button>
+  <button class="tab-btn" style="background:#fef3c7" onclick="window.location.href='hkex/index.html'"><i class="ri-exchange-line"></i> <span>HKEX导入导出</span><span class="badge-new">NEW</span></button>
+</div>
+
+<div class="main">
+
+<!-- ===== DASHBOARD ===== -->
+<div class="tab-panel active" id="panel-dashboard">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div class="section-title" style="margin-bottom:0"><span class="icon"><i class="ri-dashboard-line"></i></span><span data-i18n="dashboard.title">数据大屏</span></div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <span style="font-size:12px;color:var(--text2)"><span data-i18n="dashboard.year">数据年份</span>：</span>
+      <select id="globalYear" onchange="onGlobalYearChange()" style="width:auto;padding:7px 12px;border:2px solid var(--green-light);border-radius:8px;font-size:13px;font-weight:600;color:var(--green);background:var(--green-bg);cursor:pointer">
+        <option value="2026">2026年</option><option value="2025">2025年</option><option value="2024">2024年</option><option value="2023">2023年</option><option value="2022">2022年</option>
+      </select>
+    </div>
+  </div>
+  <div class="carbon-ticker" id="carbonTicker" style="background:linear-gradient(135deg,#022c22,#064e3b);border-radius:12px;padding:10px 16px;margin-bottom:14px;overflow:hidden;position:relative;display:flex;align-items:center;gap:12px">
+    <div style="background:rgba(255,255,255,.15);border-radius:8px;padding:6px 14px;flex-shrink:0;display:flex;align-items:center;gap:6px">
+      <span style="font-size:14px">📈</span>
+      <span style="color:#fff;font-size:12px;font-weight:700;white-space:nowrap">实时碳行情</span>
+    </div>
+    <div style="flex:1;overflow:hidden;position:relative;height:32px">
+      <div id="tickerContent" style="display:flex;gap:32px;white-space:nowrap;animation:tickerScroll 30s linear infinite;color:#d1fae5;font-size:12px;line-height:32px;position:absolute;top:0;left:0"></div>
+    </div>
+    <button class="btn btn-sm btn-secondary" onclick="refreshDashboardPrices()" style="flex-shrink:0;font-size:10px;padding:4px 10px;color:#d1fae5;background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.2)"><i class="ri-refresh-line"></i> 刷新</button>
+  </div>
+  <div class="stats-row" id="dashStats">
+    <div class="stat-box" style="grid-column:1/-1;padding:35px;text-align:center">
+      <div style="font-size:42px;margin-bottom:8px">📊</div>
+      <div style="font-weight:600;color:var(--text)" data-i18n="dashboard.nodata">请先在"碳核算"页面上传Excel数据</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:4px" data-i18n="dashboard.hint">支持.xlsx/.xls格式，自动识别排放源与排放因子</div>
+    </div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-funds-line"></i> CEA碳价走势 & 复旦碳价指数预测 (2026年)</h4><div style="height:280px" id="dashPriceChart"></div></div>
+    <div class="chart-box"><h4><i class="ri-pie-chart-line"></i> 区域碳市场占比</h4><div style="height:280px" id="dashMarketPie"></div></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-pie-chart-line"></i> Scope分布</h4><div style="height:250px" id="dashScope"></div></div>
+    <div class="chart-box"><h4><i class="ri-line-chart-line"></i> 排放趋势</h4><div style="height:250px" id="dashTrend"></div></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-bar-chart-line"></i> 排放源Top8</h4><div style="height:300px" id="dashTreemap"></div></div>
+    <div class="chart-box"><h4><i class="ri-alert-line"></i> 异常指标</h4><div id="dashIndicators" style="max-height:300px;overflow-y:auto;font-size:12px;color:var(--text2)">上传数据后自动分析</div></div>
+  </div>
+</div>
+
+<!-- ===== ACCOUNTING ===== -->
+<div class="tab-panel" id="panel-accounting">
+  <div class="section-title"><span class="icon"><i class="ri-calculator-line"></i></span><span data-i18n="accounting.title">碳排放核算</span></div>
+  <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+    <div class="icon">📁</div>
+    <h3 data-i18n="accounting.upload">点击上传碳排放数据 (Excel .xlsx/.xls)</h3>
+    <div class="hint" data-i18n="accounting.hint">文件格式：排放源 | 活动数据 | 单位 | Scope | 年份（可选）</div>
+  </div>
+  <input type="file" id="fileInput" accept=".xlsx,.xls" onchange="handleFile(this.files[0])" style="display:none">
+  <div class="btn-group" style="margin-top:12px">
+    <button class="btn btn-outline btn-sm" onclick="loadDemoData()"><i class="ri-download-line"></i> <span data-i18n="accounting.demo">加载演示数据</span></button>
+    <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="ri-file-download-line"></i> <span data-i18n="accounting.export">导出CSV</span></button>
+    <button class="btn btn-outline btn-sm" onclick="exportPDF()"><i class="ri-file-pdf-line"></i> <span data-i18n="accounting.pdf">导出报告PDF</span></button>
+    <button class="btn btn-danger btn-sm" onclick="clearData()"><i class="ri-delete-bin-line"></i> <span data-i18n="accounting.clear">清空数据</span></button>
+  </div>
+  <div class="table-wrap hidden" id="results"><h4>核算结果明细</h4><div id="resultsTable"></div></div>
+</div>
+
+<!-- ===== HISTORY ===== -->
+<div class="tab-panel" id="panel-history">
+  <div class="section-title"><span class="icon"><i class="ri-history-line"></i></span>历史数据对比</div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-bar-chart-line"></i> 各年份排放对比</h4><div style="height:300px" id="historyBar"></div></div>
+    <div class="chart-box"><h4><i class="ri-line-chart-line"></i> Scope趋势</h4><div style="height:300px" id="historyScope"></div></div>
+  </div>
+  <div class="table-wrap" id="historyTable"></div>
+</div>
+
+<!-- ===== GIS ===== -->
+<div class="tab-panel" id="panel-gis">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+    <div class="section-title" style="margin-bottom:0"><span class="icon"><i class="ri-satellite-line"></i></span>轻量化GIS · 碳源热力图 · GBA区域看板</div>
+    <div class="map-mode-toggle" id="gisModeToggle">
+      <button class="map-mode-btn active" onclick="switchGISMode('forest')">🌳 林地碳汇</button>
+      <button class="map-mode-btn" onclick="switchGISMode('heatmap')">🔥 碳源热力图</button>
+      <button class="map-mode-btn" onclick="switchGISMode('gba')">🏙️ GBA看板</button>
+    </div>
+  </div>
+  <div id="gisPanelForest">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="upload-zone" id="gisUploadZone" style="margin-bottom:0">
+        <div class="icon">🗺️</div><h3>上传林地边界文件</h3><div class="hint">支持 GeoJSON (.geojson) 或 Shapefile (.zip)</div>
+        <input type="file" id="gisFileInput" accept=".geojson,.json,.zip" onchange="handleGISFile(this.files[0])" style="display:none">
+      </div>
+      <div style="background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--border)">
+        <h4 style="font-size:13px;margin-bottom:8px"><i class="ri-focus-3-line"></i> 或手动圈定边界</h4>
+        <button class="btn btn-outline btn-sm" id="drawPolygonBtn" onclick="toggleDrawMode()"><i class="ri-pencil-line"></i> 开始绘制</button>
+        <button class="btn btn-outline btn-sm" onclick="clearGIS()"><i class="ri-delete-back-line"></i> 清除</button>
+      </div>
+    </div>
+  </div>
+  <div id="gisPanelHeatmap" class="hidden">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="upload-zone" id="heatmapUploadZone" style="margin-bottom:0">
+        <div class="icon">📊</div><h3>上传碳排放点位数据 (Excel)</h3><div class="hint">Excel格式：企业名称 | 纬度(lat) | 经度(lon) | 排放量(tCO₂e) | 所属行业</div>
+        <input type="file" id="heatmapFileInput" accept=".xlsx,.xls" onchange="handleHeatmapFile(this.files[0])" style="display:none">
+      </div>
+      <div style="background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--border)">
+        <h4 style="font-size:13px;margin-bottom:8px"><i class="ri-settings-3-line"></i> 热力图设置</h4>
+        <div class="form-row">
+          <div class="form-group"><label>热力半径 (m)</label><input type="number" id="heatmapRadius" value="800" onchange="refreshHeatmap()"></div>
+          <div class="form-group"><label>模糊度</label><input type="number" id="heatmapBlur" value="15" onchange="refreshHeatmap()" step="1"></div>
+        </div>
+        <button class="btn btn-outline btn-sm" onclick="loadHeatmapDemo()"><i class="ri-download-line"></i> 加载演示数据</button>
+        <button class="btn btn-danger btn-sm" onclick="clearHeatmap()"><i class="ri-delete-back-line"></i> 清除</button>
+      </div>
+    </div>
+  </div>
+  <div id="gisPanelGBA" class="hidden">
+    <div style="font-size:12px;color:var(--text2);margin-bottom:10px">🏙️ 粤港澳大湾区11城碳排放联动看板 — 点击地图城市标记查看该市碳数据</div>
+  </div>
+  <div id="gisMapArea" style="position:relative">
+    <div class="map-container large" id="gisMap"></div>
+    <div id="gbaSidebar" class="hidden" style="position:absolute;top:0;right:0;width:320px;height:100%;background:var(--card);border-left:1px solid var(--border);overflow-y:auto;padding:14px;z-index:1000;font-size:12px;box-shadow:-2px 0 10px rgba(0,0,0,.05)"></div>
+  </div>
+  <div id="gisLegendForest" class="legend-bar"><span style="font-weight:600">NDVI 植被指数：</span><span class="legend-item"><span class="legend-color" style="background:#8B0000"></span> <0.1 裸地</span><span class="legend-item"><span class="legend-color" style="background:#FFA500"></span> 0.1-0.3 稀疏</span><span class="legend-item"><span class="legend-color" style="background:#90EE90"></span> 0.3-0.6 中等</span><span class="legend-item"><span class="legend-color" style="background:#006400"></span> >0.6 茂密</span></div>
+  <div id="gisLegendHeatmap" class="legend-bar hidden"><span style="font-weight:600">排放强度：</span><span class="legend-item"><span class="legend-color" style="background:#22c55e"></span> 低</span><span class="legend-item"><span class="legend-color" style="background:#eab308"></span> 中</span><span class="legend-item"><span class="legend-color" style="background:#f97316"></span> 高</span><span class="legend-item"><span class="legend-color" style="background:#ef4444"></span> 极高</span></div>
+  <div id="gisResults" class="hidden"><div class="stats-row" id="gisStats"></div><div class="chart-row"><div class="chart-box"><h4><i class="ri-line-chart-line"></i> NDVI 时序变化</h4><div style="height:250px"><canvas id="ndviChart"></canvas></div></div><div class="chart-box"><h4><i class="ri-bar-chart-line"></i> 碳储量与碳汇量趋势</h4><div style="height:250px"><canvas id="biomassChart"></canvas></div></div></div><div class="table-wrap"><h4>林地碳汇盘查明细</h4><div id="gisTable"></div></div></div>
+</div>
+
+<!-- ===== TRAJECTORY ===== -->
+<div class="tab-panel" id="panel-trajectory">
+  <div class="section-title"><span class="icon"><i class="ri-route-line"></i></span>GIS轨迹核算 · 吨·公里碳足迹 (Scope 3审计)</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div>
+      <div class="upload-zone" id="trajUploadZone" onclick="document.getElementById('trajFileInput').click()" style="margin-bottom:14px">
+        <div class="icon">🚛</div><h3>上传车队GPS/北斗轨迹数据</h3><div class="hint">CSV格式：timestamp,lat,lon,speed(km/h),load(t),vehicle_type,fuel_type</div>
+      </div>
+      <input type="file" id="trajFileInput" accept=".csv,.json,.gpx" onchange="handleTrajFile(this.files[0])" style="display:none">
+      <button class="btn btn-outline btn-sm" onclick="loadTrajDemo()"><i class="ri-download-line"></i> 加载演示轨迹</button>
+    </div>
+    <div style="background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--border)">
+      <h4 style="font-size:13px;margin-bottom:8px"><i class="ri-settings-3-line"></i> 核算参数</h4>
+      <div class="form-row">
+        <div class="form-group"><label>货物类型</label><select id="cargoType"><option>普通货物</option><option>冷链货物</option><option>危险品</option><option>大宗散货</option></select></div>
+        <div class="form-group"><label>排放标准</label><select id="emitStandard"><option>GLEC 3.0框架</option><option>ISO 14083:2023</option><option>中国道路运输碳核算指南</option></select></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="calculateTrajCarbon()"><i class="ri-calculator-line"></i> 执行轨迹碳核算</button>
+    </div>
+  </div>
+  <div class="map-container large" id="trajMap"></div>
+  <div id="trajResults" class="hidden"><div class="route-summary" id="trajSummary"></div><div class="chart-row"><div class="chart-box"><h4><i class="ri-line-chart-line"></i> 路段碳排放分布</h4><div style="height:250px"><canvas id="segmentCarbonChart"></canvas></div></div><div class="chart-box"><h4><i class="ri-bar-chart-line"></i> 各车型单位排放对比</h4><div style="height:250px"><canvas id="vehicleCompareChart"></canvas></div></div></div><div class="table-wrap"><h4>轨迹碳核算明细</h4><div id="trajTable"></div></div></div>
+</div>
+
+<!-- ===== GRID ===== -->
+<div class="tab-panel" id="panel-grid">
+  <div class="section-title"><span class="icon"><i class="ri-stack-line"></i></span>网格化碳排放分布 · 双碳网格化执法监测</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div>
+      <div class="form-row">
+        <div class="form-group"><label>监测区域</label><select id="gridRegion" onchange="refreshGrid()">
+          <optgroup label="深圳市"><option value="sz_gm">深圳市光明区</option><option value="sz_ns">深圳市南山区</option><option value="sz_ft">深圳市福田区</option><option value="sz_ba">深圳市宝安区</option></optgroup>
+          <optgroup label="广州市"><option value="gz_hp">广州市黄埔区</option><option value="gz_th">广州市天河区</option><option value="gz_hz">广州市海珠区</option><option value="gz_by">广州市白云区</option></optgroup>
+          <optgroup label="惠州市"><option value="hz_hc">惠州市惠城区</option><option value="hz_zk">惠州市仲恺高新区</option><option value="hz_hy">惠州市惠阳区(大亚湾)</option></optgroup>
+          <optgroup label="东莞市"><option value="dg_ssl">东莞市松山湖</option></optgroup>
+          <optgroup label="香港"><option value="hk_yj">油尖旺区</option><option value="hk_xjl">西九龙</option><option value="hk_central">中环</option></optgroup>
+        </select></div>
+        <div class="form-group"><label>时间窗口</label><select id="gridTime" onchange="refreshGrid()"><option value="realtime">实时监测</option><option value="1h">近1小时</option><option value="24h">近24小时</option><option value="7d">近7天</option></select></div>
+      </div>
+    </div>
+    <div style="background:var(--card);border-radius:var(--radius);padding:14px;border:1px solid var(--border)">
+      <h4 style="font-size:13px;margin-bottom:6px"><i class="ri-alarm-warning-line"></i> 预警阈值 (tCO₂/km²·h)</h4>
+      <div class="form-row"><div class="form-group"><label>黄色预警</label><input type="number" id="warnYellow" value="5"></div><div class="form-group"><label>红色预警</label><input type="number" id="warnRed" value="15"></div></div>
+      <button class="btn btn-primary btn-sm" onclick="refreshGrid()"><i class="ri-refresh-line"></i> 刷新监测</button>
+    </div>
+  </div>
+  <div class="map-container large" id="gridMap"></div>
+  <div class="chart-row"><div class="chart-box"><h4><i class="ri-heat-map-line"></i> 排放热力分布</h4><div style="height:300px" id="gridHeatmap"></div></div><div class="chart-box"><h4><i class="ri-alert-line"></i> 预警事件日志</h4><div id="gridAlerts" style="max-height:300px;overflow-y:auto;font-size:11px"></div></div></div>
+</div>
+
+<!-- ===== FACTOR LIBRARY ===== -->
+<div class="tab-panel" id="panel-factorlib">
+  <div class="section-title"><span class="icon"><i class="ri-database-2-line"></i></span>排放因子库 · 强溯源与空间化 · 满足DQR核查要求</div>
+  <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+    <input type="text" id="factorSearch" data-i18n-placeholder="factor.search_placeholder" placeholder="搜索排放因子（能源品种/行业/地区）..." style="width:260px;margin-bottom:0" oninput="filterFactors()">
+    <select id="factorSource" onchange="filterFactors()" style="width:160px;margin-bottom:0">
+      <option value="all">全部来源</option><option value="ecoinvent">Ecoinvent 3.9</option><option value="ipcc">IPCC 2006/2019</option><option value="china_grid">中国电网2023</option><option value="ndefc">国家发改委气候司</option>
+    </select>
+    <select id="factorRegion" onchange="filterFactors()" style="width:160px;margin-bottom:0">
+      <option value="all">全部地区</option><option value="south">南方电网</option><option value="north">华北电网</option><option value="east">华东电网</option><option value="central">华中电网</option>
+    </select>
+    <button class="btn btn-outline btn-sm" onclick="exportFactorsCSV()"><i class="ri-file-download-line"></i> 导出因子表(含溯源)</button>
+    <button class="btn btn-outline btn-sm" onclick="compareFactors()"><i class="ri-scales-line"></i> 区域因子对比</button>
+  </div>
+  <div class="stats-row" id="factorStats"></div>
+  <div class="chart-row"><div class="chart-box"><h4><i class="ri-bar-chart-line"></i> 各电网排放因子对比</h4><div style="height:280px"><canvas id="gridFactorChart"></canvas></div></div><div class="chart-box"><h4><i class="ri-pie-chart-line"></i> 因子来源分布</h4><div style="height:280px"><canvas id="factorSourceChart"></canvas></div></div></div>
+  <div class="table-wrap"><h4>排放因子数据库（可溯源 · 满足核查机构DQR要求）</h4><div id="factorTable"></div></div>
+  <div id="factorComparePanel" class="factor-detail hidden"><h4 style="margin-bottom:10px"><i class="ri-scales-line"></i> 区域排放因子对比</h4><div id="factorCompareContent"></div></div>
+</div>
+
+<!-- ===== SOIL SPECTRAL SOC ===== -->
+<div class="tab-panel" id="panel-soil">
+  <div class="section-title"><span class="icon"><i class="ri-scanner-line"></i></span>土壤高光谱 · SOC 有机碳反演建模</div>
+  <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px">数据源：土壤光谱数据处理结果_第三批.xlsx · 46 样本 × 256 波段 (396.2–1035.9 nm) · SpecVIEW + ENVI 流程</div>
+  <div class="stats-row" id="soilStats"></div>
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap">
+    <label style="font-size:12px;color:var(--text2)">分组筛选：</label>
+    <select id="soilGroupSel" onchange="renderSoilSpectra(this.value)" style="width:160px;margin-bottom:0"></select>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-line-chart-line"></i> 分组均值光谱曲线</h4><div style="height:300px" id="soilSpectraChart"></div></div>
+    <div class="chart-box"><h4><i class="ri-scatter-plot-2-line"></i> PCA 主成分聚类 (无监督)</h4><div style="height:300px" id="soilPcaChart"></div></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box">
+      <h4><i class="ri-flask-line"></i> 有机质敏感光谱指数 (SOC 建模特征)</h4>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px">NDVI / ND450-750 / R750-450 等光谱指数可用于后续 SOC 反演回归的特征工程</div>
+      <div class="table-wrap" style="max-height:300px;overflow-y:auto" id="soilIndicesTable"></div>
+    </div>
+    <div class="chart-box">
+      <h4><i class="ri-database-line"></i> SOC 标签导入 + ML 建模框架</h4>
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;line-height:1.6">
+        当前数据文件不含 SOC 实测值。导入「样本, SOC」成对标签后可启动回归建模。
+        CSV 表头需含 <code>样本</code> 与 <code>SOC</code> 两列（可中文/英文）。
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="document.getElementById('socLabelFile').click()"><i class="ri-upload-line"></i> 导入 SOC 标签</button>
+        <input type="file" id="socLabelFile" accept=".csv,.xlsx,.xls" onchange="handleSocLabelFile(this.files[0])" style="display:none">
+        <button class="btn btn-primary btn-sm" onclick="runSocTrain()"><i class="ri-brain-line"></i> 检查建模可行性</button>
+      </div>
+      <div id="socLabelList" style="max-height:260px;overflow-y:auto"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== SEWAGE PLANT ===== -->
+<div class="tab-panel" id="panel-sewage">
+  <div class="section-title"><span class="icon"><i class="ri-water-flash-line"></i></span>污水厂运行维护 · 水质与能耗分析</div>
+  <div style="font-size:11px;color:var(--text3);margin:-6px 0 12px">数据源：博罗县麻陂镇坤元污水处理有限公司 运行月报表 (2022–2026) · 处理水量 / COD / 氨氮 / 总磷 / 污泥 / 用电</div>
+  <div class="stats-row" id="sewageStats"></div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-bar-chart-line"></i> 月处理水量趋势</h4><div style="height:280px" id="sewageWaterChart"></div></div>
+    <div class="chart-box"><h4><i class="ri-line-chart-line"></i> 污染物去除率 (COD / 氨氮 / 总磷)</h4><div style="height:280px" id="sewageRemovalChart"></div></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-drop-line"></i> COD 进/出水浓度对比</h4><div style="height:280px" id="sewageCodChart"></div></div>
+    <div class="chart-box"><h4><i class="ri-flashlight-line"></i> 污泥产生量与用电量</h4><div style="height:280px" id="sewageSludgeChart"></div></div>
+  </div>
+</div>
+
+<!-- ===== CARBON ASSET ===== -->
+<div class="tab-panel" id="panel-asset">
+  <div class="section-title"><span class="icon"><i class="ri-bank-line"></i></span>碳资产管理 · 配额交易与碳信用组合</div>
+  <div class="price-ticker" id="priceTicker"></div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-pie-chart-line"></i> 碳资产组合结构</h4><div id="assetPortfolio" style="height:250px"></div></div>
+    <div class="chart-box"><h4><i class="ri-funds-line"></i> CEA碳价走势 & 复旦碳价指数预测</h4><div style="height:250px"><canvas id="carbonPriceChart"></canvas></div></div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box"><h4><i class="ri-scales-line"></i> 配额盈缺分析 (2026年度)</h4>
+      <div class="stats-row" style="margin-bottom:12px">
+        <div class="stat-box"><div class="num" style="color:#059669">58,200</div><div class="lbl">配额持有 (tCO₂)</div></div>
+        <div class="stat-box"><div class="num" style="color:#dc2626">64,800</div><div class="lbl">预计排放 (tCO₂)</div></div>
+        <div class="stat-box"><div class="num" style="color:#F59E0B">-6,600</div><div class="lbl">配额缺口 (tCO₂)</div></div>
+        <div class="stat-box"><div class="num" style="color:#0EA5E9">¥53.6万</div><div class="lbl">缺口市值</div></div>
+      </div>
+    </div>
+    <div class="chart-box"><h4><i class="ri-calendar-check-line"></i> 碳市场履约日历</h4>
+      <div class="timeline">
+        <div class="timeline-item"><strong>2025.12.31</strong> — 第二履约周期截止 (已完成)</div>
+        <div class="timeline-item warn"><strong>2026.03.31</strong> — 年度碳排放报告提交</div>
+        <div class="timeline-item"><strong>2026.06.30</strong> — 第三方核查报告提交</div>
+        <div class="timeline-item danger"><strong>2026.10.15</strong> — CBAM首次报告提交截止</div>
+        <div class="timeline-item warn"><strong>2026.12.31</strong> — 第三履约周期配额清缴</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PRODUCT CARBON FOOTPRINT ===== -->
+<div class="tab-panel" id="panel-pcf">
+  <div class="section-title"><span class="icon"><i class="ri-git-branch-line"></i></span>产品碳足迹 (PCF) · LCA全生命周期核算</div>
+  <div class="lca-flow">
+    <div class="lca-stage active" onclick="selectLCAStage('raw')"><div class="stage-icon">⛏️</div><div class="stage-name">原材料获取</div><div class="stage-pct" id="pct-raw">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('mfg')"><div class="stage-icon">🏭</div><div class="stage-name">生产制造</div><div class="stage-pct" id="pct-mfg">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('tpt')"><div class="stage-icon">🚛</div><div class="stage-name">运输分销</div><div class="stage-pct" id="pct-tpt">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('use')"><div class="stage-icon">⚡</div><div class="stage-name">使用阶段</div><div class="stage-pct" id="pct-use">-</div></div>
+    <div class="lca-arrow">→</div>
+    <div class="lca-stage" onclick="selectLCAStage('eol')"><div class="stage-icon">♻️</div><div class="stage-name">废弃回收</div><div class="stage-pct" id="pct-eol">-</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+    <div>
+      <div class="form-row"><div class="form-group"><label>产品名称</label><input type="text" id="pcfProductName" value="XX电子元器件"></div><div class="form-group"><label>产品单位</label><select id="pcfUnit"><option>件 (pcs)</option><option>公斤 (kg)</option><option>吨 (t)</option></select></div></div>
+      <div class="form-group"><label>核算标准</label><select id="pcfStandard"><option>ISO 14067:2018</option><option>PAS 2050</option><option>GHG Protocol Product Standard</option><option>欧盟 PEF</option></select></div>
+      <button class="btn btn-primary" onclick="calcPCF()"><i class="ri-calculator-line"></i> 计算产品碳足迹</button>
+      <button class="btn btn-outline btn-sm" onclick="loadPCFDemo()"><i class="ri-download-line"></i> 加载演示数据</button>
+    </div>
+    <div id="pcfResultPanel" class="hidden" style="background:var(--green-bg);border-radius:var(--radius);padding:16px;border:1px solid var(--green-light)">
+      <h4 style="color:var(--green);margin-bottom:8px"><i class="ri-check-double-line"></i> 碳足迹核算结果</h4>
+      <div style="font-size:24px;font-weight:800;color:var(--green)" id="pcfTotal">—</div>
+      <div style="font-size:11px;color:var(--text2)" id="pcfPerUnit"></div>
+    </div>
+  </div>
+  <div class="chart-row"><div class="chart-box"><h4><i class="ri-pie-chart-2-line"></i> 各阶段碳排放占比</h4><div style="height:250px"><canvas id="pcfStageChart"></canvas></div></div><div class="chart-box"><h4><i class="ri-bar-chart-grouped-line"></i> 与行业基准值对比</h4><div style="height:250px"><canvas id="pcfBenchmarkChart"></canvas></div></div></div>
+  <div class="table-wrap"><h4>LCA各阶段排放明细</h4><div id="pcfTable"></div></div>
+</div>
+
+<!-- ===== COMPLIANCE REPORT ===== -->
+<div class="tab-panel" id="panel-report">
+  <div class="section-title"><span class="icon"><i class="ri-file-list-3-line"></i></span>合规报告中心 · 全球多标准模板 · 区域智能匹配</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center">
+    <select id="reportRegion" onchange="onRegionChange()" style="padding:6px 10px;border:1px solid var(--border);border-radius:8px;font-size:12px;background:var(--card);color:var(--text);width:auto">
+      <option value="auto">🌍 自动检测区域</option>
+      <option value="cn-mainland">🇨🇳 中国大陆</option>
+      <option value="cn-hk">🇭🇰 中国香港</option>
+      <option value="cn-tw">🇹🇼 中国台湾</option>
+      <option value="eu">🇪🇺 欧盟</option>
+      <option value="us">🇺🇸 美国</option>
+      <option value="intl">🌐 国际通用</option>
+    </select>
+    <span id="regionHint" style="font-size:10px;color:var(--text3)">选择区域自动匹配对应报告标准模板与核算规则</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:20px">
+    <div class="report-template-card selected" id="rpt-cn-sse" onclick="selectReport('cn-sse')" data-region="cn-mainland">
+      <h4 style="font-size:13px"><i class="ri-government-line"></i> 上交所/深交所可持续发展报告</h4>
+      <p style="font-size:10px;color:var(--text2)">沪深北三大交易所《上市公司可持续发展报告指引》+《编制指南》(2026.1修订第3-5号)。上证180/深证100/科创50强制披露。</p>
+      <div style="font-size:9px;color:var(--text3)">双重重要性 | 21项议题 | 四大核心要素 | 2026.4.30前披露</div>
+    </div>
+    <div class="report-template-card" id="rpt-cn-gb" onclick="selectReport('cn-gb')" data-region="cn-mainland">
+      <h4 style="font-size:13px"><i class="ri-file-text-line"></i> GB/T 32150-2025 工业企业碳排放核算通则</h4>
+      <p style="font-size:10px;color:var(--text2)">中国国家标准2025年修订版。适用于工业企业温室气体排放核算与报告，对接碳市场履约。</p>
+    </div>
+    <div class="report-template-card" id="rpt-cn-mee" onclick="selectReport('cn-mee')" data-region="cn-mainland">
+      <h4 style="font-size:13px"><i class="ri-leaf-line"></i> 生态环境部 企业温室气体排放报告</h4>
+      <p style="font-size:10px;color:var(--text2)">全国碳市场履约主体填报。覆盖发电/钢铁/水泥/铝冶炼等重点行业。</p>
+    </div>
+    <div class="report-template-card" id="rpt-hk-esg" onclick="selectReport('hk-esg')" data-region="cn-hk">
+      <h4 style="font-size:13px"><i class="ri-building-2-line"></i> HKEX ESG Code + Part D气候披露</h4>
+      <p style="font-size:10px;color:var(--text2)">港交所《环境、社会及管治报告守则》。LargeCap 2026年全面强制IFRS S2气候披露。</p>
+      <div style="font-size:9px;color:var(--text3)">4大部分 | Part D气候 | 情景分析 | 内部碳定价 | 强制Scope1-2</div>
+    </div>
+    <div class="report-template-card" id="rpt-cbam" onclick="selectReport('cbam')" data-region="eu">
+      <h4 style="font-size:13px"><i class="ri-ship-line"></i> EU CBAM 碳边境调节机制</h4>
+      <p style="font-size:10px;color:var(--text2)">2026年进入正式期。年进口>50吨须申报隐含碳排放并购买CBAM证书。</p>
+    </div>
+    <div class="report-template-card" id="rpt-eu-csrd" onclick="selectReport('eu-csrd')" data-region="eu">
+      <h4 style="font-size:13px"><i class="ri-europe-line"></i> EU CSRD / ESRS E1 气候变化</h4>
+      <p style="font-size:10px;color:var(--text2)">欧盟企业永续发展报告指令。ESRS E1涵盖气候变化减缓、适应、能源。</p>
+    </div>
+    <div class="report-template-card" id="rpt-issb" onclick="selectReport('issb')" data-region="intl">
+      <h4 style="font-size:13px"><i class="ri-global-line"></i> ISSB IFRS S1/S2 可持续披露准则</h4>
+      <p style="font-size:10px;color:var(--text2)">ISSB 2023.6发布。全球30+司法管辖区采纳。TCFD四支柱框架+行业特定指标。</p>
+    </div>
+    <div class="report-template-card" id="rpt-iso" onclick="selectReport('iso')" data-region="intl">
+      <h4 style="font-size:13px"><i class="ri-certificate-line"></i> ISO 14064-1:2018 组织层面GHG核查</h4>
+      <p style="font-size:10px;color:var(--text2)">国际标准。全球互认核查标准。2025年新增Part4量化方法技术规范。</p>
+    </div>
+  </div>
+  <div class="chart-row">
+    <div class="chart-box">
+      <h4><i class="ri-file-copy-line"></i> 报告预览 · <span id="selectedReportName">上交所/深交所可持续发展报告</span></h4>
+      <div id="reportPreview" style="border:1px solid var(--border);border-radius:8px;padding:14px;max-height:400px;overflow-y:auto;background:#fafbfc;font-size:11px;line-height:1.8">
+        <p style="color:var(--text2);text-align:center;padding:20px">请先在"碳核算"页面上传数据，系统将自动按所选区域标准填充报告内容</p>
+      </div>
+      <div class="btn-group" style="margin-top:10px">
+        <button class="btn btn-primary btn-sm" onclick="generateReport()"><i class="ri-magic-line"></i> 一键生成报告</button>
+        <button class="btn btn-outline btn-sm" onclick="exportReportPDF()"><i class="ri-file-pdf-line"></i> 导出PDF</button>
+        <button class="btn btn-outline btn-sm" onclick="exportReportWord()"><i class="ri-file-word-line"></i> 导出Word</button>
+      </div>
+    </div>
+    <div class="chart-box"><h4><i class="ri-history-line"></i> 历史报告</h4>
+      <div style="max-height:400px;overflow-y:auto">
+      <table style="font-size:10px;width:100%">
+        <thead><tr><th>报告名称</th><th>标准</th><th>区域</th><th>日期</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>2025年度碳排放核查报告</td><td>ISO 14064-1</td><td>国际</td><td>2026-03-15</td><td><span class="compliance-badge pass">已通过</span></td></tr>
+          <tr><td>2025 CBAM季度报告 Q4</td><td>EU CBAM</td><td>欧盟</td><td>2026-01-31</td><td><span class="compliance-badge pass">已提交</span></td></tr>
+          <tr><td>2025可持续发展报告</td><td>上交所指引</td><td>中国大陆</td><td>2026-04-28</td><td><span class="compliance-badge pass">已披露</span></td></tr>
+          <tr><td>2024年度ESG环境信息披露</td><td>GRI 305 + HKEX</td><td>中国香港</td><td>2025-04-22</td><td><span class="compliance-badge pass">已披露</span></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AI ADVISOR ===== -->
+<div class="tab-panel" id="panel-ai">
+  <div class="section-title"><span class="icon"><i class="ri-robot-line"></i></span>AI碳管理顾问</div>
+  <div class="ai-chat-wrap">
+    <div class="ai-api-bar">
+      <div class="api-config-row">
+        <span class="puter-badge" id="puterBadge">🛡️ 服务器代理 · 安全模式</span>
+        <span class="api-status" id="apiStatus">🟢</span>
+        <span style="font-size:9px;color:var(--text3);" id="apiModeLabel">🛡️ 服务器代理 · 密钥安全</span>
+        <span style="font-size:9px;margin-left:auto;font-weight:600" id="aiLoginRequired">🔒 请先登录后使用AI顾问</span>
+        <button class="btn btn-sm btn-secondary" id="aiCustomToggleBtn" onclick="toggleCustomApi()" style="font-size:9px;display:none;margin-left:6px">⚙️ 自定义API</button>
+      </div>
+      <div id="customApiConfig" style="display:none;margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)">
+        <div class="api-config-row">
+          <div class="api-field" style="flex:1;"><label>自定义请求地址</label><input type="text" id="aiApiUrl" placeholder="输入 API 请求地址..." style="font-size:10px;font-family:monospace;"></div>
+          <div class="api-field" style="flex:1;"><label>自定义 API Key</label><input type="password" id="aiApiKey" placeholder="输入你自己的 Key..." style="font-size:10px;font-family:monospace;"></div>
+          <div class="api-field" style="min-width:100px;"><label>模型名</label><input type="text" id="aiCustomModel" placeholder="deepseek-chat" style="font-size:10px;width:140px" value="deepseek-chat"></div>
+        </div>
+      </div>
+    </div>
+    <div class="ai-chat-messages" id="aiChatMessages">
+      <div class="chat-welcome" id="chatWelcomeEl">
+        <div class="welcome-avatar"><i class="ri-robot-line"></i></div>
+        <h4 id="chatWelcomeTitle">请先登录</h4>
+        <p id="chatWelcomeHint">登录后可使用 AI 碳管理顾问：碳盘查核算 · 配额计算 · ESG政策解读 · 减排策略建议 · CBAM合规指导</p>
+        <div class="quick-actions" id="quickActions" style="display:none">
+          <button onclick="sendQuickMsg('请根据我当前的碳排放数据，自动生成一份详细的碳盘查分析报告')"><i class="ri-file-chart-line"></i> 分析我的碳数据</button>
+          <button onclick="sendQuickMsg('2026年中国碳配额分配方案有哪些最新变化？第三履约周期有什么需要注意的？')"><i class="ri-scales-line"></i> 配额政策解读</button>
+          <button onclick="sendQuickMsg('欧盟CBAM碳关税正式实施后，中国企业需要如何应对？请给出详细的合规步骤')"><i class="ri-global-line"></i> CBAM合规指导</button>
+          <button onclick="sendQuickMsg('基于一般制造业的最佳实践，给我制定一份详细的减排路线图')"><i class="ri-lightbulb-line"></i> 减排路线图</button>
+        </div>
+      </div>
+    </div>
+    <div class="ai-chat-input-area">
+      <div class="ai-chat-input-row">
+        <textarea id="aiChatInput" placeholder="登录后即可提问..." rows="1" disabled onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMessage();}"></textarea>
+        <button class="btn btn-primary" id="aiSendBtn" disabled onclick="sendChatMessage()"><i class="ri-send-plane-fill"></i></button>
+        <button class="btn btn-secondary btn-sm" id="aiClearBtn" onclick="clearChatHistory()"><i class="ri-delete-bin-line"></i></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOOLS ===== -->
+<div class="tab-panel" id="panel-tools">
+  <div class="section-title"><span class="icon"><i class="ri-tools-line"></i></span>碳管理工具箱</div>
+  <div class="tool-grid">
+    <div class="tool-card"><h4><i class="ri-flashlight-line"></i> 电力碳排放计算</h4><div class="desc">根据用电量和所在电网区域计算Scope 2排放</div>
+      <input type="number" id="elecKwh" placeholder="用电量 (kWh)" value="10000">
+      <select id="elecGrid"><option value="south">南方电网</option><option value="east">华东电网</option><option value="north">华北电网</option></select>
+      <button class="btn btn-primary btn-sm" onclick="calcElec()">计算</button><div class="result hidden" id="elecResult"></div></div>
+    <div class="tool-card"><h4><i class="ri-gas-station-line"></i> 燃料燃烧排放</h4><div class="desc">计算煤/油/气等燃料燃烧产生的Scope 1排放</div>
+      <select id="fuelType"><option>烟煤</option><option>柴油</option><option>天然气</option></select>
+      <input type="number" id="fuelQty" placeholder="消耗量" value="100">
+      <button class="btn btn-primary btn-sm" onclick="calcFuel()">计算</button><div class="result hidden" id="fuelResult"></div></div>
+    <div class="tool-card"><h4><i class="ri-car-line"></i> 通勤碳足迹</h4><div class="desc">员工通勤碳排放估算 (年排放)</div>
+      <select id="commuteMode"><option>私家车(汽油)</option><option>公交车</option><option>地铁</option></select>
+      <input type="number" id="commuteDist" placeholder="每日通勤距离 (km)" value="20">
+      <button class="btn btn-primary btn-sm" onclick="calcCommute()">计算</button><div class="result hidden" id="commuteResult"></div></div>
+    <div class="tool-card"><h4><i class="ri-plane-line"></i> 差旅飞行碳足迹</h4><div class="desc">商务飞行碳排放计算 (单程)</div>
+      <select id="flightRoute"><option>北京-上海 (1200km)</option><option>上海-深圳 (1350km)</option></select>
+      <select id="flightClass"><option>经济舱</option><option>商务舱</option></select>
+      <button class="btn btn-primary btn-sm" onclick="calcFlight()">计算</button><div class="result hidden" id="flightResult"></div></div>
+  </div>
+</div>
+
+<!-- ===== NEWS ===== -->
+<div class="tab-panel" id="panel-news">
+  <div class="section-title"><span class="icon"><i class="ri-newspaper-line"></i></span>碳市场资讯 · 粤港澳大湾区绿色发展动态</div>
+  <div class="news-grid"></div>
+</div>
+
+</div><!-- /main -->
+
+<div class="footer">CarbonAI v5.1 · 时空智能碳管理平台 · <span class="api-badge">🔌 API Ready</span> · HKEX合规导出<br><span style="color:var(--text3)">Creator: Jacky Liang (Jiashen Liang) | <a href="hkex/index.html" style="color:var(--green)">HKEX导入导出平台 →</a></span></div>
+
+</body>
+</html>

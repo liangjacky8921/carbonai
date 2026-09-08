@@ -1,0 +1,181 @@
+/* ============================================================
+   CarbonAI V5.2 — 深色碳主题设计系统
+   绿(#10b981)/蓝(#0ea5e9) 主色调 · 大屏数据可视化风格
+   ============================================================ */
+:root {
+  /* 色板 */
+  --c-bg: #070d0b;
+  --c-bg-2: #0a120f;
+  --c-surface: #0d1714;
+  --c-surface-2: #101d18;
+  --c-border: #1c2f27;
+  --c-border-2: #24413a;
+  --c-green: #10b981;
+  --c-green-deep: #059669;
+  --c-green-soft: rgba(16, 185, 129, 0.12);
+  --c-blue: #0ea5e9;
+  --c-blue-soft: rgba(14, 165, 233, 0.12);
+  --c-amber: #f59e0b;
+  --c-red: #ef4444;
+  --c-purple: #8b5cf6;
+  --c-text: #e8f5ef;
+  --c-text-2: #9db8ae;
+  --c-text-3: #5f7a6f;
+
+  /* 字体 */
+  --font-num: 'DIN Alternate', 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* ---------- Element Plus 暗色变量覆盖（碳主题） ---------- */
+html.dark {
+  --el-color-primary: #10b981;
+  --el-color-primary-light-3: #34d399;
+  --el-color-primary-light-5: #6ee7b7;
+  --el-color-primary-light-7: #a7f3d0;
+  --el-color-primary-light-8: #d1fae5;
+  --el-color-primary-light-9: #ecfdf5;
+  --el-color-primary-dark-2: #059669;
+  --el-bg-color: #0d1714;
+  --el-bg-color-overlay: #101d18;
+  --el-bg-color-page: #070d0b;
+  --el-text-color-primary: #e8f5ef;
+  --el-text-color-regular: #c4d8cf;
+  --el-text-color-secondary: #9db8ae;
+  --el-text-color-placeholder: #5f7a6f;
+  --el-border-color: #1c2f27;
+  --el-border-color-light: #182a22;
+  --el-border-color-lighter: #14231d;
+  --el-fill-color-blank: #0d1714;
+  --el-fill-color: #16261f;
+  --el-fill-color-light: #122019;
+  --el-fill-color-lighter: #101d18;
+  --el-disabled-bg-color: #101d18;
+  --el-mask-color: rgba(4, 10, 8, 0.8);
+}
+
+/* ---------- 全局基础 ---------- */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(14, 165, 233, 0.06), transparent 60%),
+    radial-gradient(1000px 500px at 10% 110%, rgba(16, 185, 129, 0.05), transparent 60%),
+    var(--c-bg);
+  color: var(--c-text);
+  font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #1e3329; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #2a4537; }
+::-webkit-scrollbar-track { background: transparent; }
+
+/* ---------- 卡片 ---------- */
+.c-card {
+  background: linear-gradient(160deg, rgba(16, 29, 24, 0.9), rgba(13, 23, 20, 0.95));
+  border: 1px solid var(--c-border);
+  border-radius: 12px;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+}
+.c-card:hover { border-color: #2a4537; box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35); }
+
+.c-card-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 600; color: var(--c-text);
+  padding: 14px 16px 0 16px;
+}
+.c-card-title::before {
+  content: ''; width: 3px; height: 14px; border-radius: 2px;
+  background: linear-gradient(180deg, var(--c-green), var(--c-blue));
+}
+
+/* ---------- 数字字体 ---------- */
+.num { font-family: var(--font-num); font-variant-numeric: tabular-nums; }
+
+/* ---------- 统计块 ---------- */
+.stat-box {
+  background: var(--c-surface-2);
+  border: 1px solid var(--c-border);
+  border-radius: 10px; padding: 14px 16px;
+  transition: transform 0.25s, border-color 0.25s;
+}
+.stat-box:hover { transform: translateY(-2px); border-color: var(--c-border-2); }
+.stat-box .num { font-size: 24px; font-weight: 700; line-height: 1.2; }
+.stat-box .lbl { font-size: 12px; color: var(--c-text-3); margin-top: 4px; }
+.text-green { color: var(--c-green); }
+.text-blue { color: var(--c-blue); }
+.text-amber { color: var(--c-amber); }
+.text-red { color: var(--c-red); }
+.text-purple { color: var(--c-purple); }
+
+/* ---------- 示例数据标识 ---------- */
+.sample-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; line-height: 1; padding: 4px 8px; border-radius: 999px;
+  background: rgba(245, 158, 11, 0.12); color: var(--c-amber);
+  border: 1px solid rgba(245, 158, 11, 0.35); font-weight: 600;
+  letter-spacing: 0.5px; user-select: none;
+}
+.user-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; line-height: 1; padding: 4px 8px; border-radius: 999px;
+  background: var(--c-green-soft); color: var(--c-green);
+  border: 1px solid rgba(16, 185, 129, 0.35); font-weight: 600;
+}
+
+/* ---------- 上传区 ---------- */
+.upload-zone {
+  border: 1.5px dashed var(--c-border-2); border-radius: 12px;
+  padding: 22px 16px; text-align: center; cursor: pointer;
+  color: var(--c-text-2); transition: all 0.25s; background: rgba(16, 29, 24, 0.35);
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--c-green); color: var(--c-green);
+  background: var(--c-green-soft); box-shadow: 0 0 24px rgba(16, 185, 129, 0.1);
+}
+
+/* ---------- 页面切换动画 ---------- */
+.page-enter-active { animation: pageIn 0.35s ease both; }
+.page-leave-active { animation: pageIn 0.18s ease reverse both; }
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 骨架屏 */
+.skeleton {
+  background: linear-gradient(90deg, #101d18 25%, #16261f 37%, #101d18 63%);
+  background-size: 400% 100%; animation: sk 1.4s ease infinite; border-radius: 8px;
+}
+@keyframes sk { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* 数字滚动 */
+@keyframes countUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* 脉冲光晕（大屏装饰） */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.25); }
+  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+/* 表格通用 */
+.dark-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.dark-table th {
+  text-align: left; padding: 8px 10px; color: var(--c-text-3); font-weight: 600;
+  background: rgba(22, 38, 31, 0.6); border-bottom: 1px solid var(--c-border);
+  position: sticky; top: 0; backdrop-filter: blur(6px); white-space: nowrap;
+}
+.dark-table td { padding: 8px 10px; border-bottom: 1px solid var(--c-border-light, #14231d); color: var(--c-text-2); }
+.dark-table tr:hover td { background: rgba(16, 185, 129, 0.04); color: var(--c-text); }
+.dark-table tr.total-row td { color: var(--c-green); font-weight: 700; background: rgba(16, 185, 129, 0.06); }
+
+/* Leaflet 暗色适配 */
+.leaflet-container { background: #0a120f; font-family: inherit; }
+.leaflet-control-attribution { background: rgba(7, 13, 11, 0.7) !important; color: #5f7a6f !important; }
+.leaflet-control-attribution a { color: #5f7a6f !important; }
+.leaflet-bar a { background: #101d18 !important; color: #9db8ae !important; border-color: #1c2f27 !important; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #101d18; color: #e8f5ef; border: 1px solid #24413a; }

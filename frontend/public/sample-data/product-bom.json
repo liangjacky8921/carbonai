@@ -1,0 +1,123 @@
+{
+ "_meta": {
+  "dataType": "SAMPLE",
+  "sampleLabel": "示例数据",
+  "description": "虚拟产品「智能碳监测终端 CT-200」BOM 清单与 LCA 各阶段排放（示例）"
+ },
+ "product": {
+  "name": "智能碳监测终端 CT-200（虚拟）",
+  "unit": "件 (pcs)",
+  "annualOutput": 10000,
+  "standard": "ISO 14067:2018",
+  "region": "cn-mainland"
+ },
+ "lcaStages": [
+  {
+   "stage": "raw",
+   "name": "原材料获取",
+   "emission": 12.5,
+   "mainSource": "PCB/铝外壳/线材 (Ecoinvent 3.9)"
+  },
+  {
+   "stage": "mfg",
+   "name": "生产制造",
+   "emission": 28.3,
+   "mainSource": "组装线电力+锡焊工艺"
+  },
+  {
+   "stage": "tpt",
+   "name": "运输分销",
+   "emission": 5.7,
+   "mainSource": "干线公路货运 (GLEC 3.0)"
+  },
+  {
+   "stage": "use",
+   "name": "使用阶段",
+   "emission": 18.2,
+   "mainSource": "5年运行电力(南方电网)"
+  },
+  {
+   "stage": "eol",
+   "name": "废弃回收",
+   "emission": 3.1,
+   "mainSource": "拆解回收+无害化处理"
+  }
+ ],
+ "bom": [
+  {
+   "no": 1,
+   "part": "主控PCB板",
+   "spec": "4层板 FR-4",
+   "qty": 1,
+   "unit": "块",
+   "material": "覆铜板",
+   "supplier": "示例供应商A（虚拟）",
+   "emission": 4.8
+  },
+  {
+   "no": 2,
+   "part": "铝合金外壳",
+   "spec": "6061-T6 阳极氧化",
+   "qty": 1,
+   "unit": "个",
+   "material": "铝合金",
+   "supplier": "示例供应商B（虚拟）",
+   "emission": 3.6
+  },
+  {
+   "no": 3,
+   "part": "NDIR CO₂传感器",
+   "spec": "0-5000ppm ±30ppm",
+   "qty": 1,
+   "unit": "颗",
+   "material": "MEMS",
+   "supplier": "示例供应商C（虚拟）",
+   "emission": 2.4
+  },
+  {
+   "no": 4,
+   "part": "温湿度传感器",
+   "spec": "SHT30",
+   "qty": 1,
+   "unit": "颗",
+   "material": "MEMS",
+   "supplier": "示例供应商C（虚拟）",
+   "emission": 0.6
+  },
+  {
+   "no": 5,
+   "part": "锂电池组",
+   "spec": "18650×2 3.7V 5000mAh",
+   "qty": 1,
+   "unit": "组",
+   "material": "锂电",
+   "supplier": "示例供应商D（虚拟）",
+   "emission": 1.9
+  },
+  {
+   "no": 6,
+   "part": "线材与连接器",
+   "spec": "USB-C / 端子排",
+   "qty": 6,
+   "unit": "件",
+   "material": "PVC+铜",
+   "supplier": "示例供应商E（虚拟）",
+   "emission": 0.8
+  },
+  {
+   "no": 7,
+   "part": "说明书与包装",
+   "spec": "再生纸+蜂窝纸缓冲",
+   "qty": 1,
+   "unit": "套",
+   "material": "纸制品",
+   "supplier": "示例供应商F（虚拟）",
+   "emission": 0.4
+  }
+ ],
+ "benchmark": {
+  "industryAvg": 1.3,
+  "industryBest": 0.55,
+  "euPef": 0.7
+ }
+}
