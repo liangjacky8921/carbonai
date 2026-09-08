@@ -1,11 +1,11 @@
 # CarbonAI 时空智能碳管理平台 V5.2
 
 > **已上线运营的 Web 平台** · 深色碳主题大屏数据可视化 · 12 大功能模块 · 中英双语碳足迹报告 · 多标准 ESG 披露
-> 线上地址：https://www.carbontool.cn （本仓库为 V5.2 升级版源码，替代原单页 HTML 架构）
+> 线上地址：https://www.carbontool.cn 
 
 ![Tech](https://img.shields.io/badge/Vue-3.5-10b981) ![TS](https://img.shields.io/badge/TypeScript-5.6-0ea5e9) ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-059669) ![Vite](https://img.shields.io/badge/Vite-5-8b5cf6) ![License](https://img.shields.io/badge/版权-梁家深-orange)
 
-## V5.2 升级亮点（相对 v5.1 单页版）
+## V5.2 升级亮点（相对 版本v5.1 ）
 
 1. **工程化前端**：Vue 3 + Vite + TypeScript + Element Plus + ECharts + Tailwind CSS，替代 154KB 单页 HTML；深色碳主题（绿/蓝主色）统一设计系统，页面过渡动画、骨架屏、空状态引导、Toast 反馈、hover 提示，适配 PC 与 Pad。
 2. **登录注册系统（前端先行）**：邮箱+账号+密码注册（含邮箱验证码 UI 与占位接口）、登录（记住我）、登出、不自动登录；密码 ≥8 位且含大小写字母和数字；路由守卫限制未登录访问；统一 API 契约 `{code, message, data}`；后端未接入时自动回退本地 Mock。
@@ -38,8 +38,9 @@
 # 前端（开发）
 cd frontend
 npm install --registry=https://registry.npmmirror.com
-npm run dev            # http://localhost:5173
+npm run dev            
 
+# http://localhost:5173
 # 后端（可选，未启动时前端自动走 Mock 模式）
 cd backend
 python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
@@ -65,11 +66,8 @@ carbonai/
 - **云服务器（推荐，7×24）**：[docs/部署指南-云服务器.md](docs/部署指南-云服务器.md) — 阿里云/腾讯云学生机 + Nginx + systemd，约 ¥10/月
 - **免费过渡**：[docs/部署指南-Render免费版.md](docs/部署指南-Render免费版.md) — Render 免费版一键部署
 
-## 软件著作权
-
-申请材料与流程见 [docs/软著登记全流程指南.md](docs/软著登记全流程指南.md)（2026 联网核实：注册→实名认证→填报→受理→60 日审查→电子证书，官方免费）。
 
 ## 版权与作者
 
-- 作者：梁家深（Jacky Liang）· 嘉应学院 地理信息科学
-- 版权所有 © 2026。本软件用于计算机软件著作权登记（软著①：CarbonAI 时空智能碳管理平台软件 V5.2）。
+- 作者：Jacky Liang· 梁家深 地理信息科学
+- 版权所有 © 2026。
