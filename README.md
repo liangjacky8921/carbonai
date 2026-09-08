@@ -58,11 +58,13 @@ carbonai/
 ├── docs/            # 部署指南（云服务器/Render）+ 软著登记全流程
 ├── legacy/          # 原 v5.1/v5.2 静态单页版（软著源码素材与回退参考）
 ├── render.yaml      # Render 一键部署
+├── vercel.json      # Vercel 部署（carbontool.cn 绑定仓库）
 └── README.md
 ```
 
 ## 部署
 
+- **Vercel（carbontool.cn 当前托管）**：根目录 `vercel.json` 已配置从 `frontend/` 构建 Vite 产物并做 SPA 路由回退，推送 main 分支即自动部署，无需改动 Vercel 后台
 - **云服务器（推荐，7×24）**：[docs/部署指南-云服务器.md](docs/部署指南-云服务器.md) — 阿里云/腾讯云学生机 + Nginx + systemd，约 ¥10/月
 - **免费过渡**：[docs/部署指南-Render免费版.md](docs/部署指南-Render免费版.md) — Render 免费版一键部署
 
