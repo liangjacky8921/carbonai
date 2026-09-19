@@ -3,9 +3,9 @@
     <!-- 模式切换 -->
     <div class="flex flex-wrap items-center gap-2">
       <el-radio-group v-model="mode" size="small">
-        <el-radio-button value="forest">🌳 林地碳汇</el-radio-button>
-        <el-radio-button value="heatmap">🔥 碳源热力图</el-radio-button>
-        <el-radio-button value="gba">🏙️ GBA 看板</el-radio-button>
+        <el-radio-button value="forest">林地碳汇</el-radio-button>
+        <el-radio-button value="heatmap">碳源热力图</el-radio-button>
+        <el-radio-button value="gba">GBA 看板</el-radio-button>
       </el-radio-group>
       <span :class="mode === 'forest' ? badgeCls('boundary') : badgeCls('points')" v-if="mode !== 'gba'">
         {{ mode === 'forest' ? (dataStore.source.boundary === 'user' ? '用户数据' : '示例数据') : (dataStore.source.points === 'user' ? '用户数据' : '示例数据') }}
@@ -74,7 +74,7 @@
 
         <!-- GBA 面板 -->
         <div v-if="mode === 'gba'" class="c-card p-4">
-          <p class="text-xs text-[var(--c-text-2)] leading-6 mb-2">🏙️ 粤港澳大湾区 11 城碳排放联动看板 — 点击地图城市标记查看该市碳数据</p>
+          <p class="text-xs text-[var(--c-text-2)] leading-6 mb-2">粤港澳大湾区 11 城碳排放联动看板 — 点击地图城市标记查看该市碳数据</p>
           <div v-if="selectedCity" class="city-detail">
             <div class="text-sm font-bold text-[var(--c-green)]">{{ selectedCity.name }} {{ selectedCity.en }}</div>
             <div class="grid grid-cols-2 gap-2 mt-2 text-xs">

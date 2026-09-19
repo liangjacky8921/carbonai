@@ -75,7 +75,7 @@
               <td class="num text-right">{{ r.factor }}</td>
               <td class="num text-right font-semibold text-[var(--c-green)]">{{ fmt(r.emission) }}</td>
               <td class="num text-right">{{ pct(r.emission) }}%</td>
-              <td class="text-[11px]">{{ r.factorSource }} <span v-if="r.confidence === 'low'" class="text-amber">⚠️低置信</span></td>
+              <td class="text-[11px]">{{ r.factorSource }} <span v-if="r.confidence === 'low'" class="text-amber">低置信</span></td>
             </tr>
             <tr class="total-row">
               <td colspan="6">合计</td>
@@ -99,6 +99,7 @@ import { DataAnalysis } from '@element-plus/icons-vue'
 import { useDataStore, parseEmissionFile } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
 import { fmt } from '@/utils/format'
+import { bizApi, backendOnline } from '@/api/client'
 
 const dataStore = useDataStore()
 const toast = useToast()
@@ -111,14 +112,29 @@ const sortedRecords = computed(() => [...dataStore.yearRecords].sort((a, b) => b
 const pct = (v: number) => dataStore.yearTotal ? ((v / dataStore.yearTotal) * 100).toFixed(1) : '0'
 
 async function onFile(file: File) {
+  toast.info('正在解析文件…')
   try {
-    toast.info('正在解析文件…')
-    const records = await parseEmissionFile(file)
+    const records = await uploadAndAccount(file)
     dataStore.setUserEmissions(records)
-    toast.success(`✅ 解析成功：${records.length} 条记录已核算（用户数据优先展示）`)
+    toast.success(`核算完成：${records.length} 条记录`)
   } catch (e: any) {
     toast.error(e.message || '解析失败')
   }
+}
+
+/** 优先调用后端核算，后端不可用或失败时回退本地解析 */
+async function uploadAndAccount(file: File) {
+  if (backendOnline) {
+    try {
+      const fd = new FormData()
+      fd.append('file', file)
+      const res = await bizApi.uploadEmissions(fd)
+      if (res.code === 200 && Array.isArray(res.data)) return res.data
+    } catch {
+      // 后端异常，回退本地
+    }
+  }
+  return parseEmissionFile(file)
 }
 function onInputChange(e: Event) {
   const f = (e.target as HTMLInputElement).files?.[0]

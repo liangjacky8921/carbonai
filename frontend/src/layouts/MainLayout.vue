@@ -58,8 +58,8 @@
           </span>
         </div>
         <div class="flex items-center gap-3">
-          <el-tooltip content="示例数据管理：一键切换示例/用户数据" placement="bottom">
-            <el-tag size="small" type="warning" effect="plain" round>内置示例数据</el-tag>
+          <el-tooltip v-if="usingSampleData" content="当前正在查看内置示例数据：一键切换示例/用户数据" placement="bottom">
+            <el-tag size="small" type="warning" effect="plain" round>正在查看：示例数据</el-tag>
           </el-tooltip>
           <el-dropdown v-if="auth.isLoggedIn" @command="onUserCmd">
             <span class="user-chip">
@@ -87,6 +87,9 @@
           </transition>
         </router-view>
       </main>
+      <footer class="main-footer">
+        <IcpRecord />
+      </footer>
     </div>
   </div>
 </template>
@@ -98,6 +101,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useDataStore } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
 import { probeBackend, backendOnline } from '@/api/client'
+import IcpRecord from '@/components/IcpRecord.vue'
 import {
   Odometer, DataAnalysis, Files, MapLocation, Guide, Grid, Histogram, Cpu,
   Coin, Box, Document, ChatDotRound, SetUp, Expand, Fold, UserFilled, SwitchButton,
@@ -110,6 +114,10 @@ const dataStore = useDataStore()
 const toast = useToast()
 const collapsed = ref(window.innerWidth < 900)
 const searchQuery = ref('')
+
+const usingSampleData = computed(() =>
+  Object.values(dataStore.source || {}).some((v) => v === 'sample')
+)
 
 const navGroups = [
   {
@@ -217,8 +225,10 @@ onMounted(async () => {
 .collapse-btn:hover { color: var(--c-green); border-color: var(--c-green); }
 .topbar {
   height: 54px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 18px; border-bottom: 1px solid var(--c-border);
-  background: rgba(10, 18, 15, 0.85); backdrop-filter: blur(10px);
+  padding: 0 18px; border-bottom: 0.5px solid var(--c-border);
+  background: rgba(13, 23, 20, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
 }
 .conn-badge {
   font-size: 11px; padding: 3px 10px; border-radius: 999px; font-weight: 500;
@@ -234,4 +244,8 @@ onMounted(async () => {
 .fade-enter-active, .fade-leave-active { transition: opacity 0.2s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 @media (max-width: 900px) { .sidebar { width: 64px; } }
+.main-footer {
+  flex-shrink: 0; padding: 8px 18px; border-top: 1px solid var(--c-border);
+  background: rgba(10, 18, 15, 0.6); text-align: center;
+}
 </style>

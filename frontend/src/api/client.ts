@@ -44,10 +44,14 @@ export const authApi = {
     backendOnline ? wrap(http.get('/auth/user-info', { headers: { Authorization: `Bearer ${token}` } })) : mockApi.userInfo(token),
 }
 
-/** 业务占位接口（后端接入后启用） */
+/** 业务接口：后端在线时调用，离线时由各模块回退本地实现 */
 export const bizApi = {
   chat: (message: string, history: { role: string; content: string }[]) =>
     wrap(http.post('/ai/chat', { message, history })),
   uploadEmissions: (formData: FormData) =>
     wrap(http.post('/emissions/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })),
+  getFactors: () =>
+    wrap(http.get('/factors')),
+  generateReport: (payload: { standard: string; year: number; format: string; records?: unknown[] }) =>
+    wrap(http.post('/reports/generate', payload)),
 }

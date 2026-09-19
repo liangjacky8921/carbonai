@@ -4,7 +4,7 @@
       <div class="c-card-title py-3">
         AI 碳管理顾问
         <el-tag size="small" type="success" effect="plain" style="margin-left: 8px">登录后可用</el-tag>
-        <span class="ml-auto text-[11px] text-[var(--c-text-3)]">🛡️ 服务器代理 · 密钥安全（后端接入后启用）</span>
+        <span class="ml-auto text-[11px] text-[var(--c-text-3)]">{{ backendOnline ? '🛡️ 服务器安全代理 · 密钥不出服务器' : '本地知识库模式' }}</span>
       </div>
 
       <div class="flex-1 min-h-0 overflow-auto px-4 py-3 space-y-4" ref="chatBox">
@@ -88,7 +88,7 @@ async function send(q?: string) {
     await new Promise((res) => setTimeout(res, 700))
     const lower = text.toLowerCase()
     const hit = LOCAL_KB.find((k) => k.kw.some((w) => lower.includes(w)))
-    answer = hit?.answer || `收到您的问题：「${text}」\n\n当前为前端独立模式，AI 大模型代理（DeepSeek，经服务器安全代理）将在后端接入后启用。您可以在本地知识库范围内提问：CBAM、Scope 划分、碳价走势、减排路径、ESG 披露等。\n\n💡 提示：启动 FastAPI 后端并配置 AI 接口后，本模块将自动切换为真实大模型对话。`
+    answer = hit?.answer || `收到您的问题：「${text}」\n\n当前运行于本地知识库模式，可在以下范围内提问：CBAM、Scope 划分、碳价走势、减排路径、ESG 披露等。`
   }
 
   messages.value.push({ role: 'assistant', content: answer })

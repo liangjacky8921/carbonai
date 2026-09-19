@@ -21,7 +21,7 @@
     <el-divider class="my-4"><span class="text-[11px] text-[var(--c-text-3)]">还没有账号？</span></el-divider>
     <el-button class="w-full" round @click="router.push('/auth/register')">注册新账号</el-button>
 
-    <p class="tip">💡 演示提示：Mock 模式下首次使用请先注册；账号信息仅存于本机浏览器</p>
+    <p class="tip" v-if="!backendOnline">当前为本地演示模式：账号信息仅存于本机浏览器，联网部署版请通过邮箱注册正式账号</p>
   </div>
 </template>
 
@@ -31,6 +31,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { User, Lock } from '@element-plus/icons-vue'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { backendOnline } from '@/api/client'
 
 const router = useRouter()
 const route = useRoute()

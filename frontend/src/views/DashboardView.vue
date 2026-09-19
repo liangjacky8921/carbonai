@@ -90,19 +90,23 @@ const statCards = computed(() => {
   ]
 })
 
+// 异常洞察的行业示例基准：目标企业年营收（万元）与配额持有量（tCO₂）
+const REVENUE_BASELINE = 8000
+const QUOTA_HOLDING = 58200
+
 const hints = computed(() => {
   const recs = dataStore.yearRecords
-  if (!recs.length) return ['📋 暂无核算数据 — 请在「碳排放核算」上传数据，或查看内置示例数据']
+  if (!recs.length) return ['暂无核算数据 — 请在「碳排放核算」上传数据，或查看内置示例数据']
   const out: string[] = []
   const total = dataStore.yearTotal
   const maxSrc = [...recs].sort((a, b) => b.emission - a.emission)[0]
-  out.push(`🔍 <b>重点关注：</b>${maxSrc.source} 排放占比最高 (${((maxSrc.emission / total) * 100).toFixed(1)}%)`)
+  out.push(`<b>重点关注：</b>${maxSrc.source} 排放占比最高 (${((maxSrc.emission / total) * 100).toFixed(1)}%)`)
   const s1 = (dataStore.scopeSummary['Scope 1'] || 0) / total
-  if (s1 > 0.5) out.push('⚠️ <b>Scope 1 占比超 50%</b>，建议优先推进燃料替代 / 工艺优化')
-  if ((dataStore.scopeSummary['Scope 2'] || 0) > 0) out.push('💡 Scope 2 电力排放可通过绿电采购(PPA)或分布式光伏降低')
-  if (recs.some((r) => r.confidence === 'low')) out.push('📋 存在低置信度条目，建议人工复核排放因子')
-  out.push(`📊 排放强度：${fmt(total / 8000, 3)} tCO₂e/万元营收（按行业均值）`)
-  out.push(`🧮 配额缺口参考：按 58,200 tCO₂ 配额持有估算，缺口 ${fmt(Math.max(0, total - 58200))} tCO₂`)
+  if (s1 > 0.5) out.push('<b>Scope 1 占比超 50%</b>，建议优先推进燃料替代 / 工艺优化')
+  if ((dataStore.scopeSummary['Scope 2'] || 0) > 0) out.push('Scope 2 电力排放可通过绿电采购(PPA)或分布式光伏降低')
+  if (recs.some((r) => r.confidence === 'low')) out.push('存在低置信度条目，建议人工复核排放因子')
+  out.push(`排放强度：${fmt(total / REVENUE_BASELINE, 3)} tCO₂e/万元营收（按行业均值）`)
+  out.push(`配额缺口参考：按 ${QUOTA_HOLDING} tCO₂ 配额持有估算，缺口 ${fmt(Math.max(0, total - QUOTA_HOLDING))} tCO₂`)
   return out
 })
 

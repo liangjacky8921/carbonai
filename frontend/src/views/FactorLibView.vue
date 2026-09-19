@@ -66,19 +66,23 @@ import ChartCard from '@/components/ChartCard.vue'
 import { FACTOR_LIB } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
 import { Search } from '@element-plus/icons-vue'
+import { bizApi, backendOnline } from '@/api/client'
 
 const toast = useToast()
 const sourceFilter = ref('')
 const regionFilter = ref('')
 const keyword = ref('')
 
-const sources = computed(() => new Set(FACTOR_LIB.map((f) => f.source)))
-const regions = computed(() => new Set(FACTOR_LIB.map((f) => f.region)))
-const regionOptions = ['全国通用', '全球', '南方电网', '华东电网', '华北电网', '华中电网', '西北电网', '东北电网']
-const highDqr = computed(() => FACTOR_LIB.filter((f) => f.dqr >= 4).length)
+// 因子库：默认使用前端静态数据，后端在线时拉取服务端版本覆盖
+const factorLib = ref(FACTOR_LIB)
+
+const sources = computed(() => new Set(factorLib.value.map((f) => f.source)))
+const regions = computed(() => new Set(factorLib.value.map((f) => f.region)))
+const regionOptions = ['全国通用', '全国', '全球', '南方电网', '华东电网', '华北电网', '华中电网', '西北电网', '东北电网']
+const highDqr = computed(() => factorLib.value.filter((f) => f.dqr >= 4).length)
 
 const filtered = computed(() =>
-  FACTOR_LIB.filter((f) =>
+  factorLib.value.filter((f) =>
     (!sourceFilter.value || f.source === sourceFilter.value) &&
     (!regionFilter.value || f.region.includes(regionFilter.value)) &&
     (!keyword.value || f.name.includes(keyword.value)),
@@ -103,18 +107,33 @@ let c2: echarts.ECharts | null = null
 const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
 const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
 
-onMounted(() => {
+async function loadFactors() {
+  if (!backendOnline) return
+  try {
+    const res = await bizApi.getFactors()
+    if (res.code === 200 && Array.isArray(res.data) && res.data.length) {
+      factorLib.value = res.data
+    }
+  } catch {
+    // 后端不可用则保留前端静态因子库
+  }
+}
+
+function renderCharts() {
   if (gridEl.value) {
-    c1 = echarts.init(gridEl.value)
-    const gridFactors = FACTOR_LIB.filter((f) => f.name.startsWith('电网排放因子'))
+    if (!c1) c1 = echarts.init(gridEl.value)
+    const gridFactors = factorLib.value.filter((f) => f.name.startsWith('电网排放因子'))
+    // 电力全国平均/碳足迹因子也纳入对比
+    const energyFactors = factorLib.value.filter((f) => f.name.startsWith('电力-'))
+    const allGrid = gridFactors.length ? gridFactors : energyFactors
     c1.setOption({
       tooltip: { trigger: 'axis', ...tt },
       grid: { left: '3%', right: '5%', bottom: '14%', top: '12%', containLabel: true },
-      xAxis: { type: 'category', data: gridFactors.map((f) => f.name.replace('电网排放因子-', '')), ...axis },
+      xAxis: { type: 'category', data: allGrid.map((f) => f.name.replace('电网排放因子-', '')), ...axis },
       yAxis: { type: 'value', name: 'kgCO₂/kWh', nameTextStyle: { color: '#5f7a6f' }, ...axis },
       series: [{
         type: 'bar', barWidth: '50%',
-        data: gridFactors.map((f) => f.value),
+        data: allGrid.map((f) => f.value),
         itemStyle: { borderRadius: [6, 6, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#0ea5e9' }, { offset: 1, color: 'rgba(14,165,233,0.12)' }]) },
         animationDelay: (i: number) => i * 90,
         label: { show: true, position: 'top', color: '#9db8ae', fontSize: 10 },
@@ -122,9 +141,9 @@ onMounted(() => {
     })
   }
   if (srcEl.value) {
-    c2 = echarts.init(srcEl.value)
+    if (!c2) c2 = echarts.init(srcEl.value)
     const bySrc: Record<string, number> = {}
-    FACTOR_LIB.forEach((f) => { bySrc[f.source] = (bySrc[f.source] || 0) + 1 })
+    factorLib.value.forEach((f) => { bySrc[f.source] = (bySrc[f.source] || 0) + 1 })
     const colors = ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#14b8a6', '#ef4444']
     c2.setOption({
       tooltip: { trigger: 'item', ...tt },
@@ -138,6 +157,11 @@ onMounted(() => {
       }],
     })
   }
+}
+
+onMounted(async () => {
+  await loadFactors()
+  renderCharts()
   window.addEventListener('resize', resize)
 })
 function resize() { c1?.resize(); c2?.resize() }

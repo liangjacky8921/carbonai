@@ -20,9 +20,14 @@
         </transition>
       </router-view>
       <p class="footer-note">© 2026 CarbonAI · carbontool.cn · 深色碳主题大屏数据可视化平台</p>
+      <IcpRecord />
     </div>
   </div>
 </template>
+
+<script setup lang="ts">
+import IcpRecord from '@/components/IcpRecord.vue'
+</script>
 
 <style scoped>
 .auth-page {

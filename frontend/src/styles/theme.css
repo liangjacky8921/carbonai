@@ -24,6 +24,11 @@
 
   /* 字体 */
   --font-num: 'DIN Alternate', 'Bahnschrift', 'Segoe UI', system-ui, sans-serif;
+  --font-head: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* 动效曲线：标准过渡 + 弹窗弹入 */
+  --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1.4);
 }
 
 /* ---------- Element Plus 暗色变量覆盖（碳主题） ---------- */
@@ -65,7 +70,15 @@ body {
   color: var(--c-text);
   font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
   font-size: 14px;
+  letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
+}
+
+/* 标题：Apple 字重阶梯 + 负字距（SF Pro/PingFang 同源，Windows 回退微软雅黑） */
+h1, h2, h3, .c-card-title {
+  font-family: var(--font-head);
+  letter-spacing: -0.022em;
+  font-weight: 700;
 }
 
 /* 滚动条 */
@@ -79,9 +92,14 @@ body {
   background: linear-gradient(160deg, rgba(16, 29, 24, 0.9), rgba(13, 23, 20, 0.95));
   border: 1px solid var(--c-border);
   border-radius: 12px;
-  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s;
+  transition: transform 0.3s var(--ease-ios), border-color 0.3s var(--ease-ios);
 }
-.c-card:hover { border-color: #2a4537; box-shadow: 0 4px 28px rgba(0, 0, 0, 0.35); }
+.c-card:hover { transform: translateY(-2px); border-color: var(--c-border-2); }
+
+/* 按钮按压回弹：Apple 交互手感 */
+.el-button { transition: transform 0.2s var(--ease-ios), box-shadow 0.2s var(--ease-ios); }
+.el-button:active { transform: scale(0.96); }
+.el-button:hover { transform: scale(1.02); }
 
 .c-card-title {
   display: flex; align-items: center; gap: 8px;
@@ -179,3 +197,12 @@ body {
 .leaflet-control-attribution a { color: #5f7a6f !important; }
 .leaflet-bar a { background: #101d18 !important; color: #9db8ae !important; border-color: #1c2f27 !important; }
 .leaflet-popup-content-wrapper, .leaflet-popup-tip { background: #101d18; color: #e8f5ef; border: 1px solid #24413a; }
+
+/* 可访问性：用户偏好减少动态时关闭过渡与动画 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

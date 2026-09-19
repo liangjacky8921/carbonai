@@ -39,7 +39,7 @@
 
     <el-divider class="my-4"><span class="text-[11px] text-[var(--c-text-3)]">已有账号？</span></el-divider>
     <el-button class="w-full" round @click="router.push('/auth/login')">返回登录</el-button>
-    <p class="tip">🔒 邮箱验证码接口为占位实现（send-code），后端数据库接入后自动启用真实邮件发送</p>
+    <p class="tip">🔒 验证码将发送至您邮箱（5 分钟内有效）；若未收到请检查垃圾邮件箱</p>
   </div>
 </template>
 

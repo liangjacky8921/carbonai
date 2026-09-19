@@ -10,8 +10,12 @@ backend/app/routers/__pycache__/
 *.egg-info/
 
 # 环境与密钥（软著提交前脱敏）
+# .env.* 覆盖 .env.production / .env.development / .env.staging 等
+# !.env.example 仅示例文件允许入库（注意：行内注释会让规则失效，故注释独立成行）
 .env
 .env.local
+.env.*
+!.env.example
 *.db
 
 # 编辑器与系统文件
@@ -23,3 +27,6 @@ Thumbs.db
 
 # Vite 临时文件
 vite.config.ts.timestamp-*
+
+# 历史大文件（体积大且不应进入软著源码材料，建议移出主仓库）
+# legacy/

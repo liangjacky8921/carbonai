@@ -1,7 +1,7 @@
 /**
- * CarbonAI V5.2 — 本地 Mock 服务（后端数据库未接入期间的占位实现）
- * 完整实现统一契约：register / login / logout / send-code / user-info
- * 用户数据存于 localStorage（carbonai_mock_users），后端接入后直接切换。
+ * CarbonAI V5.2 — 本地离线认证兜底实现
+ * 提供 register / login / logout / send-code / user-info 的同契约实现，
+ * 用户数据存于 localStorage（carbonai_mock_users），后端在线时由上层切换。
  */
 import type { ApiResponse, UserInfo } from '@/api/types'
 import { ok, err, validatePassword } from '@/api/types'
@@ -35,7 +35,7 @@ export const mockApi = {
     const codes: Record<string, { code: string; ts: number }> = JSON.parse(localStorage.getItem(LS_CODES) || '{}')
     codes[email] = { code, ts: Date.now() }
     localStorage.setItem(LS_CODES, JSON.stringify(codes))
-    // 占位：真实环境由后端发送邮件验证码。Mock 下在控制台输出，方便演示。
+    // 离线模式没有真实邮件服务，验证码输出到控制台便于演示
     console.info(`[CarbonAI Mock] 邮箱验证码已生成（演示）：${email} → ${code}`)
     return ok({ expires_in: 300 }, '验证码已发送（演示模式：请查看浏览器控制台）')
   },
