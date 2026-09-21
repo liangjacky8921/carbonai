@@ -122,8 +122,9 @@ async function send(q?: string) {
 .msg.user { justify-content: flex-end; }
 .bubble {
   max-width: 76%; padding: 10px 14px; border-radius: 12px; font-size: 13px; line-height: 1.8;
-  white-space: pre-wrap;
+  white-space: pre-wrap; overflow-wrap: anywhere;
 }
+@media (max-width: 768px) { .bubble { max-width: 88%; } }
 .msg.user .bubble { background: var(--c-green-deep); color: #fff; border-bottom-right-radius: 4px; }
 .msg.assistant .bubble {
   background: var(--c-surface-2); border: 1px solid var(--c-border); color: var(--c-text);

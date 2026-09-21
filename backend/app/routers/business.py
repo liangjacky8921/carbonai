@@ -7,6 +7,8 @@ import csv
 import io
 import json
 import os
+import re
+import time
 from datetime import datetime
 from typing import List, Optional
 
@@ -394,14 +396,108 @@ _MARKET_SNAPSHOT = {
 }
 
 
+# ---------------- 行情实源接入（2026-09-21）：官方公开页抓取 + 失败降级内置快照 ----------------
+
+_MARKET_TTL = 1800      # 实源成功后的缓存时长（官方行情按日/按月更新，30 分钟足够）
+_MARKET_NEG_TTL = 300   # 实源全部失败时的负缓存，避免每次请求都等待超时
+_MARKET_CACHE: dict = {"ts": 0.0, "data": None, "live": False}
+
+_MARKET_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+              "(KHTML, like Gecko) Chrome/126.0 Safari/537.36")
+
+
+def _http_text(url: str, timeout: int = 6) -> str:
+    """抓取公开页面文本（带浏览器 UA），失败抛异常由调用方捕获降级。"""
+    import urllib.request
+    req = urllib.request.Request(url, headers={"User-Agent": _MARKET_UA})
+    with urllib.request.urlopen(req, timeout=timeout) as resp:
+        return resp.read().decode("utf-8", "ignore")
+
+
+def _fetch_fudan_index() -> Optional[dict]:
+    """复旦碳价指数当期值（复旦大学可持续发展研究中心「当期指数」页，首条即最新 CEA 指数）。"""
+    try:
+        html = _http_text("https://rcsd.fudan.edu.cn/fdtjzs/zsdt/dqzs.htm")
+        title = re.search(r"(\d{4})年(\d{1,2})月全国碳排放配额（CEA）", html)
+        m = re.search(r"买入价格预期为([\d.]+)元/吨，卖出价格预期为([\d.]+)元/吨，中间价为([\d.]+)元/吨", html)
+        if not m:
+            return None
+        month = f"{title.group(2)}月" if title else "当期"
+        return {"month": month, "buy": float(m.group(1)),
+                "sell": float(m.group(2)), "mid": float(m.group(3))}
+    except Exception:
+        return None
+
+
+def _fetch_cea_official() -> Optional[dict]:
+    """全国碳市场 CEA 最新日度行情（上海环交所「每日概况」文章页，7 天时效校验）。
+
+    文章页样例：开盘价81.00元/吨，最高价81.60元/吨，最低价81.00元/吨，
+    收盘价81.45元/吨，收盘价较前一日上涨0.04%。
+    """
+    try:
+        listing = _http_text("https://www.cneeex.com/qgtpfqjy/mrgk/2026n/index.shtml")
+        items = re.findall(r'href="(/c/(\d{4})-(\d{2})-(\d{2})/\d+\.shtml)"[^>]*>【CEA】', listing)
+        if not items:
+            return None
+        newest = max(items, key=lambda t: (t[1], t[2], t[3]))
+        date_str = f"{newest[1]}-{newest[2]}-{newest[3]}"
+        age = (datetime.now() - datetime.strptime(date_str, "%Y-%m-%d")).days
+        if age > 7:  # 文章停更/滞后时放弃实源，保留快照值
+            return None
+        art = _http_text("https://www.cneeex.com" + newest[0])
+        close = re.search(r"收盘价([\d.]+)元/吨", art)
+        if not close:
+            return None
+        chg = re.search(r"较前一日(上涨|下跌)([\d.]+)%", art)
+        open_ = re.search(r"开盘价([\d.]+)元/吨", art)
+        return {
+            "date": date_str,
+            "close": float(close.group(1)),
+            "open": float(open_.group(1)) if open_ else None,
+            "chg": (f"较前日{'+' if chg.group(1) == '上涨' else '-'}{chg.group(2)}%") if chg else "",
+        }
+    except Exception:
+        return None
+
+
+def _live_market_snapshot() -> dict:
+    """内置快照 + 实源覆盖（CEA 官方日度、复旦指数当期），全部失败自动降级快照。"""
+    now_ts = time.time()
+    cached = _MARKET_CACHE["data"]
+    if cached and now_ts - _MARKET_CACHE["ts"] < (_MARKET_TTL if _MARKET_CACHE["live"] else _MARKET_NEG_TTL):
+        return cached
+    snap = json.loads(json.dumps(_MARKET_SNAPSHOT))
+    live = []
+    cea = _fetch_cea_official()
+    if cea:
+        for q in snap["quotes"]:
+            if q["key"] == "cea":
+                q["price"] = f"{cea['close']:.2f}"
+                q["note"] = f"{cea['date']} 收盘 {cea['chg']}".strip()
+                q["source"] = "上海环交所·实源"
+        snap["marketShare"][0]["value"] = cea["close"]
+        live.append("CEA官方日度")
+    fd = _fetch_fudan_index()
+    if fd:
+        for q in snap["quotes"]:
+            if q["key"] == "fdi":
+                q["name"] = f"复旦碳价指数({fd['month']})"
+                q["price"] = f"{fd['mid']:.2f}"
+                q["note"] = f"买入{fd['buy']:.2f} 卖出{fd['sell']:.2f}"
+                q["source"] = "复旦研究中心·实源"
+        live.append("复旦碳价指数")
+    snap["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    snap["disclaimer"] = ("CEA/复旦碳价指数为官方公开页实源数据（按交易日/按月更新），"
+                          "其余为参考快照；实时交易请以交易所官网为准")
+    snap["liveSources"] = live
+    _MARKET_CACHE["data"] = snap
+    _MARKET_CACHE["ts"] = now_ts
+    _MARKET_CACHE["live"] = bool(live)
+    return snap
+
+
 @router.get("/market/quotes")
 def market_quotes():
-    """碳市场行情快照（含时间戳）。
-
-    当前返回内置参考行情 + 服务端生成时间戳。公开碳交易所实时行情多为付费/
-    需授权数据源，后续接入授权 API 时仅需替换本接口内部数据来源，前端无需改动。
-    """
-    snap = json.loads(json.dumps(_MARKET_SNAPSHOT))
-    snap["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    snap["disclaimer"] = "行情数据仅供参考，实时交易请以交易所官网为准"
-    return ok(snap)
+    """碳市场行情：实源优先（上海环交所日度行情 + 复旦碳价指数），失败降级内置参考快照。"""
+    return ok(_live_market_snapshot())

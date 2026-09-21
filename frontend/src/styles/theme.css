@@ -40,7 +40,7 @@
   /* 动效曲线：学术精密（无过度弹性）+ iOS 标准 */
   --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-scientific: cubic-bezier(0.4, 0, 0.6, 1);
-  --ease-spring: cubic-bezier(0.4, 0, 0.2, 1.4);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ---------- Element Plus 暗色变量覆盖（碳主题） ---------- */
@@ -211,6 +211,11 @@ h1, h2, h3, .c-card-title {
 
 /* ECharts 数据标签继承学术等宽（全局覆盖） */
 text, .echarts-tooltip { font-family: var(--font-mono); }
+
+/* ---------- 浏览器默认面主题化（选中文本 / 键盘焦点环 / 插入符） ---------- */
+::selection { background: rgba(16, 185, 129, 0.32); color: #f4fbf8; }
+:focus-visible { outline: 2px solid rgba(16, 185, 129, 0.55); outline-offset: 2px; border-radius: 4px; }
+input, textarea { caret-color: var(--c-green); }
 
 /* Leaflet 暗色适配 */
 .leaflet-container { background: #0a120f; font-family: inherit; }
