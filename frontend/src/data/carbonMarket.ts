@@ -41,20 +41,24 @@ export interface GbaCity {
   emission: number   // 万tCO₂（示例口径）
   intensity: number  // tCO₂/万元GDP
   gdp: number        // 亿元
+  population: number // 万人
+  area: number       // km²
+  perCapita: number  // 人均排放 tCO₂/人
+  industry: string   // 支柱产业
 }
 
 export const GBA_CITIES: GbaCity[] = [
-  { name: '香港', en: 'Hong Kong', lat: 22.319, lon: 114.169, emission: 3480, intensity: 0.11, gdp: 26800 },
-  { name: '深圳', en: 'Shenzhen', lat: 22.543, lon: 114.058, emission: 3860, intensity: 0.12, gdp: 36400 },
-  { name: '广州', en: 'Guangzhou', lat: 23.129, lon: 113.264, emission: 5420, intensity: 0.17, gdp: 31000 },
-  { name: '佛山', en: 'Foshan', lat: 23.022, lon: 113.122, emission: 4630, intensity: 0.34, gdp: 13300 },
-  { name: '东莞', en: 'Dongguan', lat: 23.021, lon: 113.752, emission: 4510, intensity: 0.38, gdp: 11400 },
-  { name: '惠州', en: 'Huizhou', lat: 23.111, lon: 114.416, emission: 3240, intensity: 0.31, gdp: 5600 },
-  { name: '珠海', en: 'Zhuhai', lat: 22.271, lon: 113.577, emission: 1350, intensity: 0.15, gdp: 4200 },
-  { name: '中山', en: 'Zhongshan', lat: 22.517, lon: 113.393, emission: 1880, intensity: 0.29, gdp: 3900 },
-  { name: '江门', en: 'Jiangmen', lat: 22.578, lon: 113.081, emission: 2260, intensity: 0.41, gdp: 4100 },
-  { name: '肇庆', en: 'Zhaoqing', lat: 23.047, lon: 112.471, emission: 1590, intensity: 0.45, gdp: 2900 },
-  { name: '澳门', en: 'Macao', lat: 22.198, lon: 113.544, emission: 320, intensity: 0.09, gdp: 3800 },
+  { name: '香港', en: 'Hong Kong', lat: 22.319, lon: 114.169, emission: 3480, intensity: 0.11, gdp: 26800, population: 750, area: 1114, perCapita: 4.64, industry: '金融 · 航运 · 贸易' },
+  { name: '深圳', en: 'Shenzhen', lat: 22.543, lon: 114.058, emission: 3860, intensity: 0.12, gdp: 36400, population: 1760, area: 1997, perCapita: 2.19, industry: '科技 · 金融 · 电子信息' },
+  { name: '广州', en: 'Guangzhou', lat: 23.129, lon: 113.264, emission: 5420, intensity: 0.17, gdp: 31000, population: 1880, area: 7434, perCapita: 2.88, industry: '汽车 · 商贸 · 会展' },
+  { name: '佛山', en: 'Foshan', lat: 23.022, lon: 113.122, emission: 4630, intensity: 0.34, gdp: 13300, population: 950, area: 3797, perCapita: 4.87, industry: '装备制造 · 家电 · 陶瓷' },
+  { name: '东莞', en: 'Dongguan', lat: 23.021, lon: 113.752, emission: 4510, intensity: 0.38, gdp: 11400, population: 1050, area: 2460, perCapita: 4.30, industry: '电子信息制造' },
+  { name: '惠州', en: 'Huizhou', lat: 23.111, lon: 114.416, emission: 3240, intensity: 0.31, gdp: 5600, population: 605, area: 11347, perCapita: 5.36, industry: '石油化工 · 电子信息' },
+  { name: '珠海', en: 'Zhuhai', lat: 22.271, lon: 113.577, emission: 1350, intensity: 0.15, gdp: 4200, population: 245, area: 1736, perCapita: 5.51, industry: '电子信息 · 旅游' },
+  { name: '中山', en: 'Zhongshan', lat: 22.517, lon: 113.393, emission: 1880, intensity: 0.29, gdp: 3900, population: 445, area: 1783, perCapita: 4.22, industry: '灯饰 · 五金 · 家具' },
+  { name: '江门', en: 'Jiangmen', lat: 22.578, lon: 113.081, emission: 2260, intensity: 0.41, gdp: 4100, population: 485, area: 9505, perCapita: 4.66, industry: '装备制造 · 造纸 · 食品' },
+  { name: '肇庆', en: 'Zhaoqing', lat: 23.047, lon: 112.471, emission: 1590, intensity: 0.45, gdp: 2900, population: 415, area: 14891, perCapita: 3.83, industry: '建材 · 新能源' },
+  { name: '澳门', en: 'Macao', lat: 22.198, lon: 113.544, emission: 320, intensity: 0.09, gdp: 3800, population: 68, area: 33, perCapita: 4.71, industry: '旅游 · 会展' },
 ]
 
 /** 排放因子库（与原平台一致，20 项） */

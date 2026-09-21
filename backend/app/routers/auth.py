@@ -27,7 +27,6 @@ import ssl
 import threading
 import time
 from datetime import datetime, timedelta
-from email.header import Header
 from email.mime.text import MIMEText
 from email.utils import formataddr
 
@@ -113,51 +112,74 @@ EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 # ---------- 邮件验证码发送 ----------
-def _smtp_conf() -> dict | None:
+def _smtp_configs() -> list[dict]:
+    """读取发件邮箱配置，主发件（SMTP_*）在前、备用发件（SMTP_BACKUP_*）在后。"""
+    configs: list[dict] = []
+
     host = os.getenv("SMTP_HOST", "").strip()
     user = os.getenv("SMTP_USER", "").strip()
     password = os.getenv("SMTP_PASS", "").strip()
-    if not (host and user and password):
-        return None
-    return {
-        "host": host,
-        "port": int(os.getenv("SMTP_PORT", "465")),
-        "user": user,
-        "password": password,
-        "from": os.getenv("SMTP_FROM", user).strip(),
-    }
+    if host and user and password:
+        configs.append({
+            "host": host,
+            "port": int(os.getenv("SMTP_PORT", "465")),
+            "user": user,
+            "password": password,
+            "from": os.getenv("SMTP_FROM", user).strip(),
+        })
+
+    bhost = os.getenv("SMTP_BACKUP_HOST", "").strip()
+    buser = os.getenv("SMTP_BACKUP_USER", "").strip()
+    bpassword = os.getenv("SMTP_BACKUP_PASS", "").strip()
+    if bhost and buser and bpassword:
+        configs.append({
+            "host": bhost,
+            "port": int(os.getenv("SMTP_BACKUP_PORT", "465")),
+            "user": buser,
+            "password": bpassword,
+            "from": os.getenv("SMTP_BACKUP_FROM", buser).strip(),
+        })
+
+    return configs
 
 
 def _deliver_code_email(to_email: str, code: str):
-    conf = _smtp_conf()
-    if conf is None:
+    configs = _smtp_configs()
+    if not configs:
         logger.warning("SMTP 未配置，验证码仅记录到日志：%s → %s", to_email, code)
         print(f"[CarbonAI][DEV] 邮箱验证码 {to_email} → {code}（5分钟内有效，生产环境请配置 SMTP_* 环境变量）")
         return
+
     body = (
         f"您正在注册 CarbonAI 时空智能碳管理平台账号。\n\n"
         f"验证码：{code}\n\n"
         f"5 分钟内有效。若非本人操作，请忽略本邮件。"
     )
     msg = MIMEText(body, "plain", "utf-8")
-    msg["Subject"] = Header(f"CarbonAI 注册验证码：{code}", "utf-8")
-    msg["From"] = formataddr((str(Header("CarbonAI 平台", "utf-8")), conf["from"]))
+    msg["Subject"] = f"CarbonAI 注册验证码：{code}"
     msg["To"] = to_email
-    try:
-        if conf["port"] == 465:
-            server = smtplib.SMTP_SSL(conf["host"], conf["port"], timeout=15,
-                                      context=ssl.create_default_context())
-        else:
-            server = smtplib.SMTP(conf["host"], conf["port"], timeout=15)
-            server.starttls(context=ssl.create_default_context())
-        with server:
-            server.login(conf["user"], conf["password"])
-            server.sendmail(conf["from"], [to_email], msg.as_string())
-        logger.info("验证码邮件已发送：%s", to_email)
-    except Exception as e:
-        # 发送失败时降级记录，验证码仍可从日志侧人工核对
-        logger.error("验证码邮件发送失败（%s）：%s", to_email, e)
-        print(f"[CarbonAI][MAIL-FAIL] 邮箱验证码 {to_email} → {code}（发送失败已降级打印）")
+
+    last_error = None
+    for conf in configs:
+        msg["From"] = formataddr(("CarbonAI平台", conf["from"]))
+        try:
+            if conf["port"] == 465:
+                server = smtplib.SMTP_SSL(conf["host"], conf["port"], timeout=15,
+                                          context=ssl.create_default_context())
+            else:
+                server = smtplib.SMTP(conf["host"], conf["port"], timeout=15)
+                server.starttls(context=ssl.create_default_context())
+            with server:
+                server.login(conf["user"], conf["password"])
+                server.sendmail(conf["from"], [to_email], msg.as_string())
+            logger.info("验证码邮件已发送：%s（发件 %s）", to_email, conf["from"])
+            return
+        except Exception as e:
+            last_error = e
+            logger.warning("发件 %s 发送失败，尝试下一发件：%s", conf["from"], e)
+
+    logger.error("全部发件均失败（%s）：%s", to_email, last_error)
+    print(f"[CarbonAI][MAIL-FAIL] 邮箱验证码 {to_email} → {code}（发送失败已降级打印）")
 
 
 def _send_code_email_async(to_email: str, code: str):
@@ -256,7 +278,7 @@ def send_code(body: SendCodeBody):
         db.close()
 
     _send_code_email_async(body.email, code)
-    if _smtp_conf() is None:
+    if not _smtp_configs():
         return ok({"expires_in": 300, "channel": "log"}, "验证码已发送（开发模式：请查看服务端日志或配置 SMTP）")
     return ok({"expires_in": 300, "channel": "email"}, "验证码已发送至您的邮箱，请查收（注意垃圾邮件箱）")
 

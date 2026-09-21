@@ -38,7 +38,30 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
       <ChartCard title="粤港澳大湾区 11 城碳排放对比（3D）" height="360" class="lg:col-span-7">
-        <div ref="gba3dEl" class="w-full h-full" />
+        <div class="relative w-full h-full">
+          <div ref="gba3dEl" class="w-full h-full" />
+          <transition name="page">
+            <div v-if="selectedCity" class="city-popover">
+              <div class="flex items-center justify-between mb-2">
+                <div class="text-sm font-bold text-[var(--c-green)]">
+                  {{ selectedCity.name }}
+                  <span class="text-xs text-[var(--c-text-3)] font-normal">{{ selectedCity.en }}</span>
+                </div>
+                <button class="cp-close" @click="selectedCity = null">×</button>
+              </div>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="cp-cell"><div class="num text-amber">{{ selectedCity.emission }}</div><div>碳排放(万t)</div></div>
+                <div class="cp-cell"><div class="num text-blue">{{ selectedCity.gdp }}</div><div>GDP(亿元)</div></div>
+                <div class="cp-cell"><div class="num text-green">{{ selectedCity.intensity }}</div><div>强度(t/万元)</div></div>
+                <div class="cp-cell"><div class="num">{{ selectedCity.population }}</div><div>人口(万)</div></div>
+                <div class="cp-cell"><div class="num">{{ selectedCity.area }}</div><div>面积(km²)</div></div>
+                <div class="cp-cell"><div class="num text-purple">{{ selectedCity.perCapita }}</div><div>人均(t/人)</div></div>
+              </div>
+              <div class="text-[11px] text-[var(--c-text-2)] mt-2">支柱产业：{{ selectedCity.industry }}</div>
+              <div class="text-[11px] text-[var(--c-text-3)] mt-1">排放排名：第 {{ rankOf(selectedCity) }} / {{ GBA_CITIES.length }} 位</div>
+            </div>
+          </transition>
+        </div>
       </ChartCard>
       <ChartCard title="排放源 Top8（环形图）" height="360" class="lg:col-span-5">
         <div ref="top8El" class="w-full h-full" />
@@ -71,14 +94,21 @@ import 'echarts-gl'
 import ChartCard from '@/components/ChartCard.vue'
 import StatCard from '@/components/StatCard.vue'
 import { useDataStore } from '@/stores/data'
-import { REALTIME_QUOTES, PRICE_SERIES, MARKET_SHARE, GBA_CITIES } from '@/data/carbonMarket'
+import { REALTIME_QUOTES, PRICE_SERIES, MARKET_SHARE, GBA_CITIES, type GbaCity } from '@/data/carbonMarket'
 import { fmt } from '@/utils/format'
 import { DataLine } from '@element-plus/icons-vue'
+import { bizApi, backendOnline } from '@/api/client'
 
 const dataStore = useDataStore()
-const now = new Date().toLocaleString('zh-CN')
 
-const quotesLoop = computed(() => [...REALTIME_QUOTES, ...REALTIME_QUOTES])
+// ============ 碳市场行情（后端在线则拉取实时快照，离线回退本地静态） ============
+const dynamicQuotes = ref(REALTIME_QUOTES)
+const dynamicPriceSeries = ref(PRICE_SERIES)
+const dynamicMarketShare = ref(MARKET_SHARE)
+const marketTimestamp = ref('')
+
+const quotesLoop = computed(() => [...dynamicQuotes.value, ...dynamicQuotes.value])
+const now = computed(() => marketTimestamp.value || new Date().toLocaleString('zh-CN'))
 
 const statCards = computed(() => {
   const s = dataStore.scopeSummary
@@ -119,6 +149,14 @@ const scopeEl = ref<HTMLElement | null>(null)
 const trendEl = ref<HTMLElement | null>(null)
 let charts: echarts.ECharts[] = []
 
+// 3D 城市图中当前选中的城市（点击柱子更新）
+const selectedCity = ref<GbaCity | null>(null)
+
+function rankOf(city: GbaCity): number {
+  const sorted = [...GBA_CITIES].sort((a, b) => b.emission - a.emission)
+  return sorted.findIndex((c) => c.name === city.name) + 1
+}
+
 const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
 const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
 
@@ -130,31 +168,33 @@ function init(el: HTMLElement | null): echarts.ECharts | null {
 }
 
 function renderPrice(c: echarts.ECharts) {
+  const ds = dynamicPriceSeries.value
   c.setOption({
     tooltip: { trigger: 'axis', ...tt },
     legend: { data: ['CEA收盘价', '复旦碳价指数预测中值', 'CCER均价', 'EUA(¥等值)'], bottom: 0, textStyle: { color: '#9db8ae' } },
     grid: { left: '3%', right: '4%', bottom: '14%', top: '12%', containLabel: true },
-    xAxis: { type: 'category', data: PRICE_SERIES.months, ...axis },
+    xAxis: { type: 'category', data: ds.months, ...axis },
     yAxis: { type: 'value', name: '¥/t', nameTextStyle: { color: '#5f7a6f' }, ...axis },
     series: [
-      { name: 'CEA收盘价', type: 'line', data: PRICE_SERIES.cea, color: '#10b981', smooth: true, symbolSize: 6,
+      { name: 'CEA收盘价', type: 'line', data: ds.cea, color: '#10b981', smooth: true, symbolSize: 6,
         areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(16,185,129,0.25)' }, { offset: 1, color: 'rgba(16,185,129,0)' }]) },
         animationDuration: 1500 },
-      { name: '复旦碳价指数预测中值', type: 'line', data: PRICE_SERIES.fudan, color: '#f59e0b', lineStyle: { type: 'dashed', width: 2 }, smooth: true, animationDuration: 2000 },
-      { name: 'CCER均价', type: 'line', data: PRICE_SERIES.ccer, color: '#0ea5e9', smooth: true, animationDuration: 1800 },
-      { name: 'EUA(¥等值)', type: 'line', data: PRICE_SERIES.euaCny, color: '#8b5cf6', lineStyle: { type: 'dotted', width: 1.5 }, smooth: true, animationDuration: 2200 },
+      { name: '复旦碳价指数预测中值', type: 'line', data: ds.fudan, color: '#f59e0b', lineStyle: { type: 'dashed', width: 2 }, smooth: true, animationDuration: 2000 },
+      { name: 'CCER均价', type: 'line', data: ds.ccer, color: '#0ea5e9', smooth: true, animationDuration: 1800 },
+      { name: 'EUA(¥等值)', type: 'line', data: ds.euaCny, color: '#8b5cf6', lineStyle: { type: 'dotted', width: 1.5 }, smooth: true, animationDuration: 2200 },
     ],
   })
 }
 
 function renderMarket(c: echarts.ECharts) {
+  const ds = dynamicMarketShare.value
   c.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)', ...tt },
     series: [{
       type: 'pie', radius: ['42%', '70%'], center: ['50%', '46%'],
       itemStyle: { borderColor: '#0a120f', borderWidth: 2, borderRadius: 6 },
       label: { color: '#9db8ae', fontSize: 10.5 },
-      data: MARKET_SHARE.map((m) => ({ name: m.name, value: m.value, itemStyle: { color: m.color } })),
+      data: ds.map((m) => ({ name: m.name, value: m.value, itemStyle: { color: m.color } })),
       animationType: 'scale', animationEasing: 'elasticOut',
     }],
   })
@@ -163,7 +203,15 @@ function renderMarket(c: echarts.ECharts) {
 function renderGba3d(c: echarts.ECharts) {
   const cities = GBA_CITIES.map((x) => x.name)
   c.setOption({
-    tooltip: { ...tt, formatter: (p: any) => `${p.value[0]} ${p.value[1]}<br/>排放量：${p.value[2]} 万tCO₂` },
+    tooltip: {
+      ...tt,
+      formatter: (p: any) => {
+        const city = GBA_CITIES[p.dataIndex]
+        return city
+          ? `${city.name} (${city.en})<br/>碳排放：${city.emission} 万tCO₂<br/>强度：${city.intensity} t/万元GDP<br/>人口：${city.population} 万`
+          : ''
+      },
+    },
     visualMap: {
       show: false, min: 300, max: 5500, inRange: { color: ['#0ea5e9', '#10b981', '#f59e0b', '#ef4444'] },
     },
@@ -187,6 +235,13 @@ function renderGba3d(c: echarts.ECharts) {
       emphasis: { itemStyle: { color: '#6ee7b7' } },
       animationDurationUpdate: 1000, animation: true,
     }],
+  })
+  c.off('click')
+  c.on('click', (params: any) => {
+    const idx = params.dataIndex
+    if (idx != null && GBA_CITIES[idx]) {
+      selectedCity.value = GBA_CITIES[idx]
+    }
   })
 }
 
@@ -260,6 +315,17 @@ function renderAll() {
 function resizeAll() { charts.forEach((c) => c.resize()) }
 
 onMounted(async () => {
+  // 优先拉取后端行情快照（含时间戳），离线自动降级本地静态
+  if (backendOnline) {
+    const r = await bizApi.getMarketQuotes()
+    if (r.code === 200 && r.data) {
+      const d: any = r.data
+      if (d.quotes) dynamicQuotes.value = d.quotes
+      if (d.priceSeries) dynamicPriceSeries.value = d.priceSeries
+      if (d.marketShare) dynamicMarketShare.value = d.marketShare
+      if (d.timestamp) marketTimestamp.value = d.timestamp
+    }
+  }
   await dataStore.loadSampleData()
   renderAll()
   window.addEventListener('resize', resizeAll)
@@ -297,4 +363,27 @@ onBeforeUnmount(() => {
   background: rgba(16, 185, 129, 0.05); border-left: 3px solid var(--c-green);
 }
 .hint-item :deep(b) { color: var(--c-text); }
+
+/* 3D 城市详情浮层：Apple 玻璃拟态 */
+.city-popover {
+  position: absolute; right: 12px; top: 8px; width: 236px; z-index: 10;
+  background: rgba(13, 23, 20, 0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 0.5px solid var(--c-border-2);
+  border-radius: 14px; padding: 12px 14px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  animation: popoverIn 0.3s var(--ease-spring) both;
+}
+@keyframes popoverIn { from { opacity: 0; transform: translateY(-6px) scale(0.98); } to { opacity: 1; transform: none; } }
+.cp-close {
+  width: 20px; height: 20px; line-height: 1; border-radius: 999px;
+  border: 1px solid var(--c-border); background: transparent;
+  color: var(--c-text-3); cursor: pointer; font-size: 14px;
+  transition: all 0.2s var(--ease-ios);
+}
+.cp-close:hover { color: var(--c-green); border-color: var(--c-green); }
+.cp-cell { padding: 6px 4px; border-radius: 8px; background: rgba(16, 29, 24, 0.5); }
+.cp-cell .num { font-size: 15px; font-weight: 700; }
+.cp-cell div:last-child { font-size: 10px; color: var(--c-text-3); margin-top: 2px; }
 </style>

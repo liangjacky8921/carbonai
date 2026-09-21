@@ -58,8 +58,11 @@
           </span>
         </div>
         <div class="flex items-center gap-3">
-          <el-tooltip v-if="usingSampleData" content="当前正在查看内置示例数据：一键切换示例/用户数据" placement="bottom">
-            <el-tag size="small" type="warning" effect="plain" round>正在查看：示例数据</el-tag>
+          <el-tooltip content="点击清空用户数据并切换回完整示例数据集" placement="bottom">
+            <el-tag size="small" type="warning" effect="plain" round class="cursor-pointer hover:brightness-110 transition-all"
+              @click="onToggleSample">
+              {{ usingSampleData ? '示例数据 · 点击切换' : '用户数据 · 点击切回示例' }}
+            </el-tag>
           </el-tooltip>
           <el-dropdown v-if="auth.isLoggedIn" @command="onUserCmd">
             <span class="user-chip">
@@ -176,6 +179,11 @@ async function onUserCmd(cmd: string) {
     toast.success('已退出登录')
     router.push('/auth/login')
   }
+}
+
+function onToggleSample() {
+  dataStore.resetAllToSample()
+  toast.success('已切换回完整示例数据集（本地用户数据已清空）')
 }
 
 onMounted(async () => {

@@ -1,0 +1,24 @@
+{
+  "grid_ef_kgco2_per_kwh": 0.5366,
+  "grid_ef_note": "生态环境部 2022 年全国电力平均 CO2 排放因子（运行口径，Scope 2 location-based）",
+  "grid_ef_pcf": {
+    "2022": 0.6205,
+    "2023": 0.6205,
+    "2024": 0.5777,
+    "2025": 0.5777,
+    "2026": 0.5777
+  },
+  "grid_ef_pcf_note": "电力碳足迹因子（生命周期口径）：2023=0.6205（2025-01 三部委首发），2024=0.5777（2025-10 发布）；2022 年前借用 2023 值",
+  "sludge_ef_tco2e_per_t": 0.5,
+  "ch4_ef_treatment": 0.018,
+  "ch4_ef_treatment_note": "IPCC 2019R Table 6.3 集中式好氧处理厂 kgCH4/kgBOD（0.003-0.09）",
+  "ch4_ef_effluent": 0.021,
+  "ch4_ef_effluent_note": "IPCC 2019R Table 6.3 排放至河流等水生环境（Tier 2）kgCH4/kgBOD，作用于出水 BOD",
+  "bod_from_cod_ratio": 0.5,
+  "n2o_ef": 0.016,
+  "n2o_ef_note": "IPCC 2019R 污水厂厂级 kgN2O-N/kgN（0.00016-0.045），作用于去除氮（以 NH3-N 计，TN 数据未入 ETL，属保守低估）",
+  "gwp_ch4": 27.0,
+  "gwp_n2o": 273.0,
+  "gwp_note": "IPCC AR6 100 年 GWP（CH4 生物源 27.0，N2O 273）",
+  "standard_water": "GB 18918-2002 一级A（日均：COD≤50、氨氮≤5（≤12℃时8）、总磷≤0.5 mg/L）"
+}

@@ -1,0 +1,110 @@
+{
+  "period": {
+    "start": "2022-01-01",
+    "end": "2026-07-01",
+    "n_months": 55,
+    "n_daily_rows": 1673
+  },
+  "total_flow_m3": 4111726.0,
+  "total_kwh": 2396072.6,
+  "total_co2e_t": 1916.3074999999997,
+  "total_co2e_pcf_t": 2052.7696,
+  "shares": {
+    "elec_pct": 67.1,
+    "ch4_pct": 7.5,
+    "n2o_pct": 16.5,
+    "sludge_pct": 8.9
+  },
+  "water_compliance_1A": {
+    "days_evaluated": 1673,
+    "exc_cod_days": 0,
+    "exc_nh3n_days": 0,
+    "exc_tp_days": 1,
+    "overall_rate_pct": 99.94,
+    "cod_out_p95": 15.82,
+    "nh3n_out_p95": 2.71,
+    "tp_out_p95": 0.31
+  },
+  "annual_records": [
+    {
+      "year": 2022.0,
+      "months": 12,
+      "flow_m3": 866761.0,
+      "kwh": 374718.0,
+      "fee_cny": 162232.05,
+      "sludge_prod_t": 36.8,
+      "co2e_elec_t": 201.0737,
+      "co2e_ch4_t": 40.9608,
+      "co2e_n2o_t": 69.1439,
+      "co2e_sludge_t": 18.4,
+      "co2e_total_t": 329.5783,
+      "co2e_total_pcf_t": 361.017,
+      "elec_intensity_per_m3": 0.4323,
+      "co2e_intensity_per_10k_m3": 3.8
+    },
+    {
+      "year": 2023.0,
+      "months": 12,
+      "flow_m3": 1027596.0,
+      "kwh": 512754.0,
+      "fee_cny": 412163.0,
+      "sludge_prod_t": 45.1,
+      "co2e_elec_t": 275.1439,
+      "co2e_ch4_t": 37.8349,
+      "co2e_n2o_t": 82.91069999999999,
+      "co2e_sludge_t": 22.55,
+      "co2e_total_t": 418.4396,
+      "co2e_total_pcf_t": 461.4595,
+      "elec_intensity_per_m3": 0.499,
+      "co2e_intensity_per_10k_m3": 4.07
+    },
+    {
+      "year": 2024.0,
+      "months": 12,
+      "flow_m3": 887204.0,
+      "kwh": 517289.0,
+      "fee_cny": 398966.14,
+      "sludge_prod_t": 53.8,
+      "co2e_elec_t": 277.5774,
+      "co2e_ch4_t": 30.9137,
+      "co2e_n2o_t": 73.8288,
+      "co2e_sludge_t": 26.9,
+      "co2e_total_t": 409.2198,
+      "co2e_total_pcf_t": 430.4804,
+      "elec_intensity_per_m3": 0.5831,
+      "co2e_intensity_per_10k_m3": 4.61
+    },
+    {
+      "year": 2025.0,
+      "months": 12,
+      "flow_m3": 879954.0,
+      "kwh": 573163.6,
+      "fee_cny": 442135.77,
+      "sludge_prod_t": 138.84,
+      "co2e_elec_t": 307.5597,
+      "co2e_ch4_t": 21.7228,
+      "co2e_n2o_t": 59.6734,
+      "co2e_sludge_t": 69.42,
+      "co2e_total_t": 458.3759,
+      "co2e_total_pcf_t": 481.933,
+      "elec_intensity_per_m3": 0.6514,
+      "co2e_intensity_per_10k_m3": 5.21
+    },
+    {
+      "year": 2026.0,
+      "months": 7,
+      "flow_m3": 450211.0,
+      "kwh": 418148.0,
+      "fee_cny": 308956.53,
+      "sludge_prod_t": 65.5,
+      "co2e_elec_t": 224.37810000000002,
+      "co2e_ch4_t": 12.673,
+      "co2e_n2o_t": 30.8926,
+      "co2e_sludge_t": 32.75,
+      "co2e_total_t": 300.6939,
+      "co2e_total_pcf_t": 317.8797,
+      "elec_intensity_per_m3": 0.9288,
+      "co2e_intensity_per_10k_m3": 6.68
+    }
+  ]
+}

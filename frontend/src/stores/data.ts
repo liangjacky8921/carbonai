@@ -194,6 +194,17 @@ export const useDataStore = defineStore('data', () => {
     source.value.pcf = 'user'
   }
 
+  /** 一键切换所有数据源回示例模式（清空本地用户数据） */
+  function resetAllToSample() {
+    resetEmissions()
+    resetTrajectory()
+    resetPoints()
+    resetBoundary()
+    resetBom()
+    lsDel(userKeys.pcf)
+    if (emissionYears.value.length) currentYear.value = emissionYears.value[emissionYears.value.length - 1]
+  }
+
   return {
     source, emissions, userEmissions, emissionYears, currentYear, yearRecords, yearTotal, scopeSummary,
     sampleEmissions, samplePoints, sampleBom,
@@ -201,6 +212,7 @@ export const useDataStore = defineStore('data', () => {
     loadSampleData, loadSampleTrajectory, loadSampleBoundary,
     setUserEmissions, resetEmissions, setUserTrajectory, resetTrajectory,
     setUserPoints, resetPoints, setUserBoundary, resetBoundary, setUserBom, resetBom, setUserPcf,
+    resetAllToSample,
   }
 })
 

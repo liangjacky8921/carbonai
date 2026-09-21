@@ -2,7 +2,7 @@
   <div class="max-w-[1600px] mx-auto space-y-4">
     <!-- 行情卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
-      <div v-for="q in quotes" :key="q.key" class="c-card p-3.5 asset-card">
+      <div v-for="q in dynamicQuotes" :key="q.key" class="c-card p-3.5 asset-card">
         <div class="text-[12px] text-[var(--c-text-2)] font-medium">{{ q.name }}</div>
         <div class="num text-[22px] font-bold text-green mt-1">{{ q.price }}<span class="text-[11px] ml-1 font-normal text-[var(--c-text-3)]">{{ q.unit }}</span></div>
         <div class="text-[10.5px] text-[var(--c-text-3)] mt-1.5">{{ q.source }}</div>
@@ -49,9 +49,11 @@ import ChartCard from '@/components/ChartCard.vue'
 import { REALTIME_QUOTES, PRICE_SERIES } from '@/data/carbonMarket'
 import { useDataStore } from '@/stores/data'
 import { fmt } from '@/utils/format'
+import { bizApi, backendOnline } from '@/api/client'
 
 const dataStore = useDataStore()
-const quotes = REALTIME_QUOTES
+const dynamicQuotes = ref(REALTIME_QUOTES)
+const dynamicPriceSeries = ref(PRICE_SERIES)
 const portfolioEl = ref<HTMLElement | null>(null)
 const priceEl = ref<HTMLElement | null>(null)
 let c1: echarts.ECharts | null = null
@@ -72,6 +74,15 @@ const calendar = [
 ]
 
 onMounted(async () => {
+  // 优先拉取后端行情快照，离线回退本地静态
+  if (backendOnline) {
+    const r = await bizApi.getMarketQuotes()
+    if (r.code === 200 && r.data) {
+      const d: any = r.data
+      if (d.quotes) dynamicQuotes.value = d.quotes
+      if (d.priceSeries) dynamicPriceSeries.value = d.priceSeries
+    }
+  }
   await dataStore.loadSampleData()
   const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
   const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
@@ -92,18 +103,19 @@ onMounted(async () => {
       }],
     })
   }
+  const ds = dynamicPriceSeries.value
   if (priceEl.value) {
     c2 = echarts.init(priceEl.value)
     c2.setOption({
       tooltip: { trigger: 'axis', ...tt },
       legend: { data: ['CEA实际', '复旦碳价指数预测', 'CCER均价'], bottom: 0, textStyle: { color: '#9db8ae' } },
       grid: { left: '3%', right: '4%', bottom: '14%', top: '12%', containLabel: true },
-      xAxis: { type: 'category', data: PRICE_SERIES.months, ...axis },
+      xAxis: { type: 'category', data: ds.months, ...axis },
       yAxis: { type: 'value', name: '¥/t', nameTextStyle: { color: '#5f7a6f' }, ...axis },
       series: [
-        { name: 'CEA实际', type: 'line', data: PRICE_SERIES.cea, color: '#10b981', smooth: true, symbolSize: 5, areaStyle: { color: 'rgba(16,185,129,0.12)' }, animationDuration: 1500 },
-        { name: '复旦碳价指数预测', type: 'line', data: PRICE_SERIES.fudan, color: '#f59e0b', lineStyle: { type: 'dashed', width: 2 }, smooth: true, animationDuration: 1900 },
-        { name: 'CCER均价', type: 'line', data: PRICE_SERIES.ccer, color: '#0ea5e9', smooth: true, animationDuration: 1700 },
+        { name: 'CEA实际', type: 'line', data: ds.cea, color: '#10b981', smooth: true, symbolSize: 5, areaStyle: { color: 'rgba(16,185,129,0.12)' }, animationDuration: 1500 },
+        { name: '复旦碳价指数预测', type: 'line', data: ds.fudan, color: '#f59e0b', lineStyle: { type: 'dashed', width: 2 }, smooth: true, animationDuration: 1900 },
+        { name: 'CCER均价', type: 'line', data: ds.ccer, color: '#0ea5e9', smooth: true, animationDuration: 1700 },
       ],
     })
   }

@@ -361,3 +361,47 @@ def ai_chat(body: ChatBody):
         return ok(answer)
     except Exception as e:
         return err(f"AI 服务调用失败：{e}", 502)
+
+
+# ---------------- 碳市场行情快照（2026-09-21 新增） ----------------
+
+_MARKET_SNAPSHOT = {
+    "quotes": [
+        {"key": "cea", "name": "CEA 全国碳配额", "price": "81.03", "unit": "¥/t", "source": "上海环交所", "note": "¥78-88区间"},
+        {"key": "ccer", "name": "CCER 核证减排量", "price": "82.63", "unit": "¥/t", "source": "北京绿交所", "note": "历史峰值 ¥130"},
+        {"key": "eua", "name": "EUA 欧盟碳配额", "price": "75.05", "unit": "€/t", "source": "ICE Endex", "note": "Q1均价"},
+        {"key": "fdi", "name": "复旦碳价指数(6月)", "price": "80.44", "unit": "¥/t", "source": "复旦大学", "note": "买入77.44 卖出83.42"},
+        {"key": "gdea", "name": "GDEA 广东碳配额", "price": "37.70", "unit": "¥/t", "source": "广州碳交所", "note": "年内累计 -5.7%"},
+        {"key": "szea", "name": "SZEA 深圳碳配额", "price": "47.11", "unit": "¥/t", "source": "深圳绿交所", "note": "年内 +23.8%"},
+    ],
+    "priceSeries": {
+        "months": ["1月", "2月", "3月", "4月", "5月", "6月", "7月(预)", "8月(预)", "9月(预)", "10月(预)", "11月(预)", "12月(预)"],
+        "cea": [81.5, 80.2, 82.1, 81.8, 83.0, 81.23, None, None, None, None, None, None],
+        "ccer": [88.0, 86.5, 88.67, 85.2, 83.5, 82.53, None, None, None, None, None, None],
+        "fudan": [None, None, None, None, None, 80.44, 80.0, 80.5, 81.0, 80.5, 80.2, 80.0],
+        "euaCny": [690, 705, 680, 672, 665, 658, None, None, None, None, None, None],
+    },
+    "marketShare": [
+        {"name": "全国碳市场CEA(上海)", "value": 81.23, "color": "#059669"},
+        {"name": "北京碳配额BJEA", "value": 92.0, "color": "#0ea5e9"},
+        {"name": "广东碳市场GDEA(广州)", "value": 37.62, "color": "#10b981"},
+        {"name": "深圳碳配额SZEA", "value": 47.05, "color": "#3b82f6"},
+        {"name": "湖北碳配额HBEA", "value": 48.2, "color": "#f59e0b"},
+        {"name": "天津碳配额TJEA", "value": 40.5, "color": "#8b5cf6"},
+        {"name": "重庆碳配额CQEA", "value": 38.0, "color": "#ef4444"},
+        {"name": "福建碳配额FJEA", "value": 32.6, "color": "#94a3b8"},
+    ],
+}
+
+
+@router.get("/market/quotes")
+def market_quotes():
+    """碳市场行情快照（含时间戳）。
+
+    当前返回内置参考行情 + 服务端生成时间戳。公开碳交易所实时行情多为付费/
+    需授权数据源，后续接入授权 API 时仅需替换本接口内部数据来源，前端无需改动。
+    """
+    snap = json.loads(json.dumps(_MARKET_SNAPSHOT))
+    snap["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    snap["disclaimer"] = "行情数据仅供参考，实时交易请以交易所官网为准"
+    return ok(snap)
