@@ -88,7 +88,7 @@
         </div>
 
         <div class="text-xs text-[var(--c-text-3)] leading-6" v-if="assumptions">
-          关键因子假设：电网 {{ assumptions.grid_ef_kgco2_per_kwh }} kgCO₂/kWh（2022 全国平均，运行口径）· 污泥 {{ assumptions.sludge_ef_tco2e_per_t }} tCO₂e/t · CH₄ 处理 {{ assumptions.ch4_ef_treatment }} / 出水 {{ assumptions.ch4_ef_effluent }} kgCH₄/kgBOD · N₂O {{ assumptions.n2o_ef }} kgN₂O-N/kgN · GWP CH₄={{ assumptions.gwp_ch4 }} / N₂O={{ assumptions.gwp_n2o }}（AR6）
+          关键因子假设：电网 {{ assumptions.grid_ef_kgco2_per_kwh }} kgCO₂e/kWh（2022 全国平均，运行口径）· 污泥 {{ assumptions.sludge_ef_tco2e_per_t }} tCO₂e/t · CH₄ 处理 {{ assumptions.ch4_ef_treatment }} / 出水 {{ assumptions.ch4_ef_effluent }} kgCH₄/kgBOD · N₂O {{ assumptions.n2o_ef }} kgN₂O-N/kgN · GWP CH₄={{ assumptions.gwp_ch4 }} / N₂O={{ assumptions.gwp_n2o }}（AR6）
         </div>
 
         <div class="flex gap-2">
@@ -113,7 +113,8 @@ const removalEl = ref<HTMLElement | null>(null)
 const codEl = ref<HTMLElement | null>(null)
 const sludgeEl = ref<HTMLElement | null>(null)
 
-let data: any = null
+// 注：sewage.json 原始数据，必须用 ref 包裹才能被 computed (months/totalWater 等) 响应式追踪
+const data = ref<any>(null)
 const kpi = ref<any>(null)
 const assumptions = ref<any>(null)
 let c1: echarts.ECharts | null = null
@@ -163,7 +164,7 @@ async function downloadReport() {
   }
 }
 
-const months = computed<any[]>(() => data?.months || [])
+const months = computed<any[]>(() => data.value?.months || [])
 const totalWater = computed(() => months.value.reduce((a, m) => a + (m.water || 0), 0))
 const totalSludge = computed(() => months.value.reduce((a, m) => a + (m.sludge || 0), 0))
 const avgRemoval = computed(() => {
@@ -176,7 +177,7 @@ const avgRemoval = computed(() => {
 
 onMounted(async () => {
   try {
-    data = await fetch('/sample-data/sewage.json').then((r) => r.json())
+    data.value = await fetch('/sample-data/sewage.json').then((r) => r.json())
   } catch { /* ignore */ }
   try {
     const [k, a] = await Promise.all([

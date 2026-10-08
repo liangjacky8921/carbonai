@@ -86,7 +86,7 @@ function calcElec() {
   const kwh = parseFloat(elec.kwh) || 0
   const ef = gridFactor[elec.grid]
   const co2 = (kwh * ef) / 1000
-  elec.result = `碳排放量：<b class="text-green">${co2.toFixed(3)} tCO₂e</b><br><span class="text-[11px]">因子: ${ef} kgCO₂/kWh · 来源: 中国电网 2023</span>`
+  elec.result = `碳排放量：<b class="text-green">${co2.toFixed(3)} tCO₂e</b><br><span class="text-[11px]">因子: ${ef} kgCO₂e/kWh · 来源: 中国电网 2023</span>`
 }
 function calcFuel() {
   const qty = parseFloat(fuel.qty) || 0

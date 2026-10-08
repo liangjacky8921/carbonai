@@ -85,7 +85,8 @@ const samples = computed<any[]>(() => {
   return groupFilter.value === 'all' ? data.samples : data.samples.filter((s: any) => s.group === groupFilter.value)
 })
 const groups = computed<string[]>(() => data?.groups || [])
-const pc1Var = computed(() => data ? (data.pca.variance_ratio[0] * 100).toFixed(1) : '—')
+// 注：数据源 variance_ratio 已为百分比（如 97.52），直接 toFixed 即可，禁止再 * 100
+const pc1Var = computed(() => data ? data.pca.variance_ratio[0].toFixed(2) : '—')
 
 const GROUP_COLORS = ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6']
 

@@ -54,7 +54,7 @@
         <div class="flex items-center gap-3 min-w-0">
           <h1 class="text-[15px] font-semibold truncate">{{ route.meta.title }}</h1>
           <span class="conn-badge" :class="backendOnline ? 'online' : 'offline'">
-            {{ backendOnline ? '后端已连接' : '前端独立模式' }}
+            {{ backendOnline ? '后端已连接' : '离线降级（示例数据）' }}
           </span>
         </div>
         <div class="flex items-center gap-3">
@@ -189,7 +189,7 @@ function onToggleSample() {
 onMounted(async () => {
   await probeBackend()
   if (!backendOnline) {
-    console.info('[CarbonAI] 后端未连接，运行于前端独立模式（Mock 数据）')
+    console.info('[CarbonAI] 后端未连接，进入离线降级模式（示例数据）')
   }
   dataStore.loadSampleData()
 })

@@ -76,7 +76,18 @@
     </template>
     <div v-else class="c-card">
       <EmptyState icon="Guide" title="尚未执行轨迹碳核算"
-        description="上传车队 GPS/北斗轨迹 CSV（或加载示例轨迹），选择货物类型与排放标准后执行核算。核算基于 GLEC 3.0 / ISO 14083 吨·公里方法学。" />
+        description="上传车队 GPS/北斗轨迹 CSV（或加载示例轨迹），选择货物类型与排放标准后执行核算。核算基于 GLEC 3.0 / ISO 14083 吨·公里方法学。">
+        <el-button type="primary" size="small" @click="loadDemo">🚀 一键加载示例轨迹试试</el-button>
+      </EmptyState>
+    </div>
+
+    <!-- 首次访问引导条：3 步走完核算流程，看过即消失 -->
+    <div v-if="showGuide" class="c-card p-3 flex items-center gap-3 bg-[var(--c-green-soft)] border border-[rgba(16,185,129,0.4)]">
+      <span class="text-green text-lg">💡</span>
+      <div class="text-xs text-[var(--c-text)] leading-6 flex-1">
+        <b>新手三步速通：</b> ① 在左侧点「加载示例轨迹」→ ② 中间选货物类型（如普通货物）→ ③ 点「执行轨迹碳核算」按钮，600ms 出结果 📊
+      </div>
+      <el-button size="small" text @click="dismissGuide">知道了</el-button>
     </div>
   </div>
 </template>
@@ -110,6 +121,14 @@ let trajData: TrajPoint[] = []
 
 const result = ref<{ dist: string; tonKm: string; carbon: string } | null>(null)
 const segments = ref<{ dist: string; tonKm: string; carbon: string; load: number; vehicle: string }[]>([])
+
+// 新手引导：首次访问显示，用户关闭后 localStorage 标记不再显示
+const GUIDE_KEY = 'carbonai_traj_guided_v6'
+const showGuide = ref(typeof localStorage !== 'undefined' && !localStorage.getItem(GUIDE_KEY))
+function dismissGuide() {
+  showGuide.value = false
+  try { localStorage.setItem(GUIDE_KEY, '1') } catch { /* 无痕模式忽略 */ }
+}
 
 const cargoFactor: Record<string, number> = { normal: 1, cold: 1.32, danger: 1.18, bulk: 1.1 }
 
@@ -218,7 +237,7 @@ function renderCharts(vehStats: Record<string, { carbon: number; tonKm: number }
     tooltip: { trigger: 'axis', ...tt },
     grid: { left: '3%', right: '5%', bottom: '12%', top: '12%', containLabel: true },
     xAxis: { type: 'category', data: vehEntries.map((v) => v[0]), ...axis },
-    yAxis: { type: 'value', name: 'kgCO₂/t·km', nameTextStyle: { color: '#5f7a6f' }, ...axis },
+    yAxis: { type: 'value', name: 'kgCO₂e/t·km', nameTextStyle: { color: '#5f7a6f' }, ...axis },
     series: [{
       type: 'bar', barWidth: '40%',
       data: vehEntries.map(([, v]) => +(v.tonKm ? v.carbon / v.tonKm : 0).toFixed(3)),

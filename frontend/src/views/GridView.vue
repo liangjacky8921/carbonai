@@ -19,7 +19,7 @@
             <el-radio-button value="24h">近24小时</el-radio-button>
             <el-radio-button value="7d">近7天</el-radio-button>
           </el-radio-group>
-          <div class="text-xs text-[var(--c-text-3)] mt-3">预警阈值 (tCO₂/km²·h)</div>
+          <div class="text-xs text-[var(--c-text-3)] mt-3">预警阈值 (tCO₂e/km²·h)</div>
           <div class="flex items-center gap-2">
             <el-input-number v-model="yellowThreshold" size="small" :min="1" :max="20" style="width: 100px" />
             <span class="text-[11px] text-amber">黄色预警</span>
@@ -62,6 +62,7 @@ import * as echarts from 'echarts'
 import ChartCard from '@/components/ChartCard.vue'
 import { GRID_REGIONS } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
+import { MONITORING_CONFIG } from '@/utils/format'
 
 const toast = useToast()
 const mapEl = ref<HTMLElement | null>(null)
@@ -75,8 +76,10 @@ const redThreshold = ref(12)
 let map: L.Map | null = null
 let histChart: echarts.ECharts | null = null
 let statChart: echarts.ECharts | null = null
+// T11: SSE 实时流客户端
+let sseClient: EventSource | null = null
 
-interface Alert { id: number; level: 'red' | 'yellow' | 'normal'; text: string }
+interface Alert { id: number; level: 'red' | 'yellow' | 'normal'; text: string; source?: string }
 const alerts = ref<Alert[]>([])
 
 function initMap() {
@@ -120,8 +123,8 @@ function refresh() {
 
   // 预警日志
   const newAlerts: Alert[] = [{ id: Date.now(), level: 'normal', text: `${reg.name} · ${windowLabel()}监测完成，共 ${values.length} 个网格` }]
-  if (redCells.length) newAlerts.unshift({ id: Date.now() + 1, level: 'red', text: `${reg.name} ${redCells.length} 个网格超过红色阈值 ${redThreshold.value} tCO₂/km²·h，建议立即派员核查` })
-  if (yellowCells.length) newAlerts.unshift({ id: Date.now() + 2, level: 'yellow', text: `${reg.name} ${yellowCells.length} 个网格超过黄色阈值 ${yellowThreshold.value} tCO₂/km²·h` })
+  if (redCells.length) newAlerts.unshift({ id: Date.now() + 1, level: 'red', text: `${reg.name} ${redCells.length} 个网格超过红色阈值 ${redThreshold.value} tCO₂e/km²·h，建议立即派员核查` })
+  if (yellowCells.length) newAlerts.unshift({ id: Date.now() + 2, level: 'yellow', text: `${reg.name} ${yellowCells.length} 个网格超过黄色阈值 ${yellowThreshold.value} tCO₂e/km²·h` })
   alerts.value = [...newAlerts, ...alerts.value].slice(0, 30)
 
   renderCharts(values)
@@ -142,7 +145,7 @@ function renderCharts(values: number[]) {
   histChart?.setOption({
     tooltip: { trigger: 'axis', ...tt },
     grid: { left: '3%', right: '5%', bottom: '12%', top: '14%', containLabel: true },
-    xAxis: { type: 'category', data: ['0-2', '2-4', '4-6', '6-8', '8-10', '10-12', '12-14', '>14'], name: 'tCO₂/km²·h', nameTextStyle: { color: '#5f7a6f' }, ...axis },
+    xAxis: { type: 'category', data: ['0-2', '2-4', '4-6', '6-8', '8-10', '10-12', '12-14', '>14'], name: 'tCO₂e/km²·h', nameTextStyle: { color: '#5f7a6f' }, ...axis },
     yAxis: { type: 'value', name: '网格数', nameTextStyle: { color: '#5f7a6f' }, ...axis },
     series: [{ type: 'bar', data: counts, itemStyle: { borderRadius: [4, 4, 0, 0], color: '#f59e0b' }, animationDelay: (i: number) => i * 60 }],
   }, true)
@@ -163,8 +166,64 @@ function renderCharts(values: number[]) {
 }
 
 function resize() { map?.invalidateSize(); histChart?.resize(); statChart?.resize() }
-onMounted(() => { initMap(); refresh(); window.addEventListener('resize', resize) })
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); map?.remove(); histChart?.dispose(); statChart?.dispose() })
+
+// T11: 接 SSE 实时流 → 超 CONFIG 阈值触发预警联动
+function initRealtimeStream() {
+  const { sse_url, critical_threshold, warning_threshold } = MONITORING_CONFIG
+  try {
+    sseClient = new EventSource(sse_url)
+  } catch { return }  // EventSource 不可用时静默降级
+
+  // 冷却窗口：同一点位 5 分钟内不重复追加同级别预警
+  const lastAlertAt = new Map<string, number>()
+
+  sseClient.onmessage = (ev) => {
+    try {
+      const p = JSON.parse(ev.data)
+      if (p.type === 'connected' || !p.co2e_rate) return
+
+      const rate = p.co2e_rate
+      const pid = p.point_id
+      const now = Date.now()
+
+      // 用 CONFIG 阈值判定（kg/h 绝对值，不影响网格密度阈值体系）
+      let level: Alert['level'] | null = null
+      let coolMs = 0
+      if (rate >= critical_threshold) { level = 'red'; coolMs = MONITORING_CONFIG.critical_cooldown_ms }
+      else if (rate >= warning_threshold) { level = 'yellow'; coolMs = MONITORING_CONFIG.warning_cooldown_ms }
+
+      if (level) {
+        const last = lastAlertAt.get(pid + level) || 0
+        if (now - last > coolMs) {
+          lastAlertAt.set(pid + level, now)
+          const newAlert: Alert = {
+            id: now + Math.random(),
+            level,
+            source: 'realtime',
+            text: `🔴 实时推送 ${pid} co2e_rate=${rate} kg/h 超过 ${level === 'red' ? 'critical' : 'warning'} 阈值（${level === 'red' ? critical_threshold : warning_threshold} kg/h）· ${p.timestamp}`,
+          }
+          alerts.value.unshift(newAlert)
+          alerts.value = alerts.value.slice(0, 50)
+          toast.warning(`${level === 'red' ? '🔴 红色' : '🟡 黄色'}预警：${pid} 排放速率 ${rate} kg/h`)
+        }
+      }
+    } catch { /* 坏包跳过 */ }
+  }
+
+  sseClient.onerror = () => { /* EventSource 自带指数退避重连 */ }
+}
+
+onMounted(() => {
+  initMap()
+  refresh()
+  setTimeout(initRealtimeStream, 800)  // T11: 延迟启动 SSE，避免阻塞初始渲染
+  window.addEventListener('resize', resize)
+})
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', resize)
+  sseClient?.close()  // T11: 清理 SSE 连接
+  map?.remove(); histChart?.dispose(); statChart?.dispose()
+})
 </script>
 
 <style scoped>

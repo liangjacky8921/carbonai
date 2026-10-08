@@ -130,7 +130,7 @@ function renderCharts() {
       tooltip: { trigger: 'axis', ...tt },
       grid: { left: '3%', right: '5%', bottom: '14%', top: '12%', containLabel: true },
       xAxis: { type: 'category', data: allGrid.map((f) => f.name.replace('电网排放因子-', '')), ...axis },
-      yAxis: { type: 'value', name: 'kgCO₂/kWh', nameTextStyle: { color: '#5f7a6f' }, ...axis },
+      yAxis: { type: 'value', name: 'kgCO₂e/kWh', nameTextStyle: { color: '#5f7a6f' }, ...axis },
       series: [{
         type: 'bar', barWidth: '50%',
         data: allGrid.map((f) => f.value),

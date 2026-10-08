@@ -140,6 +140,7 @@ import DataUpload from '@/components/DataUpload.vue'
 import { useDataStore, parsePointsFile } from '@/stores/data'
 import { GBA_CITIES } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
+import { MONITORING_CONFIG } from '@/utils/format'
 
 const dataStore = useDataStore()
 const toast = useToast()
@@ -156,6 +157,10 @@ let heatLayer: any = null
 let drawnItems: L.LayerGroup | null = null
 let drawMode = false
 let currentPolygon: L.Polygon | null = null
+// T10: 实时点位图层 + SSE 客户端
+let realtimePoints: L.LayerGroup | null = null
+let sseClient: EventSource | null = null
+let lastRealtimeMarker: L.CircleMarker | null = null
 let ndviChart: echarts.ECharts | null = null
 let biomassChart: echarts.ECharts | null = null
 
@@ -186,6 +191,51 @@ function initMap() {
   })
   map.on('dblclick', () => { if (drawMode) finishDraw() })
   setTimeout(() => map?.invalidateSize(), 300)
+}
+
+// T10: 建立 SSE 实时流 + 更新地图点位图层
+function initRealtime() {
+  if (!map) return
+  realtimePoints = L.layerGroup().addTo(map)
+  const { sse_url, critical_threshold, warning_threshold, demo_point_lat, demo_point_lon } = MONITORING_CONFIG
+
+  try {
+    sseClient = new EventSource(sse_url)
+  } catch { /* EventSource 不可用（非 http 或环境限制） → 静默降级 */ return }
+
+  sseClient.onmessage = (ev) => {
+    try {
+      const payload = JSON.parse(ev.data)
+      if (payload.type === 'connected') return  // 握手包跳过
+      if (!payload.co2e_rate) return
+
+      // 颜色映射：绿色=正常 / 琥珀色=warning / 红色=critical
+      const rate = payload.co2e_rate
+      let color = '#10b981'
+      let fillColor = 'rgba(16,185,129,0.45)'
+      if (rate >= critical_threshold) { color = '#ef4444'; fillColor = 'rgba(239,68,68,0.45)' }
+      else if (rate >= warning_threshold) { color = '#f59e0b'; fillColor = 'rgba(245,158,11,0.45)' }
+
+      // 节流：5s 推送本来就不频繁，直接更新 marker（CircleMarker 支持 setStyle 动画）
+      if (lastRealtimeMarker && realtimePoints?.hasLayer(lastRealtimeMarker)) {
+        lastRealtimeMarker.setStyle({ color, fillColor, radius: 10 + rate / 10 })
+        lastRealtimeMarker.bindPopup(
+          `<b>${payload.point_id}</b><br/>CO₂e: <b>${rate} kg/h</b><br/>状态: ${payload.operating_status}<br/>数据源: ${payload.data_source}<br/>时间: ${payload.timestamp}`
+        )
+      } else {
+        // 首次或被清理：新建 marker
+        lastRealtimeMarker = L.circleMarker([demo_point_lat, demo_point_lon], {
+          radius: 10 + rate / 10, color, fillColor, weight: 2, fillOpacity: 0.5,
+        }).bindPopup(
+          `<b>${payload.point_id}</b><br/>CO₂e: <b>${rate} kg/h</b><br/>状态: ${payload.operating_status}<br/>数据源: ${payload.data_source}<br/>时间: ${payload.timestamp}`
+        )
+        realtimePoints!.addLayer(lastRealtimeMarker)
+      }
+    } catch { /* 坏包跳过 */ }
+  }
+
+  // 断线静默重连（EventSource 自带指数退避）
+  sseClient.onerror = () => { /* 不 toast 打扰用户，静默重连 */ }
 }
 
 function clearLayers() {
@@ -388,11 +438,19 @@ watch(mode, () => {
 onMounted(async () => {
   await nextTick()
   initMap()
+  // T10: 初始化实时点位图层（不阻塞主线程，失败静默降级）
+  setTimeout(initRealtime, 500)
   await dataStore.loadSampleData()
   window.addEventListener('resize', resize)
 })
 function resize() { map?.invalidateSize(); ndviChart?.resize(); biomassChart?.resize() }
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); map?.remove(); ndviChart?.dispose(); biomassChart?.dispose() })
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', resize)
+  // T10: 清理 SSE + 实时点位层
+  sseClient?.close()
+  realtimePoints?.remove()
+  map?.remove(); ndviChart?.dispose(); biomassChart?.dispose()
+})
 </script>
 
 <style scoped>
