@@ -169,6 +169,8 @@ function resize() { map?.invalidateSize(); histChart?.resize(); statChart?.resiz
 
 // T11: 接 SSE 实时流 → 超 CONFIG 阈值触发预警联动
 function initRealtimeStream() {
+  // 未启用实时流（生产环境未配置 VITE_MONITORING_SSE_URL）→ 不发起连接
+  if (!MONITORING_CONFIG.realtime_enabled) return
   const { sse_url, critical_threshold, warning_threshold } = MONITORING_CONFIG
   try {
     sseClient = new EventSource(sse_url)
@@ -210,7 +212,13 @@ function initRealtimeStream() {
     } catch { /* 坏包跳过 */ }
   }
 
-  sseClient.onerror = () => { /* EventSource 自带指数退避重连 */ }
+  // 断线有限重连：连续失败 max_retries 次后关闭连接，防止服务不存在时无限重试刷屏
+  let rtFailures = 0
+  sseClient.onopen = () => { rtFailures = 0 }
+  sseClient.onerror = () => {
+    rtFailures++
+    if (rtFailures >= MONITORING_CONFIG.max_retries) { sseClient?.close(); sseClient = null }
+  }
 }
 
 onMounted(() => {

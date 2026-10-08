@@ -196,6 +196,8 @@ function initMap() {
 // T10: 建立 SSE 实时流 + 更新地图点位图层
 function initRealtime() {
   if (!map) return
+  // 未启用实时流（生产环境未配置 VITE_MONITORING_SSE_URL）→ 不创建图层、不发起连接
+  if (!MONITORING_CONFIG.realtime_enabled) return
   realtimePoints = L.layerGroup().addTo(map)
   const { sse_url, critical_threshold, warning_threshold, demo_point_lat, demo_point_lon } = MONITORING_CONFIG
 
@@ -234,8 +236,13 @@ function initRealtime() {
     } catch { /* 坏包跳过 */ }
   }
 
-  // 断线静默重连（EventSource 自带指数退避）
-  sseClient.onerror = () => { /* 不 toast 打扰用户，静默重连 */ }
+  // 断线有限重连：连续失败 max_retries 次后关闭连接，防止服务不存在时无限重试刷屏
+  let rtFailures = 0
+  sseClient.onopen = () => { rtFailures = 0 }
+  sseClient.onerror = () => {
+    rtFailures++
+    if (rtFailures >= MONITORING_CONFIG.max_retries) { sseClient?.close(); sseClient = null }
+  }
 }
 
 function clearLayers() {

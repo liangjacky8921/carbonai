@@ -46,7 +46,7 @@ router.beforeEach((to) => {
   if ((to.name === 'login' || to.name === 'register') && auth.isLoggedIn) {
     return { path: '/' }
   }
-  document.title = `${to.meta.title ?? ''} · CarbonAI V5.2 时空智能碳管理平台`
+  document.title = `${to.meta.title ?? ''} · CarbonAI V6.0 时空智能碳管理平台`
 })
 
 export default router
