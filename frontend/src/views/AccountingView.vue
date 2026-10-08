@@ -124,7 +124,7 @@ async function onFile(file: File) {
 
 /** 优先调用后端核算，后端不可用或失败时回退本地解析 */
 async function uploadAndAccount(file: File) {
-  if (backendOnline) {
+  if (backendOnline.value) {
     try {
       const fd = new FormData()
       fd.append('file', file)

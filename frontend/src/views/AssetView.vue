@@ -75,7 +75,7 @@ const calendar = [
 
 onMounted(async () => {
   // 优先拉取后端行情快照，离线回退本地静态
-  if (backendOnline) {
+  if (backendOnline.value) {
     const r = await bizApi.getMarketQuotes()
     if (r.code === 200 && r.data) {
       const d: any = r.data

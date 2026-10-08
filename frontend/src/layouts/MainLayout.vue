@@ -103,7 +103,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useDataStore } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
-import { probeBackend, backendOnline } from '@/api/client'
+import { backendOnline } from '@/api/client'
 import IcpRecord from '@/components/IcpRecord.vue'
 import {
   Odometer, DataAnalysis, Files, MapLocation, Guide, Grid, Histogram, Cpu,
@@ -186,9 +186,9 @@ function onToggleSample() {
   toast.success('已切换回完整示例数据集（本地用户数据已清空）')
 }
 
-onMounted(async () => {
-  await probeBackend()
-  if (!backendOnline) {
+onMounted(() => {
+  // 后端探测已前移到 main.ts（挂载前执行），这里只做日志与示例数据加载
+  if (!backendOnline.value) {
     console.info('[CarbonAI] 后端未连接，进入离线降级模式（示例数据）')
   }
   dataStore.loadSampleData()

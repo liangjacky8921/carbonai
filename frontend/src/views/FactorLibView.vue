@@ -108,7 +108,7 @@ const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', tex
 const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
 
 async function loadFactors() {
-  if (!backendOnline) return
+  if (!backendOnline.value) return
   try {
     const res = await bizApi.getFactors()
     if (res.code === 200 && Array.isArray(res.data) && res.data.length) {

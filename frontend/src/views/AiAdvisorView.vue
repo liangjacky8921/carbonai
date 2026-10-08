@@ -94,7 +94,7 @@ async function send(q?: string) {
   chatBox.value?.scrollTo({ top: chatBox.value.scrollHeight, behavior: 'smooth' })
 
   let answer = ''
-  if (backendOnline) {
+  if (backendOnline.value) {
     const r = await bizApi.chat(text, messages.value.slice(-8))
     answer = r.code === 200 ? String(r.data) : `后端暂不可用：${r.message}\n\n已自动回退到本地碳管理知识库。`
   }
