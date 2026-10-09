@@ -1,5 +1,5 @@
 /**
- * CarbonAI V5.2 — API 客户端
+ * CarbonAI V6.0 — API 客户端
  * 启动时探测 FastAPI 后端（/api/health）；在线走真实 API，离线自动回退 Mock。
  * 所有响应统一 { code: 200, message: "success", data: {...} }。
  */

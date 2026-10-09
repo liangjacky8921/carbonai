@@ -1,5 +1,5 @@
 /**
- * CarbonAI V5.2 — 本地离线认证兜底实现
+ * CarbonAI V6.0 — 本地离线认证兜底实现
  * 提供 register / login / logout / send-code / user-info 的同契约实现，
  * 用户数据存于 localStorage（carbonai_mock_users），后端在线时由上层切换。
  */

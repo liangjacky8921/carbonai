@@ -1,4 +1,4 @@
-/** CarbonAI V5.2 — 碳市场行情与区域静态数据（源自线上 v5.2 平台口径，2026-09） */
+/** CarbonAI V6.0 — 碳市场行情与区域静态数据（源自线上 v6.0 平台口径，2026-09） */
 
 export interface Quote {
   key: string; name: string; price: string; unit: string; source: string; note?: string

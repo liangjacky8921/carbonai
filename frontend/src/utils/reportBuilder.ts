@@ -1,5 +1,5 @@
 /**
- * CarbonAI V5.2 — 报告生成引擎（纯前端）
+ * CarbonAI V6.0 — 报告生成引擎（纯前端）
  * ① 产品碳足迹 LCA 中英文双语报告（PDF via html2canvas+jsPDF / Word via docx）
  * ② 多标准披露报告（CBAM / HKEX ESG / ISSB / ISO 14064-1 等 12 标准）
  * ③ 报告历史记录（localStorage 持久化）

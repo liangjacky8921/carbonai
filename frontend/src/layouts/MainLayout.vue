@@ -7,7 +7,7 @@
         <transition name="fade">
           <div v-show="!collapsed" class="leading-tight">
             <div class="text-[15px] font-bold tracking-wide">CarbonAI</div>
-            <div class="text-[10px] text-[var(--c-text-3)]">时空智能碳管理平台 V5.2</div>
+            <div class="text-[10px] text-[var(--c-text-3)]">时空智能碳管理平台 V6.0</div>
           </div>
         </transition>
       </div>
@@ -198,9 +198,11 @@ onMounted(() => {
 <style scoped>
 .sidebar {
   width: 232px; flex-shrink: 0; display: flex; flex-direction: column;
-  background: linear-gradient(180deg, #0a120f, #070d0b);
+  background: linear-gradient(180deg, rgba(10, 18, 15, 0.82), rgba(7, 13, 11, 0.88));
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
   border-right: 1px solid var(--c-border);
-  transition: width 0.25s ease;
+  transition: width var(--dur-micro) var(--ease-apple);
 }
 .sidebar.collapsed { width: 64px; }
 .logo-row {
@@ -214,10 +216,10 @@ onMounted(() => {
 .nav-item {
   display: flex; align-items: center; gap: 10px; margin: 2px 10px;
   padding: 9px 12px; border-radius: 8px; color: var(--c-text-2);
-  font-size: 13px; text-decoration: none; transition: all 0.2s;
+  font-size: 13px; text-decoration: none; transition: all var(--dur-micro) var(--ease-apple);
   border: 1px solid transparent;
 }
-.nav-item:hover { color: var(--c-text); background: rgba(16, 185, 129, 0.07); }
+.nav-item:hover { color: var(--c-text); background: rgba(16, 185, 129, 0.07); transform: translateX(2px); }
 .nav-item.active {
   color: var(--c-green); background: var(--c-green-soft);
   border-color: rgba(16, 185, 129, 0.25); font-weight: 600;
@@ -235,8 +237,8 @@ onMounted(() => {
   height: 54px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
   padding: 0 18px; border-bottom: 0.5px solid var(--c-border);
   background: rgba(13, 23, 20, 0.72);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(1.5);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
 }
 .conn-badge {
   font-size: 11px; padding: 3px 10px; border-radius: 999px; font-weight: 500;

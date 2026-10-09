@@ -12,7 +12,7 @@
       <div class="brand">
         <img src="/favicon.svg" class="w-14 h-14 mb-3" alt="CarbonAI" />
         <h1 class="text-2xl font-bold tracking-wide">CarbonAI</h1>
-        <p class="text-[12px] text-[var(--c-text-3)] mt-1 tracking-[3px]">时空智能碳管理平台 · V5.2</p>
+        <p class="text-[12px] text-[var(--c-text-3)] mt-1 tracking-[3px]">时空智能碳管理平台 · V6.0</p>
       </div>
       <router-view v-slot="{ Component }">
         <transition name="page" mode="out-in">

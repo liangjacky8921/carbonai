@@ -150,12 +150,22 @@ def _deliver_code_email(to_email: str, code: str):
         print(f"[CarbonAI][DEV] 邮箱验证码 {to_email} → {code}（5分钟内有效，生产环境请配置 SMTP_* 环境变量）")
         return
 
-    body = (
-        f"您正在注册 CarbonAI 时空智能碳管理平台账号。\n\n"
-        f"验证码：{code}\n\n"
-        f"5 分钟内有效。若非本人操作，请忽略本邮件。"
-    )
-    msg = MIMEText(body, "plain", "utf-8")
+    body = f"""<!DOCTYPE html>
+<html><body style="margin:0;padding:0;background:#070d0b;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;">
+<div style="max-width:480px;margin:0 auto;padding:32px 24px;">
+  <div style="background:linear-gradient(160deg,#101d18,#0d1714);border:1px solid #24413a;border-radius:12px;padding:32px;">
+    <div style="font-size:18px;font-weight:700;color:#10b981;letter-spacing:-0.02em;margin-bottom:4px;">CarbonAI</div>
+    <div style="font-size:12px;color:#5f7a6f;margin-bottom:24px;">时空智能碳管理平台</div>
+    <div style="font-size:14px;color:#e8f5ef;line-height:1.6;margin-bottom:20px;">您正在注册 CarbonAI 时空智能碳管理平台账号，请使用以下验证码完成注册：</div>
+    <div style="text-align:center;padding:20px 0;margin-bottom:20px;background:rgba(16,185,129,0.06);border-radius:10px;">
+      <span style="font-size:32px;font-weight:700;color:#10b981;letter-spacing:6px;font-family:'JetBrains Mono','SF Mono',monospace;">{code}</span>
+    </div>
+    <div style="font-size:13px;color:#9db8ae;line-height:1.6;">验证码 10 分钟内有效。若非本人操作，请忽略本邮件，无需做任何处理。</div>
+  </div>
+  <div style="font-size:11px;color:#5f7a6f;text-align:center;margin-top:16px;">© CarbonAI 时空智能碳管理平台 · 此邮件为系统自动发送</div>
+</div>
+</body></html>"""
+    msg = MIMEText(body, "html", "utf-8")
     msg["Subject"] = f"CarbonAI 注册验证码：{code}"
     msg["To"] = to_email
 
@@ -261,6 +271,8 @@ def send_code(body: SendCodeBody):
         return err("邮箱格式不正确")
     if not _rate_ok(f"code:{body.email}", limit=5, window=600):
         return err("验证码请求过于频繁，请稍后再试")
+    if not _rate_ok(f"code-resend:{body.email}", limit=1, window=60):
+        return err("请求过于频繁，请 60 秒后重试")
 
     code = str(secrets.randbelow(900000) + 100000)
     db = SessionLocal()
@@ -269,7 +281,7 @@ def send_code(body: SendCodeBody):
             EmailCode(
                 email=body.email,
                 code=code,
-                expires_at=datetime.now() + timedelta(minutes=5),
+                expires_at=datetime.now() + timedelta(minutes=10),
                 used=0,
             )
         )
@@ -279,8 +291,8 @@ def send_code(body: SendCodeBody):
 
     _send_code_email_async(body.email, code)
     if not _smtp_configs():
-        return ok({"expires_in": 300, "channel": "log"}, "验证码已发送（开发模式：请查看服务端日志或配置 SMTP）")
-    return ok({"expires_in": 300, "channel": "email"}, "验证码已发送至您的邮箱，请查收（注意垃圾邮件箱）")
+        return ok({"expires_in": 600, "channel": "log"}, "验证码已发送（开发模式：请查看服务端日志或配置 SMTP）")
+    return ok({"expires_in": 600, "channel": "email"}, "验证码已发送至您的邮箱，请查收（注意垃圾邮件箱）")
 
 
 @router.post("/login")

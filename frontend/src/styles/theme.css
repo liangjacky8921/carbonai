@@ -1,5 +1,5 @@
 /* ============================================================
-   CarbonAI V5.2 — 深色碳主题设计系统
+   CarbonAI V6.0 — 深色碳主题设计系统
    绿(#10b981)/蓝(#0ea5e9) 主色调 · 大屏数据可视化风格
    ============================================================ */
 :root {
@@ -41,6 +41,12 @@
   --ease-ios: cubic-bezier(0.25, 0.1, 0.25, 1);
   --ease-scientific: cubic-bezier(0.4, 0, 0.6, 1);
   --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-apple: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* 动效时长档位（Apple HIG） */
+  --dur-micro: 250ms;
+  --dur-page: 450ms;
+  --dur-stagger: 50ms;
 }
 
 /* ---------- Element Plus 暗色变量覆盖（碳主题） ---------- */
@@ -80,7 +86,7 @@ body {
     radial-gradient(1000px 500px at 10% 110%, rgba(16, 185, 129, 0.05), transparent 60%),
     var(--c-bg);
   color: var(--c-text);
-  font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, sans-serif;
+  font-family: var(--font-head);
   font-size: 14px;
   letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
@@ -104,17 +110,18 @@ h1, h2, h3, .c-card-title {
   background: linear-gradient(160deg, rgba(16, 29, 24, 0.9), rgba(13, 23, 20, 0.95));
   border: 1px solid var(--c-border);
   border-radius: var(--radius-lg);
-  transition: border-color 0.3s var(--ease-scientific), box-shadow 0.3s var(--ease-scientific);
+  transition: border-color var(--dur-micro) var(--ease-apple), box-shadow var(--dur-micro) var(--ease-apple), transform var(--dur-micro) var(--ease-apple);
 }
 .c-card:hover {
   border-color: var(--c-border-2);
-  box-shadow: 0 2px 12px rgba(16, 185, 129, 0.06);
+  box-shadow: 0 4px 24px rgba(16, 185, 129, 0.08), 0 1px 4px rgba(0, 0, 0, 0.3);
+  transform: translateY(-1px);
 }
 
 /* 按钮按压：克制的学术交互（少 bounce，精确按下） */
-.el-button { transition: transform 0.18s var(--ease-scientific), box-shadow 0.18s var(--ease-scientific); }
-.el-button:active { transform: scale(0.98); }
-.el-button:hover { box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08); }
+.el-button { transition: transform var(--dur-micro) var(--ease-apple), box-shadow var(--dur-micro) var(--ease-apple); }
+.el-button:active { transform: scale(0.97); }
+.el-button:hover { box-shadow: 0 2px 8px rgba(16, 185, 129, 0.08); transform: scale(1.01); }
 
 .c-card-title {
   display: flex; align-items: center; gap: 8px;
@@ -135,9 +142,9 @@ h1, h2, h3, .c-card-title {
   background: var(--c-surface-2);
   border: 1px solid var(--c-border);
   border-radius: var(--radius-md); padding: 14px 16px;
-  transition: border-color 0.25s var(--ease-scientific), box-shadow 0.25s var(--ease-scientific);
+  transition: border-color var(--dur-micro) var(--ease-apple), box-shadow var(--dur-micro) var(--ease-apple), transform var(--dur-micro) var(--ease-apple);
 }
-.stat-box:hover { border-color: var(--c-border-2); box-shadow: 0 2px 10px rgba(16, 185, 129, 0.05); }
+.stat-box:hover { border-color: var(--c-border-2); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.07); transform: translateY(-1px); }
 .stat-box .num { font-size: 24px; font-weight: 700; line-height: 1.2; }
 .stat-box .lbl { font-size: 12px; color: var(--c-text-3); margin-top: 4px; letter-spacing: -0.011em; }
 .text-green { color: var(--c-green); }
@@ -173,8 +180,8 @@ h1, h2, h3, .c-card-title {
 }
 
 /* ---------- 页面切换动画 ---------- */
-.page-enter-active { animation: pageIn 0.35s ease both; }
-.page-leave-active { animation: pageIn 0.18s ease reverse both; }
+.page-enter-active { animation: pageIn var(--dur-page) var(--ease-apple) both; }
+.page-leave-active { animation: pageIn 0.18s var(--ease-apple) reverse both; }
 @keyframes pageIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }

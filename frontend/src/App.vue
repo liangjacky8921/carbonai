@@ -4,5 +4,5 @@
 </template>
 
 <script setup lang="ts">
-// CarbonAI V5.2 根组件
+// CarbonAI V6.0 根组件
 </script>

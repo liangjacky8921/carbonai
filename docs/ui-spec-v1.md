@@ -119,11 +119,66 @@
 
 ---
 
-## 六、动效规范
+## 六、动效规范（Apple HIG 风格升级）
 
-- **Transition**：200-300ms，缓动 `--ease-ios`（`cubic-bezier(0.25, 0.1, 0.25, 1)`）
-- **禁止 bounce 弹性动效**（学术精密感）
-- **骨架屏 shimmer**：1.6s 循环，opacity 0.55↔0.95
+### 6.1 缓动曲线
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--ease-apple` | `cubic-bezier(0.32, 0.72, 0, 1)` | **统一默认曲线** — 微交互、卡片 hover、页面转场 |
+| `--ease-ios` | `cubic-bezier(0.25, 0.1, 0.25, 1)` | 旧版兼容（已废弃，新代码用 `--ease-apple`） |
+| `--ease-spring` | `cubic-bezier(0.22, 1, 0.36, 1)` | 弹性回弹（仅 press 回弹等极少场景） |
+
+**规则**：全站 transition / animation 统一使用 `var(--ease-apple)`，禁止 `ease` / `linear` / `ease-in-out` 等浏览器默认曲线。
+
+### 6.2 时长档位
+
+| Token | 值 | 用途 |
+|---|---|---|
+| `--dur-micro` | `250ms` | 微交互：hover、press、按钮、卡片、nav-item |
+| `--dur-page` | `450ms` | 页面转场：route transition |
+| `--dur-stagger` | `50ms` | 列表入场 stagger 间隔（40-60ms 范围） |
+
+### 6.3 交互质感
+
+- **hover 微放大**：`transform: scale(1.01)` 或 `translateY(-1px)` / `translateX(2px)`，只用 `transform` + `opacity`，保证 60fps
+- **press 回弹**：`transform: scale(0.97)`，250ms 回弹
+- **卡片悬停**：阴影从 `0 2px 12px` 加深到 `0 4px 24px`，+ `translateY(-1px)`
+- **nav-item 悬停**：`translateX(2px)` 微位移
+
+### 6.4 毛玻璃（backdrop-filter）
+
+| 元素 | 值 |
+|---|---|
+| 顶栏 topbar | `backdrop-filter: blur(20px) saturate(1.5)` |
+| 侧栏 sidebar | `backdrop-filter: blur(20px) saturate(1.5)` |
+| 表头 dark-table th | `backdrop-filter: blur(6px)` |
+
+背景半透明：`rgba(13, 23, 20, 0.72)` — 保证内容可读性。
+
+### 6.5 KPI 数字补间
+
+- KPI 数字变化用 `requestAnimationFrame` 补间过渡（`easeOutCubic` 曲线，600ms），禁止跳变
+- 实现见 `components/StatCard.vue` — `value` 为数字时自动触发补间
+- 图表数据追加用 ECharts 默认 `animationEasing: 'cubicOut'`（与 Apple 曲线同族）
+
+### 6.6 骨架屏 shimmer
+
+- 1.4s 循环，`background-position` 100%→0% 滑动
+- 颜色：`#101d18 → #16261f → #101d18`
+
+### 6.7 可访问性
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+```
+
+用户系统偏好「减少动态」时，所有动画/过渡降为 0.001ms。
 
 ---
 
