@@ -47,6 +47,9 @@ PBKDF2_ROUNDS = 200_000
 # 基础频率限制：内存计数（多实例部署可换成 Redis）
 _RATE: dict = {}
 
+# SMTP 日发送计数器（内存，跨进程不共享；重启归零）
+_SMTP_DAILY: dict = {}  # {"YYYY-MM-DD": count}
+
 
 def _rate_ok(key: str, limit: int, window: int) -> bool:
     now = time.time()
@@ -57,6 +60,43 @@ def _rate_ok(key: str, limit: int, window: int) -> bool:
     bucket.append(now)
     _RATE[key] = bucket
     return True
+
+
+def _smtp_daily_count() -> int:
+    """返回今日已发送邮件数。"""
+    today = datetime.now().strftime("%Y-%m-%d")
+    return _SMTP_DAILY.get(today, 0)
+
+
+def _smtp_daily_inc() -> None:
+    today = datetime.now().strftime("%Y-%m-%d")
+    _SMTP_DAILY[today] = _smtp_daily_count() + 1
+    count = _SMTP_DAILY[today]
+    # 接近 QQ 免费版 50封/天 上限时告警
+    if count >= 40 and count % 10 == 0:
+        logger.warning("SMTP 今日已发送 %d 封，接近 QQ 免费版 50封/天上限", count)
+
+
+def check_smtp_connectivity() -> dict:
+    """快速探针：连接 SMTP 服务器 + 认证（不发邮件），返回健康状态。"""
+    configs = _smtp_configs()
+    if not configs:
+        return {"status": "unconfigured", "host": None}
+    for conf in configs:
+        try:
+            if conf["port"] == 465:
+                server = smtplib.SMTP_SSL(conf["host"], conf["port"], timeout=5,
+                                          context=ssl.create_default_context())
+            else:
+                server = smtplib.SMTP(conf["host"], conf["port"], timeout=5)
+                server.starttls(context=ssl.create_default_context())
+            with server:
+                server.login(conf["user"], conf["password"])
+            return {"status": "ok", "host": conf["host"], "user": conf["user"]}
+        except Exception as e:
+            logger.debug("SMTP 探针 %s 失败: %s", conf["host"], e)
+            continue
+    return {"status": "fail", "host": configs[0]["host"], "error": str(e)}
 
 
 # ---------- 口令 ----------
@@ -143,12 +183,19 @@ def _smtp_configs() -> list[dict]:
     return configs
 
 
-def _deliver_code_email(to_email: str, code: str):
+def _deliver_code_email(to_email: str, code: str) -> bool:
+    """发送验证码邮件，返回 True 成功 / False 失败。"""
     configs = _smtp_configs()
     if not configs:
         logger.warning("SMTP 未配置，验证码仅记录到日志：%s → %s", to_email, code)
-        print(f"[CarbonAI][DEV] 邮箱验证码 {to_email} → {code}（5分钟内有效，生产环境请配置 SMTP_* 环境变量）")
-        return
+        print(f"[CarbonAI][DEV] 邮箱验证码 {to_email} → {code}（10分钟内有效，生产环境请配置 SMTP_* 环境变量）")
+        return False
+
+    # 日发送上限保护
+    daily = _smtp_daily_count()
+    if daily >= 45:
+        logger.error("SMTP 今日已发送 %d 封，超过 QQ 免费版阈值，拒绝发送新邮件", daily)
+        return False
 
     body = f"""<!DOCTYPE html>
 <html><body style="margin:0;padding:0;background:#070d0b;font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;">
@@ -182,14 +229,16 @@ def _deliver_code_email(to_email: str, code: str):
             with server:
                 server.login(conf["user"], conf["password"])
                 server.sendmail(conf["from"], [to_email], msg.as_string())
-            logger.info("验证码邮件已发送：%s（发件 %s）", to_email, conf["from"])
-            return
+            _smtp_daily_inc()
+            logger.info("验证码邮件已发送：%s（发件 %s，今日第 %d 封）", to_email, conf["from"], _smtp_daily_count())
+            return True
         except Exception as e:
             last_error = e
             logger.warning("发件 %s 发送失败，尝试下一发件：%s", conf["from"], e)
 
     logger.error("全部发件均失败（%s）：%s", to_email, last_error)
     print(f"[CarbonAI][MAIL-FAIL] 邮箱验证码 {to_email} → {code}（发送失败已降级打印）")
+    return False
 
 
 def _send_code_email_async(to_email: str, code: str):
@@ -289,10 +338,15 @@ def send_code(body: SendCodeBody):
     finally:
         db.close()
 
-    _send_code_email_async(body.email, code)
+    # 同步发送（QQ 正常 2-3s，超时 20s），让前端收到真实结果
+    sent = _deliver_code_email(body.email, code)
     if not _smtp_configs():
-        return ok({"expires_in": 600, "channel": "log"}, "验证码已发送（开发模式：请查看服务端日志或配置 SMTP）")
-    return ok({"expires_in": 600, "channel": "email"}, "验证码已发送至您的邮箱，请查收（注意垃圾邮件箱）")
+        return ok({"expires_in": 600, "channel": "log"},
+                  "验证码已发送（开发模式：请查看服务端日志或配置 SMTP）")
+    if sent:
+        return ok({"expires_in": 600, "channel": "email"},
+                  "验证码已发送至您的邮箱，请查收（注意垃圾邮件箱）")
+    return err("邮件发送失败，请稍后再试，或查看是否被运营商拦截")
 
 
 @router.post("/login")

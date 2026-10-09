@@ -1,4 +1,4 @@
-"""CarbonAI V5.2 — FastAPI 后端入口（整改版）
+"""CarbonAI V6.0 — FastAPI 后端入口（整改版）
 
 运行: uvicorn app.main:app --host 0.0.0.0 --port 8000
 
@@ -32,7 +32,7 @@ if IS_PROD and not ALLOW_ORIGINS:
 
 app = FastAPI(
     title="CarbonAI 时空智能碳管理平台 API",
-    version="5.2.0",
+    version="6.0.0",
     description="碳排放核算 / GIS / 轨迹 / 报告 / 认证 接口。统一响应 {code, message, data}。",
     # 生产环境关闭交互式文档
     docs_url=None if IS_PROD else "/docs",
@@ -54,12 +54,20 @@ app.include_router(business.router)
 
 @app.get("/api/health")
 def health():
-    return {"status": "ok", "service": "carbonai-api", "version": "5.2.0"}
+    from app.routers.auth import check_smtp_connectivity, _smtp_daily_count
+    smtp = check_smtp_connectivity()
+    return {
+        "status": "ok",
+        "service": "carbonai-api",
+        "version": "6.0.0",
+        "smtp": smtp,
+        "smtp_daily_sent": _smtp_daily_count(),
+    }
 
 
 @app.get("/")
 def root():
-    payload = {"service": "CarbonAI API v5.2", "health": "/api/health"}
+    payload = {"service": "CarbonAI API v6.0", "health": "/api/health"}
     if not IS_PROD:
         payload["docs"] = "/docs"
     return payload
