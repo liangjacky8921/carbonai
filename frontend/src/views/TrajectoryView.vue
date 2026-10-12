@@ -20,13 +20,13 @@
         <!-- 核算参数 -->
         <div class="c-card p-4 space-y-3">
           <div class="text-xs text-[var(--c-text-3)]">核算参数</div>
-          <el-select v-model="cargoType" size="small" placeholder="货物类型">
+          <el-select v-model="cargoType" size="small" placeholder="货物类型" aria-label="货物类型">
             <el-option label="普通货物" value="normal" />
             <el-option label="冷链货物" value="cold" />
             <el-option label="危险品" value="danger" />
             <el-option label="大宗散货" value="bulk" />
           </el-select>
-          <el-select v-model="standard" size="small" placeholder="排放标准">
+          <el-select v-model="standard" size="small" placeholder="排放标准" aria-label="排放标准">
             <el-option label="GLEC 3.0 框架" value="glec" />
             <el-option label="ISO 14083:2023" value="iso14083" />
             <el-option label="中国道路运输碳核算指南" value="cn-road" />
@@ -96,15 +96,19 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import L from 'leaflet'
 import * as echarts from 'echarts'
+import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import DataUpload from '@/components/DataUpload.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { Guide } from '@element-plus/icons-vue'
 import { useDataStore, parseTrajCsv, type TrajPoint } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
+import { useConfirmAction } from '@/composables/useConfirmAction'
 
 const dataStore = useDataStore()
 const toast = useToast()
+const { confirmAction } = useConfirmAction()
 const fileInput = ref<HTMLInputElement | null>(null)
 const mapEl = ref<HTMLElement | null>(null)
 const segEl = ref<HTMLElement | null>(null)
@@ -177,7 +181,9 @@ async function onFile(file: File) {
   }
 }
 
-function resetTraj() {
+async function resetTraj() {
+  const confirmed = await confirmAction('这会删除当前浏览器中保存的轨迹数据和当前核算结果，且无法撤销。', '清除轨迹数据？', '删除轨迹')
+  if (!confirmed) return
   dataStore.resetTrajectory()
   trajData = []
   result.value = null
@@ -223,8 +229,8 @@ function calculate() {
 function renderCharts(vehStats: Record<string, { carbon: number; tonKm: number }>) {
   if (segEl.value && !segChart) segChart = echarts.init(segEl.value)
   if (vehEl.value && !vehChart) vehChart = echarts.init(vehEl.value)
-  const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-  const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+  const tt = CHART_TOOLTIP
+  const axis = CHART_AXIS
   segChart?.setOption({
     tooltip: { trigger: 'axis', ...tt },
     grid: { left: '3%', right: '4%', bottom: '10%', top: '12%', containLabel: true },
@@ -248,6 +254,7 @@ function renderCharts(vehStats: Record<string, { carbon: number; tonKm: number }
 }
 
 function resize() { map?.invalidateSize(); segChart?.resize(); vehChart?.resize() }
-onMounted(() => { initMap(); window.addEventListener('resize', resize) })
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); map?.remove(); segChart?.dispose(); vehChart?.dispose() })
+useElementResize([mapEl, segEl, vehEl], resize)
+onMounted(() => { initMap() })
+onBeforeUnmount(() => { map?.remove(); segChart?.dispose(); vehChart?.dispose() })
 </script>

@@ -45,6 +45,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
+import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import { REALTIME_QUOTES, PRICE_SERIES } from '@/data/carbonMarket'
 import { useDataStore } from '@/stores/data'
@@ -84,8 +86,8 @@ onMounted(async () => {
     }
   }
   await dataStore.loadSampleData()
-  const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-  const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+  const tt = CHART_TOOLTIP
+  const axis = CHART_AXIS
   if (portfolioEl.value) {
     c1 = echarts.init(portfolioEl.value)
     c1.setOption({
@@ -119,10 +121,10 @@ onMounted(async () => {
       ],
     })
   }
-  window.addEventListener('resize', resize)
 })
 function resize() { c1?.resize(); c2?.resize() }
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); c1?.dispose(); c2?.dispose() })
+useElementResize([portfolioEl, priceEl], resize)
+onBeforeUnmount(() => { c1?.dispose(); c2?.dispose() })
 </script>
 
 <style scoped>

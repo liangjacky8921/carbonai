@@ -1,11 +1,12 @@
 <template>
-  <div class="upload-zone" :class="{ dragover }" @click="$emit('pick')"
+  <button type="button" class="upload-zone" :class="{ dragover }" @click="$emit('pick')"
+    :aria-label="title"
     @dragover.prevent="dragover = true" @dragleave.prevent="dragover = false"
     @drop.prevent="onDrop">
-    <el-icon :size="34" class="mb-1"><UploadFilled /></el-icon>
+    <el-icon :size="34" class="mb-1" aria-hidden="true"><UploadFilled /></el-icon>
     <p class="text-[13px] font-medium">{{ title }}</p>
     <p class="text-[11px] mt-1 leading-5 opacity-75">{{ hint }}</p>
-  </div>
+  </button>
 </template>
 
 <script setup lang="ts">

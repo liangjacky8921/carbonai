@@ -1,5 +1,7 @@
 # CarbonAI V6.0 · UI 设计规范 v1
 
+> 当前实现规范已在 U1 收敛到 [`ui-upgrade/design-system.md`](./ui-upgrade/design-system.md)。本文保留为 V6.0 初始规范与改造背景；出现差异时以 U1 文档和 `frontend/src/styles/theme.css` 为准。
+
 > 适用范围：全部 13 个导航模块的页面改造与新增组件。后续设计/开发必须遵守本文档，禁止绕过规范直接写内联样式。
 
 ---

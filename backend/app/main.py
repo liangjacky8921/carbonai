@@ -8,12 +8,15 @@
 3. 保留前端 dist 单机托管能力。
 """
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.routers import auth, business
+from app.db import Base, engine
 
 ENV = os.getenv("APP_ENV", "development")
 IS_PROD = ENV == "production"
@@ -30,6 +33,20 @@ ALLOW_ORIGINS = [o.strip() for o in _raw_origins.split(",") if o.strip()]
 if IS_PROD and not ALLOW_ORIGINS:
     ALLOW_ORIGINS = [o.strip() for o in _PROD_ORIGINS.split(",") if o.strip()]
 
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    """Ensure the small built-in auth schema exists before serving requests."""
+    if IS_PROD and (
+        auth.SECRET_KEY == "CHANGE_ME_IN_PRODUCTION" or len(auth.SECRET_KEY) < 32
+    ):
+        raise RuntimeError(
+            "Production requires AUTH_SECRET_KEY with at least 32 characters."
+        )
+    Base.metadata.create_all(engine)
+    yield
+    engine.dispose()
+
 app = FastAPI(
     title="CarbonAI 时空智能碳管理平台 API",
     version="6.0.0",
@@ -38,6 +55,7 @@ app = FastAPI(
     docs_url=None if IS_PROD else "/docs",
     redoc_url=None if IS_PROD else "/redoc",
     openapi_url=None if IS_PROD else "/openapi.json",
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -65,17 +83,38 @@ def health():
     }
 
 
-@app.get("/")
-def root():
-    payload = {"service": "CarbonAI API v6.0", "health": "/api/health"}
-    if not IS_PROD:
-        payload["docs"] = "/docs"
-    return payload
-
-
 # 生产环境：直接托管前端 dist（单机部署模式，无需 Nginx 时可用）
-DIST = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist"
-)
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+DIST = os.path.join(REPO_ROOT, "frontend", "dist")
+
+
+class SPAStaticFiles(StaticFiles):
+    """Serve index.html for client-side routes while preserving static 404s."""
+
+    async def get_response(self, path: str, scope):
+        normalized = path.strip("/")
+        request_path = str(scope.get("path", "")).strip("/")
+        if (
+            normalized in {"api", "docs", "redoc"}
+            or request_path in {"api", "docs", "redoc"}
+            or normalized.startswith("api/")
+            or request_path.startswith("api/")
+        ):
+            raise StarletteHTTPException(status_code=404)
+        try:
+            return await super().get_response(path, scope)
+        except StarletteHTTPException as exc:
+            if exc.status_code != 404 or "." in os.path.basename(path):
+                raise
+            return await super().get_response("index.html", scope)
+
+
 if os.path.isdir(DIST):
-    app.mount("/", StaticFiles(directory=DIST, html=True), name="frontend")
+    app.mount("/", SPAStaticFiles(directory=DIST, html=True), name="frontend")
+else:
+    @app.get("/")
+    def root():
+        payload = {"service": "CarbonAI API v6.0", "health": "/api/health"}
+        if not IS_PROD:
+            payload["docs"] = "/docs"
+        return payload

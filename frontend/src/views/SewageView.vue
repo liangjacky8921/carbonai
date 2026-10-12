@@ -41,7 +41,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <div>
+          <div class="table-scroll">
             <div class="text-xs text-[var(--c-text-3)] mb-2">排放结构（IPCC 2019R + AR6）</div>
             <div class="space-y-1.5">
               <div v-for="s in shareItems" :key="s.label" class="flex items-center gap-2 text-xs">
@@ -68,7 +68,7 @@
 
         <div>
           <div class="text-xs text-[var(--c-text-3)] mb-2">年度核算（运行口径，Scope 2 = 0.5366）</div>
-          <div class="max-h-[220px] overflow-auto">
+          <div class="max-h-[220px] table-scroll">
             <table class="dark-table">
               <thead><tr><th>年份</th><th class="text-right">水量(m³)</th><th class="text-right">电耗(kWh)</th><th class="text-right">电力 tCO₂e</th><th class="text-right">CH₄ tCO₂e</th><th class="text-right">N₂O tCO₂e</th><th class="text-right">污泥 tCO₂e</th><th class="text-right">合计 tCO₂e</th></tr></thead>
               <tbody>
@@ -102,6 +102,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
+import { CHART_TOOLTIP, createChartAxisStyle } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import { fmt } from '@/utils/format'
 import { useToast } from '@/composables/useToast'
@@ -187,8 +189,8 @@ onMounted(async () => {
     kpi.value = k
     assumptions.value = a
   } catch { /* 真实核算/因子数据缺失时仅保留运行看板 */ }
-  const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-  const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae', fontSize: 9.5 }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+  const tt = CHART_TOOLTIP
+  const axis = createChartAxisStyle(9.5)
   const ms = months.value
   const labels = ms.map((m) => m.ym)
 
@@ -252,8 +254,8 @@ onMounted(async () => {
       ],
     })
   }
-  window.addEventListener('resize', resize)
 })
 function resize() { c1?.resize(); c2?.resize(); c3?.resize(); c4?.resize() }
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); c1?.dispose(); c2?.dispose(); c3?.dispose(); c4?.dispose() })
+useElementResize([waterEl, removalEl, codEl, sludgeEl], resize)
+onBeforeUnmount(() => { c1?.dispose(); c2?.dispose(); c3?.dispose(); c4?.dispose() })
 </script>

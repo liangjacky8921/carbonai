@@ -4,12 +4,13 @@
     <div class="c-card p-4">
       <div class="flex flex-wrap items-center gap-2 lca-flow">
         <template v-for="(s, i) in stageList" :key="s.stage">
-          <div class="lca-stage" :class="{ active: selectedStage === s.stage }"
+          <button type="button" class="lca-stage" :class="{ active: selectedStage === s.stage }"
+            :aria-pressed="selectedStage === s.stage"
             @click="selectedStage = s.stage">
             <span class="text-xl">{{ s.icon }}</span>
             <div class="text-xs mt-1">{{ s.name }}</div>
             <div class="num text-[13px] mt-0.5 font-bold" :style="{ color: stageColors[s.stage] }">{{ stageData[s.stage] ? stageData[s.stage].toFixed(1) : '—' }}</div>
-          </div>
+          </button>
           <span v-if="i < stageList.length - 1" class="arrow">→</span>
         </template>
       </div>
@@ -18,13 +19,13 @@
     <!-- 参数表单 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="c-card p-4 space-y-3">
-        <el-input v-model="productName" placeholder="产品名称" size="small" />
-        <el-select v-model="unit" size="small" placeholder="产品单位">
+        <el-input v-model="productName" placeholder="产品名称" size="small" aria-label="产品名称" />
+        <el-select v-model="unit" size="small" placeholder="产品单位" aria-label="产品单位">
           <el-option label="件 (pcs)" value="件" />
           <el-option label="公斤 (kg)" value="kg" />
           <el-option label="吨 (t)" value="t" />
         </el-select>
-        <el-select v-model="standard" size="small" placeholder="核算标准">
+        <el-select v-model="standard" size="small" placeholder="核算标准" aria-label="核算标准">
           <el-option label="ISO 14067:2018" value="ISO 14067:2018" />
           <el-option label="PAS 2050" value="PAS 2050" />
           <el-option label="GHG Protocol Product Standard" value="GHG Protocol Product Standard" />
@@ -35,11 +36,11 @@
           <el-button size="small" @click="loadDemo">加载演示数据</el-button>
         </div>
         <div class="flex gap-2">
-          <el-button size="small" type="success" plain :disabled="!hasResult" @click="exportPcf('pdf')">
-            📄 双语 PDF 报告
+          <el-button size="small" type="success" plain :disabled="!hasResult || Boolean(exporting)" :loading="exporting === 'pdf'" @click="exportPcf('pdf')">
+            双语 PDF 报告
           </el-button>
-          <el-button size="small" type="success" plain :disabled="!hasResult" @click="exportPcf('word')">
-            📝 双语 Word 报告
+          <el-button size="small" type="success" plain :disabled="!hasResult || Boolean(exporting)" :loading="exporting === 'word'" @click="exportPcf('word')">
+            双语 Word 报告
           </el-button>
         </div>
       </div>
@@ -92,7 +93,7 @@
         <div class="c-card">
           <div class="c-card-title">
             报告预览（中英双语）
-            <el-radio-group v-model="reportLang" size="small" style="margin-left: 12px">
+            <el-radio-group v-model="reportLang" size="small" style="margin-left: 12px" aria-label="报告语言">
               <el-radio-button value="both">中英双语</el-radio-button>
               <el-radio-button value="zh">中文</el-radio-button>
               <el-radio-button value="en">English</el-radio-button>
@@ -107,7 +108,7 @@
       <!-- LCA 明细表 -->
       <div class="c-card">
         <div class="c-card-title">LCA 各阶段排放明细</div>
-        <div class="p-4">
+        <div class="p-4 table-scroll">
           <table class="dark-table">
             <thead><tr><th>阶段</th><th>排放量 (kgCO₂e)</th><th class="text-right">占比</th><th>主要排放源</th></tr></thead>
             <tbody>
@@ -133,6 +134,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
+import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { Box } from '@element-plus/icons-vue'
@@ -142,6 +145,7 @@ import { buildPcfHtml, exportHtmlToPdf, exportReportWord, addReportHistory, type
 
 const dataStore = useDataStore()
 const toast = useToast()
+const exporting = ref<'' | 'pdf' | 'word'>('')
 
 const stageList = [
   { stage: 'raw', name: '原材料获取', icon: '⛏️', nameEn: 'Raw Materials' },
@@ -207,8 +211,8 @@ function calcPcf() {
 function renderCharts() {
   if (stageEl.value && !c1) c1 = echarts.init(stageEl.value)
   if (benchmarkEl.value && !c2) c2 = echarts.init(benchmarkEl.value)
-  const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-  const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+  const tt = CHART_TOOLTIP
+  const axis = CHART_AXIS
   c1?.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c} kgCO₂e ({d}%)', ...tt },
     legend: { bottom: 0, textStyle: { color: '#9db8ae', fontSize: 10.5 } },
@@ -244,6 +248,7 @@ function renderCharts() {
 async function exportPcf(format: 'pdf' | 'word') {
   const html = buildPcfHtml(pcfData.value, reportLang.value)
   const name = `产品碳足迹报告_${productName.value || '未命名'}_${new Date().toISOString().slice(0, 10)}`
+  exporting.value = format
   try {
     if (format === 'pdf') {
       toast.info('正在生成双语 PDF 报告…')
@@ -252,7 +257,7 @@ async function exportPcf(format: 'pdf' | 'word') {
       toast.info('正在生成双语 Word 报告…')
       await exportReportWord(
         `${productName.value} 产品碳足迹核算报告 / Product Carbon Footprint Report`,
-        `${standard.value} | 功能单位: 1 ${unit.value} | CarbonAI v5.2 双语报告`,
+        `${standard.value} | 功能单位: 1 ${unit.value} | CarbonAI V6.0 双语报告`,
         html, name + '.docx',
       )
     }
@@ -260,20 +265,25 @@ async function exportPcf(format: 'pdf' | 'word') {
     toast.success(`✅ ${format === 'pdf' ? 'PDF' : 'Word'} 报告已生成并下载`)
   } catch (e: any) {
     toast.error('报告生成失败：' + e.message)
+  } finally {
+    exporting.value = ''
   }
 }
 
 function resize() { c1?.resize(); c2?.resize() }
-onMounted(() => { dataStore.loadSampleData(); window.addEventListener('resize', resize) })
+useElementResize([stageEl, benchmarkEl], resize)
+onMounted(() => { dataStore.loadSampleData() })
 watch(reportLang, () => nextTick())
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); c1?.dispose(); c2?.dispose() })
+onBeforeUnmount(() => { c1?.dispose(); c2?.dispose() })
 </script>
 
 <style scoped>
 .lca-flow { justify-content: space-between; }
 .lca-stage {
+  appearance: none; color: inherit; font: inherit;
   flex: 1; min-width: 96px; text-align: center; padding: 12px 8px; border-radius: 10px;
-  border: 1px solid var(--c-border); cursor: pointer; transition: all 0.25s; background: var(--c-surface-2);
+  border: 1px solid var(--c-border); cursor: pointer; background: var(--c-surface-2);
+  transition: transform var(--dur-micro) var(--ease-apple), border-color var(--dur-micro) var(--ease-apple), background-color var(--dur-micro) var(--ease-apple), box-shadow var(--dur-micro) var(--ease-apple);
 }
 .lca-stage:hover { transform: translateY(-3px); border-color: var(--c-border-2); }
 .lca-stage.active { border-color: rgba(16, 185, 129, 0.5); background: var(--c-green-soft); box-shadow: 0 0 20px rgba(16, 185, 129, 0.12); }

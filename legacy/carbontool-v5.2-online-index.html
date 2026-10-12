@@ -3694,10 +3694,8 @@ function unhighlightTab(){
 }
 
 document.addEventListener('DOMContentLoaded',function(){
-  // Clean up OLD hardcoded API key if it matches the known default
-  // (only removes the developer's key, not the user's own saved key)
-  var oldKey = localStorage.getItem('carbonai_api_key');
-  if(oldKey && oldKey.indexOf('sk-5259fbcb7bf34839bda846931ddccf62') === 0){
+  // The archived client must not retain API credentials in browser storage.
+  if(localStorage.getItem('carbonai_api_key')){
     localStorage.removeItem('carbonai_api_key');
   }
 

@@ -1,4 +1,4 @@
-# CarbonAI V5.2 — FastAPI 后端
+# CarbonAI V6.0 — FastAPI 后端
 
 ## 快速启动（开发）
 
@@ -31,10 +31,9 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 | POST | /api/reports/generate | 报告生成（占位，当前前端本地生成） |
 | POST | /api/ai/chat | AI 顾问（占位，待接入 LLM API Key） |
 
-## 数据库接入（后续）
+## 数据库接入
 
-见 `app/db.py`：设置 `DATABASE_URL` 环境变量（默认 sqlite），运行 `python -m app.db` 建表，
-然后将 `routers/auth.py` 的内存 `_USERS` 替换为 SQLAlchemy 查询即可。
+见 `app/db.py`：设置 `DATABASE_URL` 环境变量（默认 SQLite）。应用启动时会创建尚不存在的认证表；`python -m app.db` 仍可用于部署前显式初始化。
 
 ## 生产部署
 

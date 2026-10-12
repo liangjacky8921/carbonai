@@ -4,8 +4,8 @@
     <div class="c-card p-4 space-y-3">
       <div class="c-card-title">⚡ 电力碳排放计算</div>
       <p class="text-[11px] text-[var(--c-text-3)]">根据用电量和所在电网区域计算 Scope 2 排放</p>
-      <el-input v-model="elec.kwh" type="number" placeholder="用电量 (kWh)" size="small" />
-      <el-select v-model="elec.grid" size="small">
+      <el-input v-model="elec.kwh" type="number" inputmode="decimal" placeholder="用电量 (kWh)" size="small" aria-label="用电量" />
+      <el-select v-model="elec.grid" size="small" aria-label="电网区域">
         <el-option label="南方电网 (0.5703)" value="south" />
         <el-option label="华东电网 (0.5890)" value="east" />
         <el-option label="华北电网 (0.7410)" value="north" />
@@ -21,14 +21,14 @@
     <div class="c-card p-4 space-y-3">
       <div class="c-card-title">🔥 燃料燃烧排放</div>
       <p class="text-[11px] text-[var(--c-text-3)]">计算煤/油/气等燃料燃烧产生的 Scope 1 排放</p>
-      <el-select v-model="fuel.type" size="small">
+      <el-select v-model="fuel.type" size="small" aria-label="燃料类型">
         <el-option label="烟煤 (1.9003 tCO₂/t)" value="烟煤" />
         <el-option label="无烟煤 (2.53 tCO₂/t)" value="无烟煤" />
         <el-option label="柴油 (3.1605 tCO₂/t)" value="柴油" />
         <el-option label="汽油 (2.9251 tCO₂/t)" value="汽油" />
         <el-option label="天然气 (21.84 tCO₂/万m³)" value="天然气" />
       </el-select>
-      <el-input v-model="fuel.qty" type="number" :placeholder="`消耗量（${fuelUnitHint}）`" size="small" />
+      <el-input v-model="fuel.qty" type="number" inputmode="decimal" :placeholder="`消耗量（${fuelUnitHint}）`" size="small" aria-label="燃料消耗量" />
       <el-button type="primary" size="small" @click="calcFuel">计算</el-button>
       <div v-if="fuel.result" class="calc-result" v-html="fuel.result" />
     </div>
@@ -37,8 +37,8 @@
     <div class="c-card p-4 space-y-3">
       <div class="c-card-title">🚌 通勤碳足迹</div>
       <p class="text-[11px] text-[var(--c-text-3)]">员工通勤碳排放估算（年排放）</p>
-      <el-input v-model="commute.dist" type="number" placeholder="单程通勤距离 (km)" size="small" />
-      <el-select v-model="commute.mode" size="small">
+      <el-input v-model="commute.dist" type="number" inputmode="decimal" placeholder="单程通勤距离 (km)" size="small" aria-label="单程通勤距离" />
+      <el-select v-model="commute.mode" size="small" aria-label="通勤方式">
         <el-option label="私家车(汽油) (0.20 kg/km)" value="私家车(汽油)" />
         <el-option label="公交车 (0.05)" value="公交车" />
         <el-option label="地铁 (0.035)" value="地铁" />
@@ -52,14 +52,14 @@
     <div class="c-card p-4 space-y-3">
       <div class="c-card-title">✈️ 差旅飞行碳足迹</div>
       <p class="text-[11px] text-[var(--c-text-3)]">商务飞行碳排放计算（单程）· 因子来源 ICAO CORSIA</p>
-      <el-select v-model="flight.route" size="small">
+      <el-select v-model="flight.route" size="small" aria-label="飞行航线">
         <el-option label="北京-上海 (1200km)" value="1200" />
         <el-option label="上海-深圳 (1350km)" value="1350" />
         <el-option label="广州-成都 (1300km)" value="1300" />
         <el-option label="深圳-伦敦 (9600km)" value="9600" />
         <el-option label="香港-纽约 (13000km)" value="13000" />
       </el-select>
-      <el-select v-model="flight.cls" size="small">
+      <el-select v-model="flight.cls" size="small" aria-label="舱位等级">
         <el-option label="经济舱 (0.115 kg/人·km)" value="eco" />
         <el-option label="商务舱 (0.18 kg/人·km)" value="biz" />
       </el-select>

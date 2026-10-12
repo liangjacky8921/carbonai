@@ -26,7 +26,6 @@ export default defineConfig({
         manualChunks: {
           echarts: ['echarts', 'echarts-gl'],
           element: ['element-plus', '@element-plus/icons-vue'],
-          office: ['docx', 'jspdf', 'html2canvas'],
         },
       },
     },

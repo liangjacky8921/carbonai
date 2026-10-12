@@ -9,11 +9,11 @@
       <div class="space-y-4">
         <div class="c-card p-4 space-y-3">
           <div class="text-xs text-[var(--c-text-3)]">监测区域</div>
-          <el-select v-model="regionKey" size="small" @change="refresh">
+          <el-select v-model="regionKey" size="small" aria-label="监测区域" @change="refresh">
             <el-option v-for="(r, k) in GRID_REGIONS" :key="k" :label="r.name" :value="k" />
           </el-select>
           <div class="text-xs text-[var(--c-text-3)] mt-2">时间窗口</div>
-          <el-radio-group v-model="timeWindow" size="small" @change="refresh">
+          <el-radio-group v-model="timeWindow" size="small" aria-label="监测时间窗口" @change="refresh">
             <el-radio-button value="realtime">实时监测</el-radio-button>
             <el-radio-button value="1h">近1小时</el-radio-button>
             <el-radio-button value="24h">近24小时</el-radio-button>
@@ -21,11 +21,11 @@
           </el-radio-group>
           <div class="text-xs text-[var(--c-text-3)] mt-3">预警阈值 (tCO₂e/km²·h)</div>
           <div class="flex items-center gap-2">
-            <el-input-number v-model="yellowThreshold" size="small" :min="1" :max="20" style="width: 100px" />
+            <el-input-number v-model="yellowThreshold" size="small" :min="1" :max="20" style="width: 100px" aria-label="黄色预警阈值" />
             <span class="text-[11px] text-amber">黄色预警</span>
           </div>
           <div class="flex items-center gap-2">
-            <el-input-number v-model="redThreshold" size="small" :min="2" :max="40" style="width: 100px" />
+            <el-input-number v-model="redThreshold" size="small" :min="2" :max="40" style="width: 100px" aria-label="红色预警阈值" />
             <span class="text-[11px] text-red">红色预警</span>
           </div>
           <el-button type="primary" size="small" class="w-full" @click="refresh">刷新监测</el-button>
@@ -59,6 +59,8 @@
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import L from 'leaflet'
 import * as echarts from 'echarts'
+import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import { GRID_REGIONS } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
@@ -138,8 +140,8 @@ function windowLabel() {
 function renderCharts(values: number[]) {
   if (histEl.value && !histChart) histChart = echarts.init(histEl.value)
   if (statEl.value && !statChart) statChart = echarts.init(statEl.value)
-  const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-  const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+  const tt = CHART_TOOLTIP
+  const axis = CHART_AXIS
   const bins = [0, 2, 4, 6, 8, 10, 12, 14, 99]
   const counts = bins.slice(1).map((b, i) => values.filter((v) => v > bins[i] && v <= b).length)
   histChart?.setOption({
@@ -166,6 +168,7 @@ function renderCharts(values: number[]) {
 }
 
 function resize() { map?.invalidateSize(); histChart?.resize(); statChart?.resize() }
+useElementResize([mapEl, histEl, statEl], resize)
 
 // T11: 接 SSE 实时流 → 超 CONFIG 阈值触发预警联动
 function initRealtimeStream() {
@@ -225,10 +228,8 @@ onMounted(() => {
   initMap()
   refresh()
   setTimeout(initRealtimeStream, 800)  // T11: 延迟启动 SSE，避免阻塞初始渲染
-  window.addEventListener('resize', resize)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', resize)
   sseClient?.close()  // T11: 清理 SSE 连接
   map?.remove(); histChart?.dispose(); statChart?.dispose()
 })

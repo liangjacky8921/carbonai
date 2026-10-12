@@ -8,7 +8,7 @@
     <!-- 分组筛选 -->
     <div class="flex flex-wrap items-center gap-2">
       <span class="text-xs text-[var(--c-text-3)]">分组筛选：</span>
-      <el-radio-group v-model="groupFilter" size="small">
+      <el-radio-group v-model="groupFilter" size="small" aria-label="土壤样本分组筛选">
         <el-radio-button value="all">全部</el-radio-button>
         <el-radio-button v-for="g in groups" :key="g" :value="g">{{ g }}</el-radio-button>
       </el-radio-group>
@@ -61,6 +61,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import * as echarts from 'echarts'
+import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import DataUpload from '@/components/DataUpload.vue'
 import { useToast } from '@/composables/useToast'
@@ -105,8 +107,8 @@ function renderAll() {
   if (!data) return
   // 均值光谱
   if (spectralEl.value && !c1) c1 = echarts.init(spectralEl.value)
-  const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-  const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+  const tt = CHART_TOOLTIP
+  const axis = CHART_AXIS
 
   const showGroups = groupFilter.value === 'all' ? groups.value : [groupFilter.value]
   const series = showGroups.map((g, gi) => {
@@ -178,6 +180,7 @@ function checkFeasibility() {
 }
 
 function resize() { c1?.resize(); c2?.resize(); c3?.resize() }
-onMounted(async () => { await loadData(); window.addEventListener('resize', resize) })
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); c1?.dispose(); c2?.dispose(); c3?.dispose() })
+useElementResize([spectralEl, pcaEl, indicesEl], resize)
+onMounted(async () => { await loadData() })
+onBeforeUnmount(() => { c1?.dispose(); c2?.dispose(); c3?.dispose() })
 </script>

@@ -1,6 +1,6 @@
 <template>
-  <transition-group name="toast" tag="div" class="toast-host">
-    <div v-for="t in toasts" :key="t.id" class="toast-item" :class="t.type">
+  <transition-group name="toast" tag="div" class="toast-host" aria-live="polite" aria-atomic="true">
+    <div v-for="t in toasts" :key="t.id" class="toast-item" :class="t.type" role="status">
       <span class="toast-dot" />
       <span>{{ t.message }}</span>
     </div>
@@ -21,21 +21,25 @@ const { toasts } = useToast()
 .toast-item {
   display: flex; align-items: center; gap: 8px;
   padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
-  background: rgba(13, 23, 20, 0.92); backdrop-filter: blur(10px);
+  background: rgba(13, 23, 20, 0.96); backdrop-filter: blur(10px);
   border: 1px solid var(--c-border-2); color: var(--c-text);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
-  animation: toastIn 0.3s ease;
+  box-shadow: var(--shadow-overlay);
+  animation: toastIn 0.3s var(--ease-apple);
 }
 .toast-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .toast-item.success { border-color: rgba(16, 185, 129, 0.5); }
-.toast-item.success .toast-dot { background: var(--c-green); box-shadow: 0 0 8px var(--c-green); }
+.toast-item.success .toast-dot { background: var(--c-success); box-shadow: 0 0 8px var(--c-success); }
 .toast-item.error { border-color: rgba(239, 68, 68, 0.5); }
-.toast-item.error .toast-dot { background: var(--c-red); box-shadow: 0 0 8px var(--c-red); }
+.toast-item.error .toast-dot { background: var(--c-danger); box-shadow: 0 0 8px var(--c-danger); }
 .toast-item.warning { border-color: rgba(245, 158, 11, 0.5); }
-.toast-item.warning .toast-dot { background: var(--c-amber); box-shadow: 0 0 8px var(--c-amber); }
+.toast-item.warning .toast-dot { background: var(--c-warning); box-shadow: 0 0 8px var(--c-warning); }
 .toast-item.info { border-color: rgba(14, 165, 233, 0.5); }
-.toast-item.info .toast-dot { background: var(--c-blue); box-shadow: 0 0 8px var(--c-blue); }
+.toast-item.info .toast-dot { background: var(--c-info); box-shadow: 0 0 8px var(--c-info); }
 .toast-enter-from { opacity: 0; transform: translateY(-12px); }
 .toast-leave-to { opacity: 0; transform: translateY(-8px); }
 @keyframes toastIn { from { opacity: 0; transform: translateY(-12px); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) {
+  .toast-host { top: max(12px, env(safe-area-inset-top)); width: calc(100vw - 24px); }
+  .toast-item { width: 100%; padding: 10px 12px; }
+}
 </style>

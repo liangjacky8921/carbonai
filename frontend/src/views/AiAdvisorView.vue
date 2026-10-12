@@ -30,7 +30,7 @@
 
       <div class="p-3 border-t" style="border-color: var(--c-border)">
         <div class="flex gap-2">
-          <el-input v-model="input" placeholder="输入碳管理问题…（Enter 发送）" :disabled="thinking"
+          <el-input v-model="input" placeholder="输入碳管理问题…（Enter 发送）" :disabled="thinking" aria-label="碳管理问题"
             @keyup.enter="send(input)" clearable />
           <el-button type="primary" :loading="thinking" @click="send(input)">发送</el-button>
         </div>

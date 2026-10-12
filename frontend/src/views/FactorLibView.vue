@@ -9,13 +9,13 @@
     </div>
 
     <div class="c-card p-4 flex flex-wrap gap-3 items-center">
-      <el-select v-model="sourceFilter" placeholder="全部来源" clearable size="small" style="width: 180px">
+      <el-select v-model="sourceFilter" placeholder="全部来源" clearable size="small" style="width: 180px" aria-label="因子来源筛选">
         <el-option v-for="s in sources" :key="s" :label="s" :value="s" />
       </el-select>
-      <el-select v-model="regionFilter" placeholder="全部地区" clearable size="small" style="width: 200px">
+      <el-select v-model="regionFilter" placeholder="全部地区" clearable size="small" style="width: 200px" aria-label="适用地区筛选">
         <el-option v-for="r in regionOptions" :key="r" :label="r" :value="r" />
       </el-select>
-      <el-input v-model="keyword" placeholder="搜索因子名称…" clearable size="small" style="width: 200px" :prefix-icon="Search" />
+      <el-input v-model="keyword" placeholder="搜索因子名称…" clearable size="small" style="width: 200px" :prefix-icon="Search" aria-label="搜索因子名称" />
       <el-button size="small" type="primary" plain @click="exportCsv">导出因子表(含溯源)</el-button>
     </div>
 
@@ -62,6 +62,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
+import { CHART_TOOLTIP, createChartAxisStyle } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import { FACTOR_LIB } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
@@ -104,8 +106,8 @@ const gridEl = ref<HTMLElement | null>(null)
 const srcEl = ref<HTMLElement | null>(null)
 let c1: echarts.ECharts | null = null
 let c2: echarts.ECharts | null = null
-const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae', fontSize: 10 }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+const tt = CHART_TOOLTIP
+const axis = createChartAxisStyle(10)
 
 async function loadFactors() {
   if (!backendOnline.value) return
@@ -162,8 +164,8 @@ function renderCharts() {
 onMounted(async () => {
   await loadFactors()
   renderCharts()
-  window.addEventListener('resize', resize)
 })
 function resize() { c1?.resize(); c2?.resize() }
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); c1?.dispose(); c2?.dispose() })
+useElementResize([gridEl, srcEl], resize)
+onBeforeUnmount(() => { c1?.dispose(); c2?.dispose() })
 </script>

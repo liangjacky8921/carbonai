@@ -1,5 +1,7 @@
 import * as echarts from 'echarts'
-import { onMounted, onBeforeUnmount, ref, type Ref, watch, nextTick } from 'vue'
+import { onMounted, onBeforeUnmount, ref, type Ref, nextTick } from 'vue'
+import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 
 /** ECharts 生命周期封装：初始化 / 自适应 / 主题 / 卸载销毁 */
 export function useEChart(
@@ -19,26 +21,17 @@ export function useEChart(
     }
   }
 
-  const darkTooltip = {
-    backgroundColor: 'rgba(13,23,20,0.92)',
-    borderColor: '#24413a',
-    textStyle: { color: '#e8f5ef', fontSize: 12 },
-  }
-  const axisStyle = {
-    axisLine: { lineStyle: { color: '#1e3329' } },
-    axisLabel: { color: '#9db8ae' },
-    splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } },
-  }
+  const darkTooltip = CHART_TOOLTIP
+  const axisStyle = CHART_AXIS
 
   function resize() { chart?.resize() }
+  useElementResize([elRef], resize)
 
   onMounted(async () => {
     await nextTick()
     render()
-    window.addEventListener('resize', resize)
   })
   onBeforeUnmount(() => {
-    window.removeEventListener('resize', resize)
     chart?.dispose()
     chart = null
   })

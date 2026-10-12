@@ -5,10 +5,10 @@
 
     <el-form :model="form" @submit.prevent="onLogin" size="large">
       <el-form-item>
-        <el-input v-model="form.username" placeholder="账号 / 邮箱" :prefix-icon="User" clearable />
+        <el-input v-model="form.username" name="username" autocomplete="username" placeholder="账号 / 邮箱" aria-label="账号或邮箱" :prefix-icon="User" clearable />
       </el-form-item>
       <el-form-item>
-        <el-input v-model="form.password" type="password" placeholder="密码" :prefix-icon="Lock"
+        <el-input v-model="form.password" name="password" autocomplete="current-password" type="password" placeholder="密码" aria-label="密码" :prefix-icon="Lock"
           show-password @keyup.enter="onLogin" />
       </el-form-item>
       <div class="flex items-center justify-between mb-4">

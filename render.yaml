@@ -9,3 +9,12 @@ services:
       cd frontend && npm install --registry=https://registry.npmmirror.com && npm run build:fast && cd ..
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT --app-dir backend
     healthCheckPath: /api/health
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: ALLOW_ORIGINS
+        value: https://carbontool.cn,https://www.carbontool.cn
+      - key: AUTH_SECRET_KEY
+        generateValue: true
+      - key: DATABASE_URL
+        sync: false

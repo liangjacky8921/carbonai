@@ -1,8 +1,8 @@
 {
   "name": "carbonai-frontend",
-  "version": "5.2.0",
+  "version": "6.0.0",
   "private": true,
-  "description": "CarbonAI 时空智能碳管理平台 V5.2 — 前端（Vue3 + Vite + TS + Element Plus + ECharts + Tailwind）",
+  "description": "CarbonAI 时空智能碳管理平台 V6.0 — 前端（Vue3 + Vite + TS + Element Plus + ECharts + Tailwind）",
   "type": "module",
   "scripts": {
     "dev": "vite",

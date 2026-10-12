@@ -4,7 +4,7 @@
     <div class="c-card p-4 flex flex-wrap items-center gap-4">
       <div class="flex items-center gap-2">
         <span class="text-xs text-[var(--c-text-3)]">🌍 自动检测区域</span>
-        <el-select v-model="region" size="small" style="width: 150px" @change="onRegionChange">
+        <el-select v-model="region" size="small" style="width: 150px" aria-label="报告适用区域" @change="onRegionChange">
           <el-option v-for="(label, key) in REGION_LABELS" :key="key" :label="label" :value="key" />
         </el-select>
       </div>
@@ -13,8 +13,9 @@
 
     <!-- 标准模板卡片 -->
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-      <div v-for="std in REPORT_STANDARDS" :key="std.key" class="rpt-card c-card p-4"
+      <button v-for="std in REPORT_STANDARDS" :key="std.key" type="button" class="rpt-card c-card p-4"
         :class="{ selected: current === std.key, dim: regionStandards.length && !regionStandards.includes(std.key) }"
+        :aria-pressed="current === std.key"
         @click="selectReport(std.key)">
         <div class="flex items-start justify-between gap-2">
           <div class="text-[13px] font-semibold text-[var(--c-text)] leading-6">{{ std.name }}</div>
@@ -24,7 +25,7 @@
         <div class="flex flex-wrap gap-1.5 mt-3">
           <el-tag v-for="t in std.tags" :key="t" size="small" effect="dark" type="info" class="!text-[10px]">{{ t }}</el-tag>
         </div>
-      </div>
+      </button>
     </div>
 
     <!-- 预览 + 操作 -->
@@ -43,8 +44,8 @@
         <div class="c-card p-4 space-y-3">
           <el-button type="primary" class="w-full" @click="generate">一键生成报告</el-button>
           <div class="grid grid-cols-2 gap-2">
-            <el-button size="small" type="success" plain @click="exportPdf">📄 导出 PDF</el-button>
-            <el-button size="small" type="success" plain @click="exportWord">📝 导出 Word</el-button>
+            <el-button size="small" type="success" plain :loading="exporting === 'pdf'" :disabled="Boolean(exporting)" @click="exportPdf">导出 PDF</el-button>
+            <el-button size="small" type="success" plain :loading="exporting === 'word'" :disabled="Boolean(exporting)" @click="exportWord">导出 Word</el-button>
           </div>
           <div class="text-[11px] text-[var(--c-text-3)] leading-5">
             报告数据取自「碳排放核算」模块（{{ dataStore.currentYear }} 年度，{{ dataStore.yearRecords.length }} 条记录）。
@@ -81,14 +82,17 @@
 import { computed, onMounted, ref } from 'vue'
 import { useDataStore } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
+import { useConfirmAction } from '@/composables/useConfirmAction'
 import { REPORT_STANDARDS, REGION_LABELS, REGION_STANDARDS, STANDARD_NAMES } from '@/data/reportStandards'
 import { buildStandardReportHtml, exportHtmlToPdf, exportReportWord, addReportHistory, getReportHistory, clearReportHistory } from '@/utils/reportBuilder'
 
 const dataStore = useDataStore()
 const toast = useToast()
+const { confirmAction } = useConfirmAction()
 const region = ref('auto')
 const current = ref('cn-sse')
 const history = ref<any[]>([])
+const exporting = ref<'' | 'pdf' | 'word'>('')
 
 const regionStandards = computed(() => (region.value === 'auto' ? [] : REGION_STANDARDS[region.value] || []))
 const currentName = computed(() => STANDARD_NAMES[current.value] || current.value)
@@ -128,6 +132,7 @@ function generate() {
 
 async function exportPdf() {
   if (!dataStore.yearRecords.length) { toast.warning('请先在「碳排放核算」加载数据'); return }
+  exporting.value = 'pdf'
   try {
     toast.info('正在生成 PDF 报告…')
     await exportHtmlToPdf(previewHtml.value, `合规报告_${currentName.value}_${dataStore.currentYear}.pdf`)
@@ -135,24 +140,29 @@ async function exportPdf() {
     history.value = getReportHistory()
     toast.success('✅ PDF 报告已导出')
   } catch (e: any) { toast.error('PDF 生成失败：' + e.message) }
+  finally { exporting.value = '' }
 }
 
 async function exportWord() {
   if (!dataStore.yearRecords.length) { toast.warning('请先在「碳排放核算」加载数据'); return }
+  exporting.value = 'word'
   try {
     toast.info('正在生成 Word 报告…')
     await exportReportWord(
       `${currentName.value}（${dataStore.currentYear}年度）`,
-      `合规碳排放报告 | CarbonAI v5.2 | ${new Date().toLocaleDateString('zh-CN')}`,
+      `合规碳排放报告 | CarbonAI V6.0 | ${new Date().toLocaleDateString('zh-CN')}`,
       previewHtml.value, `合规报告_${currentName.value}_${dataStore.currentYear}.docx`,
     )
     addReportHistory({ name: `${dataStore.currentYear}年度${currentName.value}`, standard: currentName.value, region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10), format: 'Word', type: 'standard' })
     history.value = getReportHistory()
     toast.success('✅ Word 报告已导出')
   } catch (e: any) { toast.error('Word 生成失败：' + e.message) }
+  finally { exporting.value = '' }
 }
 
-function clearHistory() {
+async function clearHistory() {
+  const confirmed = await confirmAction('这会删除当前浏览器中的全部报告历史记录，且无法撤销。', '清空报告历史？', '清空历史')
+  if (!confirmed) return
   clearReportHistory()
   history.value = []
   toast.info('历史记录已清空')
@@ -165,7 +175,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.rpt-card { cursor: pointer; transition: all 0.25s; }
+.rpt-card { width: 100%; appearance: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: transform var(--dur-micro) var(--ease-apple), border-color var(--dur-micro) var(--ease-apple), background-color var(--dur-micro) var(--ease-apple), box-shadow var(--dur-micro) var(--ease-apple), opacity var(--dur-micro) var(--ease-apple); }
 .rpt-card:hover { transform: translateY(-3px); border-color: var(--c-border-2); }
 .rpt-card.selected { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.06); box-shadow: 0 0 24px rgba(16, 185, 129, 0.1); }
 .rpt-card.dim { opacity: 0.42; }

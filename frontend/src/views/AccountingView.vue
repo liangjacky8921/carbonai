@@ -26,7 +26,7 @@
     <!-- 年份切换 -->
     <div class="flex flex-wrap items-center gap-3" v-if="dataStore.emissionYears.length">
       <span class="text-xs text-[var(--c-text-3)]">数据年份：</span>
-      <el-radio-group v-model="dataStore.currentYear" size="small">
+      <el-radio-group v-model="dataStore.currentYear" size="small" aria-label="数据年份">
         <el-radio-button v-for="y in dataStore.emissionYears" :key="y" :value="y">{{ y }}</el-radio-button>
       </el-radio-group>
       <span class="sample-badge" v-if="dataStore.source.emissions === 'sample'">示例数据</span>
@@ -92,17 +92,21 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeUnmount, watch } from 'vue'
 import * as echarts from 'echarts'
+import { CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import DataUpload from '@/components/DataUpload.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import { DataAnalysis } from '@element-plus/icons-vue'
 import { useDataStore, parseEmissionFile } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
+import { useConfirmAction } from '@/composables/useConfirmAction'
 import { fmt } from '@/utils/format'
 import { bizApi, backendOnline } from '@/api/client'
 
 const dataStore = useDataStore()
 const toast = useToast()
+const { confirmAction } = useConfirmAction()
 const fileInput = ref<HTMLInputElement | null>(null)
 
 const s1 = computed(() => dataStore.scopeSummary['Scope 1'] || 0)
@@ -145,7 +149,9 @@ async function loadSample() {
   await dataStore.loadSampleData()
   toast.success('已加载示例数据（虚拟企业 2022-2026）')
 }
-function resetUser() {
+async function resetUser() {
+  const confirmed = await confirmAction('这会删除当前浏览器中保存的排放核算数据，且无法撤销。', '切回示例排放数据？', '删除并切换')
+  if (!confirmed) return
   dataStore.resetEmissions()
   toast.info('已切回示例数据')
 }
@@ -155,7 +161,7 @@ const scopeEl = ref<HTMLElement | null>(null)
 const deptEl = ref<HTMLElement | null>(null)
 let scopeChart: echarts.ECharts | null = null
 let deptChart: echarts.ECharts | null = null
-const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
+const tt = CHART_TOOLTIP
 
 function renderCharts() {
   if (scopeEl.value && !scopeChart) scopeChart = echarts.init(scopeEl.value)
@@ -193,12 +199,12 @@ function renderCharts() {
 }
 
 function resize() { scopeChart?.resize(); deptChart?.resize() }
+useElementResize([scopeEl, deptEl], resize)
 
 onMounted(async () => {
   await dataStore.loadSampleData()
   renderCharts()
-  window.addEventListener('resize', resize)
 })
 watch(() => [dataStore.currentYear, dataStore.source.emissions, dataStore.yearRecords.length], renderCharts)
-onBeforeUnmount(() => { window.removeEventListener('resize', resize); scopeChart?.dispose(); deptChart?.dispose() })
+onBeforeUnmount(() => { scopeChart?.dispose(); deptChart?.dispose() })
 </script>

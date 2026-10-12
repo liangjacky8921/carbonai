@@ -5,25 +5,25 @@
 
     <el-form :model="form" label-position="top" size="large" @submit.prevent="onRegister">
       <el-form-item>
-        <el-input v-model="form.email" placeholder="邮箱（用于接收验证码）" :prefix-icon="Message" clearable />
+        <el-input v-model="form.email" name="email" autocomplete="email" placeholder="邮箱（用于接收验证码）" aria-label="邮箱" :prefix-icon="Message" clearable />
       </el-form-item>
       <el-form-item>
         <div class="flex gap-2 w-full">
-          <el-input v-model="form.code" placeholder="邮箱验证码" :prefix-icon="Key" maxlength="6" />
+          <el-input v-model="form.code" name="verification-code" autocomplete="one-time-code" inputmode="numeric" placeholder="邮箱验证码" aria-label="邮箱验证码" :prefix-icon="Key" maxlength="6" />
           <el-button :disabled="cooldown > 0" @click="onSendCode" style="min-width: 108px">
             {{ cooldown > 0 ? `${cooldown}s` : '获取验证码' }}
           </el-button>
         </div>
       </el-form-item>
       <el-form-item>
-        <el-input v-model="form.username" placeholder="账号名（至少 2 位）" :prefix-icon="User" clearable />
+        <el-input v-model="form.username" name="username" autocomplete="username" placeholder="账号名（至少 2 位）" aria-label="账号名" :prefix-icon="User" clearable />
       </el-form-item>
       <el-form-item>
-        <el-input v-model="form.password" type="password" placeholder="密码（≥8位，含大小写字母和数字）"
+        <el-input v-model="form.password" name="new-password" autocomplete="new-password" type="password" placeholder="密码（≥8位，含大小写字母和数字）" aria-label="新密码"
           :prefix-icon="Lock" show-password />
       </el-form-item>
       <el-form-item>
-        <el-input v-model="form.confirm" type="password" placeholder="确认密码" :prefix-icon="Lock"
+        <el-input v-model="form.confirm" name="confirm-password" autocomplete="new-password" type="password" placeholder="确认密码" aria-label="确认密码" :prefix-icon="Lock"
           show-password @keyup.enter="onRegister" />
       </el-form-item>
 
@@ -117,5 +117,5 @@ async function onRegister() {
 .tip { margin-top: 14px; font-size: 11px; color: var(--c-text-3); line-height: 1.7; }
 .pwd-meter { display: flex; align-items: center; gap: 10px; }
 .meter-bar { flex: 1; height: 4px; border-radius: 2px; background: #16261f; overflow: hidden; }
-.meter-bar span { display: block; height: 100%; border-radius: 2px; transition: all 0.3s; }
+.meter-bar span { display: block; height: 100%; border-radius: 2px; transition: width 0.3s var(--ease-apple), background-color 0.3s var(--ease-apple); }
 </style>

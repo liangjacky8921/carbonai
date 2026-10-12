@@ -19,7 +19,6 @@
 
     <!-- ===== 统计卡片 ===== -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <StatCard value="—" label="总排放 (tCO₂e)" color="text-green" v-if="false" />
       <div class="stat-box" v-for="s in statCards" :key="s.label">
         <div class="num text-[24px] font-bold" :class="s.color">{{ s.value }}</div>
         <div class="lbl">{{ s.label }}</div>
@@ -47,7 +46,7 @@
                   {{ selectedCity.name }}
                   <span class="text-xs text-[var(--c-text-3)] font-normal">{{ selectedCity.en }}</span>
                 </div>
-                <button class="cp-close" @click="selectedCity = null">×</button>
+                <button class="cp-close" type="button" aria-label="关闭城市详情" @click="selectedCity = null">×</button>
               </div>
               <div class="grid grid-cols-3 gap-2 text-center">
                 <div class="cp-cell"><div class="num text-amber">{{ selectedCity.emission }}</div><div>碳排放(万t)</div></div>
@@ -90,9 +89,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
 import * as echarts from 'echarts'
+import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import 'echarts-gl'
 import ChartCard from '@/components/ChartCard.vue'
-import StatCard from '@/components/StatCard.vue'
 import { useDataStore } from '@/stores/data'
 import { REALTIME_QUOTES, PRICE_SERIES, MARKET_SHARE, GBA_CITIES, type GbaCity } from '@/data/carbonMarket'
 import { fmt } from '@/utils/format'
@@ -157,8 +157,8 @@ function rankOf(city: GbaCity): number {
   return sorted.findIndex((c) => c.name === city.name) + 1
 }
 
-const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
-const axis = { axisLine: { lineStyle: { color: '#1e3329' } }, axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } }
+const tt = CHART_TOOLTIP
+const axis = CHART_AXIS
 
 function init(el: HTMLElement | null): echarts.ECharts | null {
   if (!el) return null
@@ -313,6 +313,7 @@ function renderAll() {
 }
 
 function resizeAll() { charts.forEach((c) => c.resize()) }
+useElementResize([priceEl, marketEl, gba3dEl, top8El, scopeEl, trendEl], resizeAll)
 
 onMounted(async () => {
   // 优先拉取后端行情快照（含时间戳），离线自动降级本地静态
@@ -328,10 +329,8 @@ onMounted(async () => {
   }
   await dataStore.loadSampleData()
   renderAll()
-  window.addEventListener('resize', resizeAll)
 })
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', resizeAll)
   charts.forEach((c) => c.dispose())
 })
 </script>
@@ -380,7 +379,7 @@ onBeforeUnmount(() => {
   width: 20px; height: 20px; line-height: 1; border-radius: 999px;
   border: 1px solid var(--c-border); background: transparent;
   color: var(--c-text-3); cursor: pointer; font-size: 14px;
-  transition: all 0.2s var(--ease-ios);
+  transition: color var(--dur-micro) var(--ease-apple), border-color var(--dur-micro) var(--ease-apple), background-color var(--dur-micro) var(--ease-apple);
 }
 .cp-close:hover { color: var(--c-green); border-color: var(--c-green); }
 .cp-cell { padding: 6px 4px; border-radius: 8px; background: rgba(16, 29, 24, 0.5); }

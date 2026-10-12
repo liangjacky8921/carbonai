@@ -1,11 +1,10 @@
 <template>
-  <div class="h-full flex flex-col items-center justify-center gap-3 py-10 text-center">
-    <div class="w-16 h-16 rounded-2xl flex items-center justify-center"
-      style="background: var(--c-green-soft); border: 1px solid rgba(16,185,129,0.3); animation: pulseGlow 2.4s infinite">
-      <el-icon :size="28" color="#10b981"><component :is="iconComp" /></el-icon>
+  <div class="state-panel h-full">
+    <div class="state-panel__icon">
+      <el-icon :size="28"><component :is="iconComp" /></el-icon>
     </div>
-    <p class="text-sm text-[var(--c-text)] font-medium">{{ title }}</p>
-    <p class="text-xs text-[var(--c-text-3)] max-w-sm leading-6">{{ description }}</p>
+    <p class="state-panel__title">{{ title }}</p>
+    <p v-if="description" class="state-panel__description">{{ description }}</p>
     <slot />
   </div>
 </template>

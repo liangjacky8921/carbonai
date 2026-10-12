@@ -281,7 +281,7 @@ def _build_report_pdf(body: ReportBody) -> bytes:
         story.append(Paragraph("本报告未附带核算明细。可调用 /api/emissions/upload 获得核算记录后生成完整报告。", head_style))
 
     story.append(Spacer(1, 6 * mm))
-    story.append(Paragraph("说明：本报告由 CarbonAI V5.2 自动生成，排放因子取值见平台因子库（含溯源与 DQR 评级）。", sub_style))
+    story.append(Paragraph("说明：本报告由 CarbonAI V6.0 自动生成，排放因子取值见平台因子库（含溯源与 DQR 评级）。", sub_style))
 
     doc.build(story)
     return buf.getvalue()

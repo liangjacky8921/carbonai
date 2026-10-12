@@ -2,7 +2,7 @@
   <div class="max-w-[1600px] mx-auto space-y-4">
     <!-- 模式切换 -->
     <div class="flex flex-wrap items-center gap-2">
-      <el-radio-group v-model="mode" size="small">
+      <el-radio-group v-model="mode" size="small" aria-label="GIS 分析模式">
         <el-radio-button value="forest">林地碳汇</el-radio-button>
         <el-radio-button value="heatmap">碳源热力图</el-radio-button>
         <el-radio-button value="gba">GBA 看板</el-radio-button>
@@ -112,7 +112,7 @@
     <!-- 林地碳汇盘查明细 -->
     <div v-if="mode === 'forest' && gisResult" class="c-card">
       <div class="c-card-title">林地碳汇盘查明细</div>
-      <div class="p-4">
+      <div class="p-4 table-scroll">
         <table class="dark-table">
           <thead><tr><th>年份</th><th class="text-right">NDVI</th><th class="text-right">地上生物量 (t)</th><th class="text-right">碳储量 (tC)</th><th class="text-right">碳汇量 (tCO₂e)</th></tr></thead>
           <tbody>
@@ -135,15 +135,19 @@ import { onMounted, onBeforeUnmount, ref, computed, nextTick, watch } from 'vue'
 import L from 'leaflet'
 import 'leaflet.heat'
 import * as echarts from 'echarts'
+import { CHART_TOOLTIP } from '@/utils/chartTheme'
+import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import DataUpload from '@/components/DataUpload.vue'
 import { useDataStore, parsePointsFile } from '@/stores/data'
 import { GBA_CITIES } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
+import { useConfirmAction } from '@/composables/useConfirmAction'
 import { MONITORING_CONFIG } from '@/utils/format'
 
 const dataStore = useDataStore()
 const toast = useToast()
+const { confirmAction } = useConfirmAction()
 const mode = ref<'forest' | 'heatmap' | 'gba'>('forest')
 
 const mapEl = ref<HTMLElement | null>(null)
@@ -348,7 +352,7 @@ function renderForestCharts(rows: { year: number; ndvi: number; carbon: number; 
   nextTick(() => {
     if (ndviEl.value && !ndviChart) ndviChart = echarts.init(ndviEl.value)
     if (biomassEl.value && !biomassChart) biomassChart = echarts.init(biomassEl.value)
-    const tt = { backgroundColor: 'rgba(13,23,20,0.94)', borderColor: '#24413a', textStyle: { color: '#e8f5ef', fontSize: 12 } }
+    const tt = CHART_TOOLTIP
     ndviChart?.setOption({
       tooltip: { trigger: 'axis', ...tt },
       grid: { left: '3%', right: '5%', bottom: '10%', top: '14%', containLabel: true },
@@ -389,7 +393,9 @@ async function onPointsFile(file: File) {
   }
 }
 
-function resetPoints() {
+async function resetPoints() {
+  const confirmed = await confirmAction('这会删除当前浏览器中保存的排放点位数据，且无法撤销。', '切回示例点位？', '删除并切换')
+  if (!confirmed) return
   dataStore.resetPoints()
   renderHeatmap()
   toast.info('已切回示例点位')
@@ -448,11 +454,10 @@ onMounted(async () => {
   // T10: 初始化实时点位图层（不阻塞主线程，失败静默降级）
   setTimeout(initRealtime, 500)
   await dataStore.loadSampleData()
-  window.addEventListener('resize', resize)
 })
 function resize() { map?.invalidateSize(); ndviChart?.resize(); biomassChart?.resize() }
+useElementResize([mapEl, ndviEl, biomassEl], resize)
 onBeforeUnmount(() => {
-  window.removeEventListener('resize', resize)
   // T10: 清理 SSE + 实时点位层
   sseClient?.close()
   realtimePoints?.remove()

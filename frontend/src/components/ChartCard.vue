@@ -13,9 +13,9 @@
       </div>
       <div v-else-if="empty" class="h-full flex items-center justify-center">
         <slot name="empty">
-          <div class="text-center text-[var(--c-text-3)]">
+          <div class="state-panel h-full">
             <el-icon :size="42" class="mb-2 opacity-40"><DataLine /></el-icon>
-            <p class="text-xs">{{ emptyText }}</p>
+            <p class="state-panel__description">{{ emptyText }}</p>
           </div>
         </slot>
       </div>
@@ -36,7 +36,7 @@ const props = withDefaults(defineProps<{
   emptyText?: string
   sample?: boolean
   userTag?: boolean
-}>(), { height: 300, loading: false, empty: false, emptyText: '暂无数据 — 请上传数据或加载示例数据' })
+}>(), { height: 300, loading: false, empty: false, emptyText: '暂无数据，请上传数据或加载示例数据' })
 
 const cssHeight = computed(() => {
   const h = props.height
