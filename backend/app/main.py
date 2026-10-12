@@ -78,7 +78,10 @@ def health():
         "status": "ok",
         "service": "carbonai-api",
         "version": "6.0.0",
-        "smtp": smtp,
+        "smtp": {
+            "status": smtp.get("status", "unknown"),
+            "host": smtp.get("host"),
+        },
         "smtp_daily_sent": _smtp_daily_count(),
     }
 
