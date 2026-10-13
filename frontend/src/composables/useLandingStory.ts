@@ -7,6 +7,16 @@ export function useLandingStory(root: Ref<HTMLElement | null>, initialSection = 
   let revealObserver: IntersectionObserver | undefined
   let reducedMotion: MediaQueryList | undefined
 
+  const prepareRevealItems = (sections: HTMLElement[]) => {
+    sections.forEach((section) => {
+      Array.from(section.children).forEach((child, index) => {
+        if (!(child instanceof HTMLElement) || child.getAttribute('aria-hidden') === 'true') return
+        child.classList.add('story-reveal-item')
+        child.style.setProperty('--story-item-order', String(index))
+      })
+    })
+  }
+
   const showAllSections = () => {
     root.value
       ?.querySelectorAll<HTMLElement>('[data-story-reveal]')
@@ -19,6 +29,20 @@ export function useLandingStory(root: Ref<HTMLElement | null>, initialSection = 
     showAllSections()
   }
 
+  const focusAnchorTarget = (event: MouseEvent) => {
+    const link = (event.target as Element | null)?.closest<HTMLAnchorElement>('a[href^="#"]')
+    if (!link || !root.value?.contains(link)) return
+    const id = decodeURIComponent(link.hash.slice(1))
+    const target = id ? document.getElementById(id) : undefined
+    if (!target) return
+    window.requestAnimationFrame(() => {
+      const hadTabIndex = target.hasAttribute('tabindex')
+      if (!hadTabIndex) target.setAttribute('tabindex', '-1')
+      target.focus({ preventScroll: true })
+      if (!hadTabIndex) target.addEventListener('blur', () => target.removeAttribute('tabindex'), { once: true })
+    })
+  }
+
   onMounted(() => {
     const storyRoot = root.value
     if (!storyRoot) return
@@ -28,6 +52,21 @@ export function useLandingStory(root: Ref<HTMLElement | null>, initialSection = 
 
     const sections = Array.from(storyRoot.querySelectorAll<HTMLElement>('[data-story-section]'))
     const revealSections = Array.from(storyRoot.querySelectorAll<HTMLElement>('[data-story-reveal]'))
+    prepareRevealItems(revealSections)
+
+    const hashId = window.location.hash ? decodeURIComponent(window.location.hash.slice(1)) : ''
+    const hashTarget = hashId ? document.getElementById(hashId) : null
+    const hashSection = hashTarget?.closest<HTMLElement>('[data-story-section]')
+    hashSection?.classList.add('is-story-visible')
+    if (hashSection?.id) activeSection.value = hashSection.id
+    if (hashTarget) {
+      const previousBehavior = document.documentElement.style.scrollBehavior
+      document.documentElement.style.scrollBehavior = 'auto'
+      hashTarget.scrollIntoView({ block: 'start' })
+      window.requestAnimationFrame(() => {
+        document.documentElement.style.scrollBehavior = previousBehavior
+      })
+    }
 
     if ('IntersectionObserver' in window) {
       const visibleSections = new Set<HTMLElement>()
@@ -69,6 +108,7 @@ export function useLandingStory(root: Ref<HTMLElement | null>, initialSection = 
     }
 
     reducedMotion.addEventListener('change', handleMotionPreference)
+    storyRoot.addEventListener('click', focusAnchorTarget)
     enhanced.value = true
   })
 
@@ -77,6 +117,7 @@ export function useLandingStory(root: Ref<HTMLElement | null>, initialSection = 
     sectionObserver?.disconnect()
     revealObserver?.disconnect()
     reducedMotion?.removeEventListener('change', handleMotionPreference)
+    root.value?.removeEventListener('click', focusAnchorTarget)
   })
 
   return { activeSection: readonly(activeSection), enhanced: readonly(enhanced) }

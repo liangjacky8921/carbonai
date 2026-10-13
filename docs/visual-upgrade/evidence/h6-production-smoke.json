@@ -1,0 +1,76 @@
+{
+  "checkedAt": "2026-10-13T12:23:06.040Z",
+  "base": "https://www.carbontool.cn",
+  "checks": [
+    {
+      "name": "生产首页与 3D 地球",
+      "passed": true,
+      "title": "CarbonAI · 时空智能碳管理平台",
+      "h1": "看清排放。理解空间。让决策有据。",
+      "sections": 7,
+      "width": [
+        1440,
+        1440
+      ],
+      "canvas": 1,
+      "globeClass": "globe-visual is-ready",
+      "loginHref": "/auth/login"
+    },
+    {
+      "name": "生产首页动效控制",
+      "passed": true,
+      "pressed": "true",
+      "label": "播放背景动效"
+    },
+    {
+      "name": "生产工作台与 ECS API",
+      "passed": true,
+      "healthStatus": 200,
+      "service": "carbonai-api",
+      "kpis": 4,
+      "canvases": 6
+    },
+    {
+      "name": "生产 GIS 路由",
+      "passed": true,
+      "map": true,
+      "zoom": true,
+      "tiles": 12
+    },
+    {
+      "name": "生产登录入口",
+      "passed": true,
+      "title": "登录 · CarbonAI V6.0 时空智能碳管理平台",
+      "inputs": 3,
+      "submit": 2
+    },
+    {
+      "name": "生产手机端静态降级",
+      "passed": true,
+      "width": [
+        390,
+        390
+      ],
+      "canvas": 0,
+      "globeClass": "globe-visual is-static",
+      "menuDisplay": "block"
+    },
+    {
+      "name": "生产减少动画降级",
+      "passed": true,
+      "canvas": 0,
+      "globeClass": "globe-visual is-static",
+      "ribbon": "none",
+      "grid": "none"
+    }
+  ],
+  "errors": [],
+  "failedResponses": [],
+  "browser": "154.0.8037.98",
+  "summary": {
+    "passed": 7,
+    "failed": 0,
+    "errors": 0,
+    "failedResponses": 0
+  }
+}

@@ -1,7 +1,7 @@
 <template>
   <section id="enter" class="closing" data-story-section data-story-reveal aria-labelledby="closing-title">
     <div class="closing-mark" aria-hidden="true"><i /><i /><i /></div>
-    <p>CarbonAI / Platform</p>
+    <p>07 / 07 · CarbonAI Platform</p>
     <h2 id="closing-title">从数据开始，<br />建立可追溯的碳管理路径。</h2>
     <div class="actions">
       <RouterLink class="primary-action" :to="{ name: 'dashboard' }">进入平台工作台</RouterLink>
@@ -24,6 +24,6 @@ h2 { position: relative; z-index: 1; max-width: 790px; margin: 0; font-size: cla
 .closing-mark i { position: absolute; inset: 14%; border: 1px solid #2a3d32; border-radius: 50%; }
 .closing-mark i:nth-child(2) { inset: 30%; }.closing-mark i:nth-child(3) { inset: 46%; background: #9cc2a7; box-shadow: 0 0 80px rgba(107, 166, 122, .22); }
 @media (max-width: 1440px) { .closing { margin-right: 32px; margin-left: 32px; } }
-@media (max-width: 600px) { .closing { min-height: 520px; margin: 0 20px 48px; padding: 72px 24px; }.actions { flex-direction: column; align-items: flex-start; gap: 16px; }.closing-mark { right: -34%; width: 100vw; } }
+@media (max-width: 600px) { .closing { min-height: 540px; margin: 0 20px 48px; padding: 72px 24px; }.actions { flex-direction: column; align-items: flex-start; gap: 16px; }.closing-mark { right: -42%; bottom: -12%; width: min(118vw, 460px); opacity: .72; } }
 @media (prefers-reduced-motion: reduce) { .primary-action, .secondary-action { transition-duration: .001ms; }.primary-action:hover { transform: none; } }
 </style>

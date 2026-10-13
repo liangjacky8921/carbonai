@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import IcpRecord from '@/components/IcpRecord.vue'
 import { useLandingStory } from '@/composables/useLandingStory'
 import LandingCapabilities from './LandingCapabilities.vue'
+import LandingApplications from './LandingApplications.vue'
 import LandingClosing from './LandingClosing.vue'
 import LandingHero from './LandingHero.vue'
 import LandingProvenance from './LandingProvenance.vue'
@@ -11,15 +12,21 @@ import LandingSpatial from './LandingSpatial.vue'
 import LandingStoryProgress from './LandingStoryProgress.vue'
 
 const storyRoot = ref<HTMLElement | null>(null)
+const mobileMenu = ref<HTMLDetailsElement | null>(null)
 const storyItems = [
   { id: 'overview', index: '01', label: '首页' },
   { id: 'capabilities', index: '02', label: '平台能力' },
   { id: 'spatial', index: '03', label: '空间视角' },
-  { id: 'provenance', index: '04', label: '核算路径' },
-  { id: 'roles', index: '05', label: '应用角色' },
-  { id: 'enter', index: '06', label: '进入平台' },
+  { id: 'applications', index: '04', label: '环境场景' },
+  { id: 'provenance', index: '05', label: '核算路径' },
+  { id: 'roles', index: '06', label: '应用角色' },
+  { id: 'enter', index: '07', label: '进入平台' },
 ] as const
 const { activeSection, enhanced } = useLandingStory(storyRoot)
+
+function closeMobileMenu() {
+  mobileMenu.value?.removeAttribute('open')
+}
 </script>
 
 <template>
@@ -36,9 +43,21 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
       <nav class="navigation" aria-label="首页导航">
         <a href="#capabilities">平台能力</a>
         <a href="#spatial">空间视角</a>
+        <a href="#applications">环境场景</a>
         <a href="#provenance">核算路径</a>
       </nav>
-      <RouterLink class="header-entry" :to="{ name: 'dashboard' }">进入平台</RouterLink>
+      <RouterLink class="header-login" :to="{ name: 'login' }">账户登录</RouterLink>
+      <details ref="mobileMenu" class="mobile-nav" @keydown.esc="closeMobileMenu">
+        <summary aria-label="打开首页目录">目录</summary>
+        <nav aria-label="移动端首页导航">
+          <a href="#capabilities" @click="closeMobileMenu">平台能力</a>
+          <a href="#spatial" @click="closeMobileMenu">空间视角</a>
+          <a href="#applications" @click="closeMobileMenu">环境场景</a>
+          <a href="#provenance" @click="closeMobileMenu">核算路径</a>
+          <RouterLink :to="{ name: 'login' }" @click="closeMobileMenu">账户登录</RouterLink>
+        </nav>
+      </details>
+      <RouterLink class="header-entry" :to="{ name: 'dashboard' }">进入工作台</RouterLink>
     </header>
 
     <LandingStoryProgress :items="storyItems" :active-section="activeSection" />
@@ -47,6 +66,7 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
       <LandingHero />
       <LandingCapabilities />
       <LandingSpatial />
+      <LandingApplications />
       <LandingProvenance />
       <LandingRoles />
       <LandingClosing />
@@ -82,24 +102,33 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
   -webkit-tap-highlight-color: rgba(199, 228, 204, 0.15);
 }
 
-.story-enhanced :deep([data-story-reveal]) {
+.story-enhanced :deep([data-story-reveal] > .story-reveal-item) {
   opacity: 0;
-  transform: translateY(26px);
-  transition: opacity 720ms cubic-bezier(0.22, 1, 0.36, 1), transform 720ms cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateY(18px);
+  transition: opacity 620ms cubic-bezier(0.22, 1, 0.36, 1), transform 620ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: calc(var(--story-item-order, 0) * 70ms);
+  will-change: opacity, transform;
 }
 
-.story-enhanced :deep([data-story-reveal].is-story-visible) {
+.story-enhanced :deep([data-story-reveal].is-story-visible > .story-reveal-item) {
   opacity: 1;
   transform: translateY(0);
+  will-change: auto;
 }
 
 :global(html.landing-scroll) { scroll-behavior: smooth; }
 
 .landing-page :deep(a:focus-visible),
 .landing-page :deep(button:focus-visible),
+.landing-page :deep(summary:focus-visible),
 #landing-main:focus-visible {
   outline: 2px solid var(--landing-accent);
   outline-offset: 6px;
+}
+
+.landing-page :deep([data-story-section]:focus-visible) {
+  outline: 1px solid #7fa68b;
+  outline-offset: -6px;
 }
 
 .skip-link {
@@ -116,6 +145,8 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
 .skip-link:focus { transform: none; }
 
 .masthead {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   gap: 48px;
@@ -143,6 +174,7 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
 }
 
 .navigation a,
+.header-login,
 .header-entry,
 .landing-footer > a {
   display: inline-flex;
@@ -152,7 +184,13 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
 }
 
 .navigation a:hover,
+.header-login:hover,
 .landing-footer > a:hover { color: #fff; }
+
+.header-login {
+  color: var(--landing-muted);
+  font-size: 13px;
+}
 
 .header-entry {
   padding: 0 22px;
@@ -162,6 +200,8 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
 }
 
 .header-entry:hover { background: #24392b; }
+
+.mobile-nav { display: none; }
 
 .landing-footer {
   display: grid;
@@ -178,19 +218,31 @@ const { activeSection, enhanced } = useLandingStory(storyRoot)
 
 .footer-brand { color: var(--landing-ink); font-size: 18px; }
 .footer-record { --c-text-3: #9fb3a7; --c-text-2: #d4e0d8; justify-self: center; }
+.footer-record :deep(a) { display: inline-flex; align-items: center; min-height: 44px; }
+
+@media (max-width: 900px) {
+  .navigation, .header-login { display: none; }
+  .mobile-nav { position: relative; display: block; margin-left: auto; }
+  .mobile-nav summary { display: inline-flex; align-items: center; min-height: 44px; padding: 0 10px; color: var(--landing-muted); font-size: 13px; cursor: pointer; list-style: none; }
+  .mobile-nav summary::-webkit-details-marker { display: none; }
+  .mobile-nav summary::after { margin-left: 7px; content: '+'; color: var(--landing-accent); font-size: 16px; }
+  .mobile-nav[open] summary::after { content: '−'; }
+  .mobile-nav nav { position: absolute; top: calc(100% + 10px); right: 0; display: grid; min-width: 190px; padding: 8px; border: 1px solid #4c5d52; border-radius: 4px; background: #131d19; box-shadow: 0 18px 40px rgba(0, 0, 0, .34); }
+  .mobile-nav nav a { display: flex; align-items: center; min-height: 48px; padding: 0 14px; color: var(--landing-muted); font-size: 14px; }
+  .mobile-nav nav a:hover { color: #fff; background: #1d2b24; }
+}
 
 @media (max-width: 600px) {
   .masthead { min-height: 80px; padding: 18px 20px; gap: 12px; }
   .wordmark { gap: 8px; font-size: 21px; }
-  .navigation { display: none; }
-  .header-entry { margin-left: auto; padding: 0 14px; }
+  .header-entry { padding: 0 12px; }
   .landing-footer { grid-template-columns: 1fr auto; margin: 0 24px; padding: 24px 0; gap: 16px; }
   .footer-record { grid-column: 1 / -1; grid-row: 2; justify-self: start; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .landing-page :deep(a) { transition-duration: 0.001ms; }
-  .story-enhanced :deep([data-story-reveal]) { opacity: 1; transform: none; transition: none; }
+  .story-enhanced :deep([data-story-reveal] > .story-reveal-item) { opacity: 1; transform: none; transition: none; }
   :global(html.landing-scroll) { scroll-behavior: auto; }
 }
 </style>

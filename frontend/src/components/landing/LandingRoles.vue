@@ -1,7 +1,7 @@
 <template>
   <section id="roles" class="roles" data-story-section data-story-reveal aria-labelledby="roles-title">
     <header>
-      <p>不同职责，同一份数据语境</p>
+      <p>06 / 07 · 不同职责，同一份数据语境</p>
       <h2 id="roles-title">让管理、核算与空间分析，<br />在各自需要的尺度上工作。</h2>
     </header>
     <div class="role-lines">
@@ -13,9 +13,9 @@
 </template>
 
 <style scoped>
-.roles { max-width: 1240px; margin: auto; padding: 112px 32px 128px; scroll-margin-top: 24px; }
+.roles { max-width: 1240px; margin: auto; padding: 120px 32px 136px; border-top: 1px solid var(--landing-line); scroll-margin-top: 24px; }
 header { display: grid; grid-template-columns: .7fr 1.3fr; gap: 70px; align-items: start; margin-bottom: 70px; }
-header p { margin: 8px 0 0; color: var(--landing-muted); font-size: 13px; }
+header p { margin: 8px 0 0; color: #82968a; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; }
 h2 { margin: 0; font-size: clamp(30px, 3.2vw, 46px); font-weight: 500; line-height: 1.38; letter-spacing: -.035em; text-wrap: balance; }
 .role-lines { border-top: 1px solid var(--landing-line); }
 article { display: grid; grid-template-columns: .7fr .65fr 1fr; gap: 40px; align-items: baseline; padding: 30px 0; border-bottom: 1px solid var(--landing-line); }

@@ -1,6 +1,6 @@
 <template>
   <section id="provenance" class="provenance" data-story-section data-story-reveal aria-labelledby="provenance-title">
-    <div class="section-index" aria-hidden="true">04 / 06</div>
+    <div class="section-index" aria-hidden="true">05 / 07</div>
     <div class="provenance-heading">
       <p class="eyebrow">从输入到输出</p>
       <h2 id="provenance-title">让每一步核算，<br />都有清楚的来路。</h2>
