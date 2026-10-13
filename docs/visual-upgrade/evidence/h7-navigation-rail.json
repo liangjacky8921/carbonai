@@ -1,0 +1,66 @@
+{
+  "checkedAt": "2026-10-13T12:47:04.764Z",
+  "base": "https://www.carbontool.cn/?release=h7-nav",
+  "passed": true,
+  "before": {
+    "viewport": 1530,
+    "rail": {
+      "left": 1484,
+      "right": 1530,
+      "width": 46,
+      "height": 296
+    },
+    "pause": {
+      "left": 1283.125,
+      "right": 1384.203125,
+      "width": 101.078125,
+      "height": 44
+    },
+    "labels": [
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0",
+      "0"
+    ],
+    "links": [
+      {
+        "width": 46,
+        "label": "01 首页"
+      },
+      {
+        "width": 46,
+        "label": "02 平台能力"
+      },
+      {
+        "width": 46,
+        "label": "03 空间视角"
+      },
+      {
+        "width": 46,
+        "label": "04 环境场景"
+      },
+      {
+        "width": 46,
+        "label": "05 核算路径"
+      },
+      {
+        "width": 46,
+        "label": "06 应用角色"
+      },
+      {
+        "width": 46,
+        "label": "07 进入平台"
+      }
+    ]
+  },
+  "hover": {
+    "opacity": "1",
+    "visibility": "visible",
+    "text": "平台能力"
+  },
+  "narrowDisplay": "none",
+  "errors": []
+}
