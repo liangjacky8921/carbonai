@@ -54,8 +54,8 @@ Playwright 使用 Chrome 对生产环境执行 7 项只读检查，结果为 **7
 
 如需回滚，先将当前 `/opt/carbonai/frontend/dist` 移至新的保留目录，再将 `/opt/carbonai/releases/frontend-dist-20261013-h5-01` 恢复为 `/opt/carbonai/frontend/dist`，随后执行 `nginx -t`、重载 Nginx，并重新检查首页和 `/api/health`。
 
-## 发布后待确认
+## 发布后信息确认
 
-- ICP 备案号仍需由站点主体确认。
+- 站点主体随后确认唯一备案信息为“粤ICP备2026140571号”。
 - 仓库没有可核实的公开联系方式，本次未添加邮箱或电话。
 - 公网 LCP、CLS、INP 和长期 GPU 数据尚未形成可靠测量记录。
