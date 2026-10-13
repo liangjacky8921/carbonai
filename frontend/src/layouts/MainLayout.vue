@@ -2,7 +2,7 @@
   <div class="app-shell flex min-h-[100dvh] overflow-hidden">
     <a class="skip-link" href="#main-content">跳到主要内容</a>
     <!-- ============ 侧边导航 ============ -->
-    <aside class="sidebar" :class="{ collapsed: collapsed }">
+    <aside id="primary-sidebar" class="sidebar" :class="{ collapsed: collapsed }">
       <div class="logo-row">
         <img src="/favicon.svg" class="w-9 h-9" alt="CarbonAI" />
         <transition name="fade">
@@ -35,14 +35,14 @@
                 <el-icon :size="17"><component :is="item.icon" /></el-icon>
               </el-tooltip>
               <span v-show="!collapsed" class="nav-text">{{ item.title }}</span>
-              <span v-if="item.auth && !auth.isLoggedIn" v-show="!collapsed" class="lock-mark">🔒</span>
+              <el-icon v-if="item.auth && !auth.isLoggedIn" v-show="!collapsed" class="lock-mark" aria-label="需要登录"><Lock /></el-icon>
             </router-link>
           </template>
         </nav>
       </el-scrollbar>
 
       <div class="sidebar-footer">
-        <button class="collapse-btn" :aria-label="collapsed ? '展开侧边栏' : '收起侧边栏'"
+        <button class="collapse-btn" aria-controls="primary-sidebar" :aria-label="collapsed ? '展开侧边栏' : '收起侧边栏'"
           :aria-expanded="!collapsed" @click="collapsed = !collapsed">
           <el-icon :size="16"><component :is="collapsed ? Expand : Fold" /></el-icon>
         </button>
@@ -111,7 +111,7 @@ import { backendOnline } from '@/api/client'
 import IcpRecord from '@/components/IcpRecord.vue'
 import {
   Odometer, DataAnalysis, Files, MapLocation, Guide, Grid, Histogram, Cpu,
-  Coin, Box, Document, ChatDotRound, SetUp, Expand, Fold, UserFilled, SwitchButton,
+  Coin, Box, Document, ChatDotRound, SetUp, Expand, Fold, UserFilled, SwitchButton, Lock,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()

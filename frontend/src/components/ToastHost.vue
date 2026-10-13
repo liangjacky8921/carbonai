@@ -1,6 +1,6 @@
 <template>
   <transition-group name="toast" tag="div" class="toast-host" aria-live="polite" aria-atomic="true">
-    <div v-for="t in toasts" :key="t.id" class="toast-item" :class="t.type" role="status">
+    <div v-for="t in toasts" :key="t.id" class="toast-item" :class="t.type" :role="t.type === 'error' ? 'alert' : 'status'">
       <span class="toast-dot" />
       <span>{{ t.message }}</span>
     </div>

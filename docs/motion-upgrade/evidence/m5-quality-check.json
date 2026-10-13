@@ -1,0 +1,684 @@
+{
+  "environment": {
+    "date": "2026-10-13",
+    "timezone": "Asia/Shanghai",
+    "browser": "154.0.8037.98",
+    "baseUrl": "http://127.0.0.1:4173",
+    "build": "Vite production preview"
+  },
+  "checks": [
+    {
+      "name": "首页基本结构与无横向溢出",
+      "passed": true,
+      "title": "CarbonAI · 时空智能碳管理平台",
+      "h1": "看清排放。理解空间。让决策有据。",
+      "sections": 6,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "canvas": 0
+    },
+    {
+      "name": "首页动效暂停与恢复",
+      "passed": true
+    },
+    {
+      "name": "首页离屏暂停",
+      "passed": true
+    },
+    {
+      "name": "页面隐藏与重新显示分支",
+      "passed": true,
+      "hidden": "false",
+      "visible": "true"
+    },
+    {
+      "name": "首页 1440px 响应式与滚动叙事",
+      "passed": true,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "sections": 6,
+      "hiddenSections": 0
+    },
+    {
+      "name": "首页 1280px 响应式与滚动叙事",
+      "passed": true,
+      "width": 1280,
+      "scrollWidth": 1280,
+      "sections": 6,
+      "hiddenSections": 0
+    },
+    {
+      "name": "首页 375px 响应式与滚动叙事",
+      "passed": true,
+      "width": 375,
+      "scrollWidth": 375,
+      "sections": 6,
+      "hiddenSections": 0
+    },
+    {
+      "name": "Dashboard 图表、KPI 与行情控制",
+      "passed": true,
+      "cards": 7,
+      "canvases": 6,
+      "kpis": 4,
+      "pressed": "true",
+      "playState": "paused"
+    },
+    {
+      "name": "Dashboard 手机缩放与图表保留",
+      "passed": true,
+      "viewport": 375,
+      "scrollWidth": 375,
+      "main": 319,
+      "canvas": 6
+    },
+    {
+      "name": "GIS 地图缩放与热力图示例",
+      "passed": true,
+      "heatCanvas": 1
+    },
+    {
+      "name": "Dashboard/GIS 路由往返与实例数量稳定",
+      "passed": true,
+      "dashboardCanvasInitial": 6,
+      "counts": [
+        6,
+        6
+      ]
+    },
+    {
+      "name": "减少动画：首页静态状态",
+      "passed": true,
+      "running": "false",
+      "ribbon": "none",
+      "scrollBehavior": "auto",
+      "hiddenStories": 0
+    },
+    {
+      "name": "减少动画：Dashboard 行情静止",
+      "passed": true,
+      "disabled": true,
+      "text": "已静止",
+      "animation": "none"
+    },
+    {
+      "name": "WebGL 不可用：首页仍可操作",
+      "passed": true
+    },
+    {
+      "name": "WebGL 不可用：Dashboard 非 3D 内容仍可见",
+      "passed": true,
+      "kpis": 4,
+      "canvases": 6,
+      "main": true
+    }
+  ],
+  "viewports": [
+    {
+      "width": 1440,
+      "height": 1000,
+      "scrollWidth": 1440,
+      "sections": 6,
+      "hiddenSections": 0,
+      "metrics": {
+        "lcpMs": 56,
+        "cls": 0,
+        "maxLongTaskMs": 0,
+        "longTaskCount": 0,
+        "maxEventDurationMs": 0,
+        "transferBytes": 2400,
+        "domContentLoadedMs": 28,
+        "loadMs": 35
+      }
+    },
+    {
+      "width": 1280,
+      "height": 900,
+      "scrollWidth": 1280,
+      "sections": 6,
+      "hiddenSections": 0,
+      "metrics": {
+        "lcpMs": 64,
+        "cls": 0,
+        "maxLongTaskMs": 0,
+        "longTaskCount": 0,
+        "maxEventDurationMs": 0,
+        "transferBytes": 2400,
+        "domContentLoadedMs": 31,
+        "loadMs": 35
+      }
+    },
+    {
+      "width": 375,
+      "height": 812,
+      "scrollWidth": 375,
+      "sections": 6,
+      "hiddenSections": 0,
+      "metrics": {
+        "lcpMs": 60,
+        "cls": 0,
+        "maxLongTaskMs": 0,
+        "longTaskCount": 0,
+        "maxEventDurationMs": 0,
+        "transferBytes": 2400,
+        "domContentLoadedMs": 29,
+        "loadMs": 33
+      }
+    }
+  ],
+  "errors": [
+    {
+      "label": "normal",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "label": "normal",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=1673&y=891&z=11",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3338&y=1783&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3338&y=1782&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3339&y=1782&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd03.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3338&y=1784&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd04.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3339&y=1784&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3337&y=1783&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd04.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3340&y=1783&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd04.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3337&y=1782&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd03.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3340&y=1782&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd02.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3337&y=1784&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "requestfailed",
+      "url": "https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x=3340&y=1784&z=12",
+      "text": "net::ERR_ABORTED"
+    },
+    {
+      "label": "normal",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "label": "normal",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "label": "normal",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "label": "normal",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "label": "reduced-motion",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    },
+    {
+      "label": "no-webgl",
+      "type": "console",
+      "text": "Failed to load resource: the server responded with a status of 404 (Not Found)"
+    }
+  ],
+  "failedResponses": [
+    {
+      "label": "normal",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    },
+    {
+      "label": "normal",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    },
+    {
+      "label": "normal",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    },
+    {
+      "label": "normal",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    },
+    {
+      "label": "normal",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    },
+    {
+      "label": "normal",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    },
+    {
+      "label": "reduced-motion",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    },
+    {
+      "label": "no-webgl",
+      "status": 404,
+      "url": "http://127.0.0.1:4173/api/health"
+    }
+  ],
+  "performance": {
+    "homeCold": {
+      "lcpMs": 472,
+      "cls": 0,
+      "maxLongTaskMs": 0,
+      "longTaskCount": 0,
+      "maxEventDurationMs": 0,
+      "transferBytes": 487083,
+      "domContentLoadedMs": 221,
+      "loadMs": 233
+    },
+    "homeRaf": {
+      "durationMs": 2002,
+      "frames": 281,
+      "averageGapMs": 7.12,
+      "maxGapMs": 22.9,
+      "droppedGapCount": 0
+    },
+    "homeRuntime": {
+      "taskDurationDeltaSeconds": 0.0953,
+      "jsHeapUsedBytes": 4191860
+    },
+    "dashboard": {
+      "lcpMs": 364,
+      "cls": 0,
+      "maxLongTaskMs": 216,
+      "longTaskCount": 2,
+      "maxEventDurationMs": 40,
+      "transferBytes": 662166,
+      "domContentLoadedMs": 31,
+      "loadMs": 50
+    },
+    "routeCycle": {
+      "jsHeapUsedBytesAfterCycles": 53000160,
+      "cycles": 2
+    },
+    "homeCached": {
+      "lcpMs": 56,
+      "cls": 0,
+      "maxLongTaskMs": 0,
+      "longTaskCount": 0,
+      "maxEventDurationMs": 0,
+      "transferBytes": 2400,
+      "domContentLoadedMs": 28,
+      "loadMs": 35
+    }
+  },
+  "bundles": [
+    {
+      "name": "echarts-DN4_CU0e.js",
+      "bytes": 1643810,
+      "gzipBytes": 511487
+    },
+    {
+      "name": "element-DIfIqhdn.js",
+      "bytes": 1171533,
+      "gzipBytes": 372802
+    },
+    {
+      "name": "index-D1JIm2aD.css",
+      "bytes": 403907,
+      "gzipBytes": 61671
+    },
+    {
+      "name": "jspdf.es.min-CNsxbEc6.js",
+      "bytes": 357811,
+      "gzipBytes": 118019
+    },
+    {
+      "name": "data-B5JpGVny.js",
+      "bytes": 340707,
+      "gzipBytes": 116789
+    },
+    {
+      "name": "index-C8gh8rso.js",
+      "bytes": 325919,
+      "gzipBytes": 93023
+    },
+    {
+      "name": "html2canvas.esm-CBrSDip1.js",
+      "bytes": 202301,
+      "gzipBytes": 48033
+    },
+    {
+      "name": "index.es-Ci9Iuqbs.js",
+      "bytes": 150924,
+      "gzipBytes": 51631
+    },
+    {
+      "name": "leaflet-src-Be5bl0le.js",
+      "bytes": 149587,
+      "gzipBytes": 43360
+    },
+    {
+      "name": "index-BMS9etLG.js",
+      "bytes": 98028,
+      "gzipBytes": 38529
+    },
+    {
+      "name": "reportBuilder-BZdZamqP.js",
+      "bytes": 25804,
+      "gzipBytes": 8145
+    },
+    {
+      "name": "purify.es-BwoZCkIS.js",
+      "bytes": 22028,
+      "gzipBytes": 8766
+    },
+    {
+      "name": "GisView-CmSTdIWf.js",
+      "bytes": 21515,
+      "gzipBytes": 8325
+    },
+    {
+      "name": "HomeView-B16XkYi-.css",
+      "bytes": 19036,
+      "gzipBytes": 4529
+    },
+    {
+      "name": "HomeView-CTp5I-CV.js",
+      "bytes": 15394,
+      "gzipBytes": 5960
+    },
+    {
+      "name": "DashboardView-Batg0Pot.js",
+      "bytes": 13614,
+      "gzipBytes": 5573
+    },
+    {
+      "name": "AiAdvisorView-CTCugwIH.js",
+      "bytes": 12685,
+      "gzipBytes": 6767
+    },
+    {
+      "name": "PcfView-2L21re9P.js",
+      "bytes": 11616,
+      "gzipBytes": 4951
+    },
+    {
+      "name": "SewageView-BDBxzb83.js",
+      "bytes": 11505,
+      "gzipBytes": 4263
+    },
+    {
+      "name": "TrajectoryView-DQhMbJJq.js",
+      "bytes": 9681,
+      "gzipBytes": 4535
+    },
+    {
+      "name": "AccountingView-CerBzvrq.js",
+      "bytes": 8080,
+      "gzipBytes": 3622
+    },
+    {
+      "name": "GridView-DdXJIpCf.js",
+      "bytes": 7615,
+      "gzipBytes": 3559
+    },
+    {
+      "name": "SoilView-CWLUZHQP.js",
+      "bytes": 7491,
+      "gzipBytes": 3422
+    },
+    {
+      "name": "ReportView-p0Wrzk-J.js",
+      "bytes": 6923,
+      "gzipBytes": 2959
+    },
+    {
+      "name": "MainLayout-DljiYwzs.js",
+      "bytes": 6853,
+      "gzipBytes": 3338
+    },
+    {
+      "name": "carbonMarket-D7BYG7RY.js",
+      "bytes": 6813,
+      "gzipBytes": 2583
+    },
+    {
+      "name": "FactorLibView-C1slcWQ3.js",
+      "bytes": 6297,
+      "gzipBytes": 2951
+    },
+    {
+      "name": "ToolsView-D6nMD65n.js",
+      "bytes": 6227,
+      "gzipBytes": 2321
+    },
+    {
+      "name": "AssetView-C9qdaqql.js",
+      "bytes": 5014,
+      "gzipBytes": 2437
+    },
+    {
+      "name": "MainLayout-BTe1Kk5m.css",
+      "bytes": 4754,
+      "gzipBytes": 1263
+    },
+    {
+      "name": "RegisterView-DbG3hODp.js",
+      "bytes": 4680,
+      "gzipBytes": 2100
+    },
+    {
+      "name": "DashboardView-cvwtNpjg.css",
+      "bytes": 3457,
+      "gzipBytes": 1087
+    },
+    {
+      "name": "LoginView-BOaWkSNT.js",
+      "bytes": 2781,
+      "gzipBytes": 1507
+    },
+    {
+      "name": "ChartCard.vue_vue_type_script_setup_true_lang-OuHCIcWu.js",
+      "bytes": 2450,
+      "gzipBytes": 1339
+    },
+    {
+      "name": "AuthLayout-H4OTiNCx.css",
+      "bytes": 1629,
+      "gzipBytes": 688
+    },
+    {
+      "name": "AuthLayout-Br91rpis.js",
+      "bytes": 1235,
+      "gzipBytes": 751
+    },
+    {
+      "name": "AiAdvisorView-Be8VX8Yv.css",
+      "bytes": 967,
+      "gzipBytes": 444
+    },
+    {
+      "name": "DataUpload.vue_vue_type_script_setup_true_lang-DI1rvYH7.js",
+      "bytes": 963,
+      "gzipBytes": 624
+    },
+    {
+      "name": "PcfView-B1iPaJF9.css",
+      "bytes": 958,
+      "gzipBytes": 442
+    },
+    {
+      "name": "ReportView-Bvj-fLIN.css",
+      "bytes": 804,
+      "gzipBytes": 368
+    },
+    {
+      "name": "EmptyState.vue_vue_type_script_setup_true_lang-D3gN1LGA.js",
+      "bytes": 691,
+      "gzipBytes": 437
+    },
+    {
+      "name": "IcpRecord-blGXtXro.js",
+      "bytes": 599,
+      "gzipBytes": 393
+    },
+    {
+      "name": "GisView-hdbT3VLU.css",
+      "bytes": 592,
+      "gzipBytes": 316
+    },
+    {
+      "name": "RegisterView-eX20NgMn.css",
+      "bytes": 496,
+      "gzipBytes": 288
+    },
+    {
+      "name": "GridView-B0UpKR1B.css",
+      "bytes": 344,
+      "gzipBytes": 213
+    },
+    {
+      "name": "IcpRecord-B5vm-wmM.css",
+      "bytes": 298,
+      "gzipBytes": 190
+    },
+    {
+      "name": "useConfirmAction-BHotITTt.js",
+      "bytes": 292,
+      "gzipBytes": 251
+    },
+    {
+      "name": "LoginView-DFeg4T0e.css",
+      "bytes": 173,
+      "gzipBytes": 156
+    },
+    {
+      "name": "ToolsView-Ulqwqm9s.css",
+      "bytes": 167,
+      "gzipBytes": 161
+    },
+    {
+      "name": "AssetView-CPNV7rH-.css",
+      "bytes": 166,
+      "gzipBytes": 136
+    },
+    {
+      "name": "favicon-B1w23DGS.js",
+      "bytes": 39,
+      "gzipBytes": 59
+    }
+  ],
+  "limitations": [
+    "本地 loopback、无网络或 CPU 节流，结果不是生产环境 Core Web Vitals。",
+    "INP 需要真实用户现场数据或完整交互测量，本次仅记录 Event Timing 诊断样本。",
+    "FPS 为 requestAnimationFrame 回调节奏，不代表 GPU 实际呈现帧率。",
+    "内存为 Chromium JSHeapUsedSize 单点/短程诊断，不足以证明不存在长期泄漏。",
+    "页面隐藏测试通过合成 visibilitychange 覆盖代码分支，未模拟操作系统真实后台调度。",
+    "本地 FastAPI 未启动，/api/health 404 单独列为预期测试环境响应。"
+  ],
+  "summary": {
+    "passed": 15,
+    "failed": 0,
+    "expectedBackendResponses": [
+      {
+        "label": "normal",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      },
+      {
+        "label": "normal",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      },
+      {
+        "label": "normal",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      },
+      {
+        "label": "normal",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      },
+      {
+        "label": "normal",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      },
+      {
+        "label": "normal",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      },
+      {
+        "label": "reduced-motion",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      },
+      {
+        "label": "no-webgl",
+        "status": 404,
+        "url": "http://127.0.0.1:4173/api/health"
+      }
+    ],
+    "unexpectedFailedResponses": []
+  }
+}

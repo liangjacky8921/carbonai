@@ -2,7 +2,7 @@
   <div class="dashboard">
     <!-- ===== 顶部：实时碳行情跑马灯 ===== -->
     <div class="ticker-card c-card mb-4">
-      <div class="ticker-track" :style="{ animationDuration: quotesLoop.length * 3 + 's' }">
+      <div class="ticker-track" :class="{ paused: tickerStopped }" :style="{ animationDuration: quotesLoop.length * 3 + 's' }">
         <div v-for="(q, i) in quotesLoop" :key="i" class="ticker-item">
           <span class="q-name">{{ q.name }}</span>
           <span class="q-price num">{{ q.price }}</span>
@@ -14,29 +14,37 @@
       <div class="ticker-meta">
         <el-icon class="animate-pulse" color="#10b981"><DataLine /></el-icon>
         <span>更新 {{ now }}</span>
+        <button
+          type="button"
+          class="ticker-control"
+          :disabled="reducedMotion"
+          :aria-pressed="tickerPaused"
+          :aria-label="reducedMotion ? '行情滚动已按系统设置停止' : tickerPaused ? '继续行情滚动' : '暂停行情滚动'"
+          @click="tickerPaused = !tickerPaused"
+        >{{ reducedMotion ? '已静止' : tickerPaused ? '继续' : '暂停' }}</button>
       </div>
     </div>
 
     <!-- ===== 统计卡片 ===== -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <div class="stat-box" v-for="s in statCards" :key="s.label">
-        <div class="num text-[24px] font-bold" :class="s.color">{{ s.value }}</div>
+      <div class="stat-box kpi-card" v-for="(s, index) in statCards" :key="s.label" :style="{ '--kpi-index': index }">
+        <div class="num text-[24px] font-bold" :class="s.color"><MotionNumber :value="s.value" :reduced-motion="reducedMotion" /></div>
         <div class="lbl">{{ s.label }}</div>
       </div>
     </div>
 
     <!-- ===== 主图表区 ===== -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <ChartCard title="CEA 碳价走势 & 复旦碳价指数预测 (2026)" height="320">
+      <ChartCard title="CEA 碳价走势 & 复旦碳价指数预测 (2026)" height="320" :loading="chartsLoading">
         <div ref="priceEl" class="w-full h-full" />
       </ChartCard>
-      <ChartCard title="区域碳市场占比" height="320">
+      <ChartCard title="区域碳市场占比" height="320" :loading="chartsLoading">
         <div ref="marketEl" class="w-full h-full" />
       </ChartCard>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
-      <ChartCard title="粤港澳大湾区 11 城碳排放对比（3D）" height="360" class="lg:col-span-7">
+      <ChartCard title="粤港澳大湾区 11 城碳排放对比（3D）" height="360" class="lg:col-span-7" :loading="chartsLoading">
         <div class="relative w-full h-full">
           <div ref="gba3dEl" class="w-full h-full" />
           <transition name="page">
@@ -62,16 +70,16 @@
           </transition>
         </div>
       </ChartCard>
-      <ChartCard title="排放源 Top8（环形图）" height="360" class="lg:col-span-5">
+      <ChartCard title="排放源 Top8（环形图）" height="360" class="lg:col-span-5" :loading="chartsLoading">
         <div ref="top8El" class="w-full h-full" />
       </ChartCard>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4">
-      <ChartCard title="Scope 分布" height="280" class="lg:col-span-4">
+      <ChartCard title="Scope 分布" height="280" class="lg:col-span-4" :loading="chartsLoading">
         <div ref="scopeEl" class="w-full h-full" />
       </ChartCard>
-      <ChartCard title="各年度排放趋势" height="280" class="lg:col-span-8">
+      <ChartCard title="各年度排放趋势" height="280" class="lg:col-span-8" :loading="chartsLoading">
         <div ref="trendEl" class="w-full h-full" />
       </ChartCard>
     </div>
@@ -87,12 +95,14 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, onBeforeUnmount } from 'vue'
+import { computed, nextTick, onMounted, ref, onBeforeUnmount, watch } from 'vue'
 import * as echarts from 'echarts'
 import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
 import { useElementResize } from '@/composables/useElementResize'
 import 'echarts-gl'
 import ChartCard from '@/components/ChartCard.vue'
+import MotionNumber from '@/components/MotionNumber.vue'
+import { useReducedMotion } from '@/composables/useReducedMotion'
 import { useDataStore } from '@/stores/data'
 import { REALTIME_QUOTES, PRICE_SERIES, MARKET_SHARE, GBA_CITIES, type GbaCity } from '@/data/carbonMarket'
 import { fmt } from '@/utils/format'
@@ -100,6 +110,10 @@ import { DataLine } from '@element-plus/icons-vue'
 import { bizApi, backendOnline } from '@/api/client'
 
 const dataStore = useDataStore()
+const reducedMotion = useReducedMotion()
+const tickerPaused = ref(false)
+const tickerStopped = computed(() => tickerPaused.value || reducedMotion.value)
+const chartsLoading = ref(true)
 
 // ============ 碳市场行情（后端在线则拉取实时快照，离线回退本地静态） ============
 const dynamicQuotes = ref(REALTIME_QUOTES)
@@ -113,10 +127,10 @@ const now = computed(() => marketTimestamp.value || new Date().toLocaleString('z
 const statCards = computed(() => {
   const s = dataStore.scopeSummary
   return [
-    { label: `总排放 FY${dataStore.currentYear} (tCO₂e)`, value: fmt(dataStore.yearTotal), color: 'text-green' },
-    { label: 'Scope 1 直接排放', value: fmt(s['Scope 1'] || 0), color: 'text-red' },
-    { label: 'Scope 2 间接排放', value: fmt(s['Scope 2'] || 0), color: 'text-amber' },
-    { label: 'Scope 3 价值链排放', value: fmt(s['Scope 3'] || 0), color: 'text-blue' },
+    { label: `总排放 FY${dataStore.currentYear} (tCO₂e)`, value: dataStore.yearTotal, color: 'text-green' },
+    { label: 'Scope 1 直接排放', value: s['Scope 1'] || 0, color: 'text-red' },
+    { label: 'Scope 2 间接排放', value: s['Scope 2'] || 0, color: 'text-amber' },
+    { label: 'Scope 3 价值链排放', value: s['Scope 3'] || 0, color: 'text-blue' },
   ]
 })
 
@@ -170,6 +184,7 @@ function init(el: HTMLElement | null): echarts.ECharts | null {
 function renderPrice(c: echarts.ECharts) {
   const ds = dynamicPriceSeries.value
   c.setOption({
+    animation: !reducedMotion.value,
     tooltip: { trigger: 'axis', ...tt },
     legend: { data: ['CEA收盘价', '复旦碳价指数预测中值', 'CCER均价', 'EUA(¥等值)'], bottom: 0, textStyle: { color: '#9db8ae' } },
     grid: { left: '3%', right: '4%', bottom: '14%', top: '12%', containLabel: true },
@@ -189,6 +204,7 @@ function renderPrice(c: echarts.ECharts) {
 function renderMarket(c: echarts.ECharts) {
   const ds = dynamicMarketShare.value
   c.setOption({
+    animation: !reducedMotion.value,
     tooltip: { trigger: 'item', formatter: '{b}: ¥{c} ({d}%)', ...tt },
     series: [{
       type: 'pie', radius: ['42%', '70%'], center: ['50%', '46%'],
@@ -203,6 +219,7 @@ function renderMarket(c: echarts.ECharts) {
 function renderGba3d(c: echarts.ECharts) {
   const cities = GBA_CITIES.map((x) => x.name)
   c.setOption({
+    animation: !reducedMotion.value,
     tooltip: {
       ...tt,
       formatter: (p: any) => {
@@ -233,7 +250,7 @@ function renderGba3d(c: echarts.ECharts) {
       barSize: 12,
       itemStyle: { opacity: 0.9 },
       emphasis: { itemStyle: { color: '#6ee7b7' } },
-      animationDurationUpdate: 1000, animation: true,
+      animationDurationUpdate: 1000, animation: !reducedMotion.value,
     }],
   })
   c.off('click')
@@ -251,6 +268,7 @@ function renderTop8(c: echarts.ECharts) {
   const top8 = Object.entries(bySrc).sort((a, b) => b[1] - a[1]).slice(0, 8)
   const colors = ['#10b981', '#0ea5e9', '#f59e0b', '#8b5cf6', '#ef4444', '#14b8a6', '#38bdf8', '#a3e635']
   c.setOption({
+    animation: !reducedMotion.value,
     tooltip: { trigger: 'item', formatter: '{b}: {c} tCO₂e ({d}%)', ...tt },
     legend: { orient: 'vertical', right: 6, top: 'center', textStyle: { color: '#9db8ae', fontSize: 11 } },
     series: [{
@@ -266,6 +284,7 @@ function renderTop8(c: echarts.ECharts) {
 function renderScope(c: echarts.ECharts) {
   const s = dataStore.scopeSummary
   c.setOption({
+    animation: !reducedMotion.value,
     tooltip: { trigger: 'item', ...tt },
     series: [{
       type: 'pie', radius: ['50%', '75%'],
@@ -290,6 +309,7 @@ function renderTrend(c: echarts.ECharts) {
     s1.push(g('Scope 1')); s2.push(g('Scope 2')); s3.push(g('Scope 3'))
   })
   c.setOption({
+    animation: !reducedMotion.value,
     tooltip: { trigger: 'axis', ...tt },
     legend: { data: ['Scope1', 'Scope2', 'Scope3'], bottom: 0, textStyle: { color: '#9db8ae' } },
     grid: { left: '3%', right: '4%', bottom: '14%', top: '14%', containLabel: true },
@@ -315,19 +335,29 @@ function renderAll() {
 function resizeAll() { charts.forEach((c) => c.resize()) }
 useElementResize([priceEl, marketEl, gba3dEl, top8El, scopeEl, trendEl], resizeAll)
 
+watch(reducedMotion, (reduced) => {
+  charts.forEach((chart) => chart.setOption({ animation: !reduced }))
+})
+
 onMounted(async () => {
   // 优先拉取后端行情快照（含时间戳），离线自动降级本地静态
-  if (backendOnline.value) {
-    const r = await bizApi.getMarketQuotes()
-    if (r.code === 200 && r.data) {
-      const d: any = r.data
-      if (d.quotes) dynamicQuotes.value = d.quotes
-      if (d.priceSeries) dynamicPriceSeries.value = d.priceSeries
-      if (d.marketShare) dynamicMarketShare.value = d.marketShare
-      if (d.timestamp) marketTimestamp.value = d.timestamp
+  try {
+    if (backendOnline.value) {
+      const r = await bizApi.getMarketQuotes()
+      if (r.code === 200 && r.data) {
+        const d: any = r.data
+        if (d.quotes) dynamicQuotes.value = d.quotes
+        if (d.priceSeries) dynamicPriceSeries.value = d.priceSeries
+        if (d.marketShare) dynamicMarketShare.value = d.marketShare
+        if (d.timestamp) marketTimestamp.value = d.timestamp
+      }
     }
+  } catch {
+    // 行情接口失败时继续使用已标注来源的本地静态快照。
   }
   await dataStore.loadSampleData()
+  chartsLoading.value = false
+  await nextTick()
   renderAll()
 })
 onBeforeUnmount(() => {
@@ -344,6 +374,7 @@ onBeforeUnmount(() => {
   display: flex; gap: 34px; width: max-content;
   animation: marquee linear infinite;
 }
+.ticker-track.paused { animation-play-state: paused; }
 .ticker-item { display: flex; align-items: center; gap: 8px; font-size: 13px; white-space: nowrap; }
 .q-name { color: var(--c-text-2); }
 .q-price { color: var(--c-green); font-weight: 700; font-size: 16px; }
@@ -356,6 +387,17 @@ onBeforeUnmount(() => {
   display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--c-text-3);
   background: linear-gradient(90deg, transparent, #0d1714 30%); padding-left: 30px;
 }
+.ticker-control {
+  min-width: 44px; min-height: 28px; padding: 0 8px; border: 1px solid var(--c-border-2);
+  border-radius: var(--radius-sm); color: var(--c-text-2); background: var(--c-surface-2);
+  font: inherit; cursor: pointer; transition: color var(--dur-micro) var(--ease-apple), border-color var(--dur-micro) var(--ease-apple), background-color var(--dur-micro) var(--ease-apple);
+}
+.ticker-control:hover:not(:disabled) { color: var(--c-text); border-color: var(--c-green); background: var(--c-green-soft); }
+.ticker-control:disabled { cursor: default; opacity: .72; }
+.kpi-card { animation: kpiEnter 420ms var(--ease-apple) both; animation-delay: calc(var(--kpi-index) * 45ms); }
+@keyframes kpiEnter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+@media (hover: hover) { .ticker-card:hover .ticker-track { animation-play-state: paused; } }
+@media (prefers-reduced-motion: reduce) { .ticker-track { animation: none; transform: none; }.kpi-card { animation: none; } }
 
 .hint-item {
   padding: 9px 12px; border-radius: 8px; font-size: 12.5px; line-height: 1.7; color: var(--c-text-2);

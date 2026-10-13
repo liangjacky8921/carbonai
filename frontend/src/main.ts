@@ -23,8 +23,12 @@ app.use(router)
 app.use(ElementPlus, { locale: zhCn })
 app.component('ToastHost', ToastHost)
 
-// 挂载前先探测后端：Vue 子组件 onMounted 先于父组件触发，
-// 若放在 MainLayout 里探测，各视图读到的在线标志可能是过期的 false
-probeBackend()
+// 公开首页不依赖业务 API；首次进入业务路由时再执行一次后端探测。
+let backendProbeStarted = false
+router.afterEach((to) => {
+  if (to.name === 'home' || backendProbeStarted) return
+  backendProbeStarted = true
+  void probeBackend()
+})
 
 app.mount('#app')

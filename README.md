@@ -71,8 +71,8 @@ carbonai/
 
 ## 部署
 
-- **Vercel（carbontool.cn 当前托管）**：项目 Root Directory 已设为 `frontend/`、框架 Vite（零配置自动构建），`frontend/vercel.json` 提供 SPA history 路由回退，推送 main 分支即自动部署
-- **云服务器（推荐，7×24）**：[docs/部署指南-云服务器.md](docs/部署指南-云服务器.md) — 阿里云/腾讯云学生机 + Nginx + systemd，约 ¥10/月
+- **当前生产环境**：`carbontool.cn` 由阿里云 ECS 上的 Nginx 提供 Vue 静态页面并反向代理同机 FastAPI；详见 [docs/部署指南-云服务器.md](docs/部署指南-云服务器.md)
+- **Vercel（可选前端托管）**：项目 Root Directory 设为 `frontend/`、框架选择 Vite；`frontend/vercel.json` 提供 SPA history 路由回退
 - **免费过渡**：[docs/部署指南-Render免费版.md](docs/部署指南-Render免费版.md) — Render 免费版一键部署
 
 

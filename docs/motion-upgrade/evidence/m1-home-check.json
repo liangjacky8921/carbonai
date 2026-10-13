@@ -1,0 +1,54 @@
+{
+  "environment": {
+    "date": "2026-10-13",
+    "timezone": "Asia/Shanghai",
+    "browser": "154.0.8037.98",
+    "server": "Vite production preview on loopback"
+  },
+  "viewports": [
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "title": "CarbonAI · 时空智能碳管理平台",
+      "heading": "看清排放。理解空间。让决策有据。",
+      "conceptTextPresent": false
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "title": "CarbonAI · 时空智能碳管理平台",
+      "heading": "看清排放。理解空间。让决策有据。",
+      "conceptTextPresent": false
+    },
+    {
+      "width": 375,
+      "scrollWidth": 375,
+      "title": "CarbonAI · 时空智能碳管理平台",
+      "heading": "看清排放。理解空间。让决策有据。",
+      "conceptTextPresent": false
+    }
+  ],
+  "checks": {
+    "homeHasNoApiProbe": true,
+    "pauseControl": true,
+    "reducedMotion": true,
+    "skipLink": true,
+    "dashboardRoute": true,
+    "gisDirectRoute": true,
+    "returnHome": true
+  },
+  "homeErrors": [],
+  "apiRequests": [
+    "http://127.0.0.1:4173/api/health",
+    "http://127.0.0.1:4173/api/health"
+  ],
+  "limitations": [
+    "Local single-browser regression only.",
+    "Business backend intentionally not started.",
+    "Full GIS and chart interaction regression remains in M5."
+  ],
+  "businessPreviewErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)",
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}

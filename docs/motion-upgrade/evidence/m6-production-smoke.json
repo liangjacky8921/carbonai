@@ -1,0 +1,60 @@
+{
+  "checkedAt": "2026-10-13T05:26:24.577Z",
+  "base": "https://www.carbontool.cn",
+  "checks": [
+    {
+      "name": "生产首页与新空间光场",
+      "passed": true,
+      "h1": "看清排放。\n理解空间。\n让决策有据。",
+      "sections": 6,
+      "width": [
+        1440,
+        1440
+      ],
+      "before": {
+        "x": "72%",
+        "grids": 1
+      },
+      "after": {
+        "x": "72.22%",
+        "running": "true"
+      }
+    },
+    {
+      "name": "生产首页动效控制",
+      "passed": true,
+      "running": "false"
+    },
+    {
+      "name": "生产 Dashboard 与 ECS API",
+      "passed": true,
+      "healthStatus": 200,
+      "service": "carbonai-api",
+      "kpis": 4,
+      "canvases": 6
+    },
+    {
+      "name": "生产 GIS 路由",
+      "passed": true,
+      "map": true,
+      "zoom": true,
+      "tiles": 0
+    },
+    {
+      "name": "生产减少动画降级",
+      "passed": true,
+      "running": "false",
+      "ribbon": "none",
+      "grid": "none"
+    }
+  ],
+  "errors": [],
+  "failedResponses": [],
+  "browser": "154.0.8037.98",
+  "summary": {
+    "passed": 5,
+    "failed": 0,
+    "errors": 0,
+    "failedResponses": 0
+  }
+}

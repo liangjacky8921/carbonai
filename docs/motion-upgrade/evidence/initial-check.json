@@ -1,0 +1,89 @@
+{
+  "environment": {
+    "date": "2026-10-13",
+    "timezone": "Asia/Shanghai",
+    "browser": "154.0.8037.98",
+    "server": "Vite production preview on loopback",
+    "throttling": "none",
+    "runs": 1
+  },
+  "viewports": [
+    {
+      "width": 1440,
+      "scrollWidth": 1440,
+      "lcp": 344,
+      "cls": 0,
+      "events": [],
+      "longTasks": [
+        75
+      ],
+      "canvasCount": 0
+    },
+    {
+      "width": 1280,
+      "scrollWidth": 1280,
+      "lcp": 36,
+      "cls": 0,
+      "events": [],
+      "longTasks": [],
+      "canvasCount": 0
+    },
+    {
+      "width": 375,
+      "scrollWidth": 375,
+      "lcp": 68,
+      "cls": 0,
+      "events": [],
+      "longTasks": [],
+      "canvasCount": 0
+    }
+  ],
+  "checks": {
+    "pause": true,
+    "reducedMotion": true,
+    "syntheticVisibility": true,
+    "offscreenPause": true,
+    "skipLink": true,
+    "anchorNavigation": true,
+    "noWebGL": true,
+    "platformLink": true
+  },
+  "errors": [],
+  "apiRequests": [],
+  "limitations": [
+    "Single-run local lab measurements, not production field data.",
+    "INP not measured; click event timing is diagnostic only.",
+    "CPU reported as Chromium TaskDuration delta, not operating-system utilization.",
+    "Heap reported as JS heap only; total browser/GPU memory not measured.",
+    "Frame cadence uses requestAnimationFrame, not GPU presentation FPS.",
+    "Visibility branch tested with a synthetic visibilitychange; real background-tab scheduling not measured.",
+    "Full GIS/chart business regression deferred to M5."
+  ],
+  "performance": {
+    "sampleSeconds": 3,
+    "frameSamples": 432,
+    "averageIntervalMs": 6.946759259314449,
+    "intervalsAbove34ms": 0,
+    "maxIntervalMs": 17.399999999999636,
+    "taskDurationSeconds": 0.178007,
+    "jsHeapBytes": 6169436,
+    "inp": "not measured"
+  },
+  "clickEventDiagnostics": [
+    {
+      "name": "keydown",
+      "duration": 24
+    },
+    {
+      "name": "keydown",
+      "duration": 16
+    },
+    {
+      "name": "click",
+      "duration": 16
+    }
+  ],
+  "businessPreviewErrors": [
+    "Failed to load resource: the server responded with a status of 404 (Not Found)"
+  ]
+}
