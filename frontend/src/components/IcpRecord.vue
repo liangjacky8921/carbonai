@@ -6,6 +6,7 @@
       target="_blank"
       rel="noopener noreferrer"
     >{{ icp }}</a>
+    <span class="author-credit" aria-label="作者署名">Lam Jacky梁家深</span>
   </div>
 </template>
 
@@ -32,5 +33,16 @@ const icp = '粤ICP备2026140571号'
 }
 .icp-link:hover {
   color: var(--c-text-2, #b8c0cc);
+}
+.author-credit {
+  display: inline-flex;
+  align-items: center;
+  color: var(--c-text-3, #8a94a6);
+  white-space: nowrap;
+}
+.author-credit::before {
+  margin-right: 12px;
+  color: color-mix(in srgb, currentColor 52%, transparent);
+  content: '·';
 }
 </style>
