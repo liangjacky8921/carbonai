@@ -1,0 +1,12 @@
+{
+  "desktop": {
+    "hash": "#provenance",
+    "activeId": "provenance",
+    "mobileMenuOpen": false
+  },
+  "mobile": {
+    "hash": "#product",
+    "activeId": "product",
+    "mobileMenuOpen": false
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "baseUrl": "http://127.0.0.1:4173/",
+  "capturedAt": "2026-10-14T09:02:54.929Z",
+  "viewports": {
+    "desktop-1440": {
+      "actualSections": [
+        "overview",
+        "capabilities",
+        "provenance",
+        "spatial",
+        "product",
+        "enter"
+      ],
+      "expectedOrder": true,
+      "progressLinks": 6,
+      "legacyAnchors": {
+        "applications": true,
+        "roles": true
+      },
+      "imageState": [
+        {
+          "alt": "CarbonAI GIS 工作台当前界面截图，页面标注为示例数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "alt": "CarbonAI 数据大屏当前界面截图，页面标注为演示数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "canvasCount": 1,
+      "overflow": false,
+      "pageHeight": 5999,
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    "desktop-1280": {
+      "actualSections": [
+        "overview",
+        "capabilities",
+        "provenance",
+        "spatial",
+        "product",
+        "enter"
+      ],
+      "expectedOrder": true,
+      "progressLinks": 6,
+      "legacyAnchors": {
+        "applications": true,
+        "roles": true
+      },
+      "imageState": [
+        {
+          "alt": "CarbonAI GIS 工作台当前界面截图，页面标注为示例数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "alt": "CarbonAI 数据大屏当前界面截图，页面标注为演示数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "canvasCount": 1,
+      "overflow": false,
+      "pageHeight": 5882,
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    "tablet-768": {
+      "actualSections": [
+        "overview",
+        "capabilities",
+        "provenance",
+        "spatial",
+        "product",
+        "enter"
+      ],
+      "expectedOrder": true,
+      "progressLinks": 6,
+      "legacyAnchors": {
+        "applications": true,
+        "roles": true
+      },
+      "imageState": [
+        {
+          "alt": "CarbonAI GIS 工作台当前界面截图，页面标注为示例数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "alt": "CarbonAI 数据大屏当前界面截图，页面标注为演示数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "canvasCount": 1,
+      "overflow": false,
+      "pageHeight": 6870,
+      "consoleErrors": [],
+      "failedRequests": []
+    },
+    "mobile-390": {
+      "actualSections": [
+        "overview",
+        "capabilities",
+        "provenance",
+        "spatial",
+        "product",
+        "enter"
+      ],
+      "expectedOrder": true,
+      "progressLinks": 6,
+      "legacyAnchors": {
+        "applications": true,
+        "roles": true
+      },
+      "imageState": [
+        {
+          "alt": "CarbonAI GIS 工作台当前界面截图，页面标注为示例数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        },
+        {
+          "alt": "CarbonAI 数据大屏当前界面截图，页面标注为演示数据",
+          "loading": "lazy",
+          "width": 1440,
+          "height": 900
+        }
+      ],
+      "canvasCount": 0,
+      "overflow": false,
+      "pageHeight": 6947,
+      "consoleErrors": [],
+      "failedRequests": []
+    }
+  }
+}

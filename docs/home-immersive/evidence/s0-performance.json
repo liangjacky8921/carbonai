@@ -1,0 +1,43 @@
+{
+  "environment": "Local Vite preview, system Chrome, 1440×900, single cold browser context",
+  "navigation": {
+    "domContentLoaded": 335.3000000715256,
+    "load": 354.10000002384186,
+    "responseEnd": 137.20000004768372
+  },
+  "resources": {
+    "count": 11,
+    "transferSize": 692430,
+    "encodedBodySize": 689130,
+    "byType": {
+      "script": {
+        "count": 5,
+        "transferSize": 230648,
+        "encodedBodySize": 229148
+      },
+      "other": {
+        "count": 2,
+        "transferSize": 373696,
+        "encodedBodySize": 373096
+      },
+      "link": {
+        "count": 3,
+        "transferSize": 68826,
+        "encodedBodySize": 67926
+      },
+      "img": {
+        "count": 1,
+        "transferSize": 19260,
+        "encodedBodySize": 18960
+      }
+    }
+  },
+  "vitals": {
+    "lcp": 812,
+    "cls": 0,
+    "longTasks": [
+      222,
+      58
+    ]
+  }
+}

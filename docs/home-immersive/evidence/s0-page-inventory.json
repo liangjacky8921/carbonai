@@ -1,0 +1,188 @@
+{
+  "baseUrl": "http://127.0.0.1:4173/",
+  "capturedAt": "2026-10-14T05:59:53.847Z",
+  "viewports": {
+    "desktop-1440": {
+      "consoleErrors": [],
+      "failedRequests": [],
+      "sections": {
+        "overview": {
+          "heading": "看清排放。理解空间。让决策有据。",
+          "width": 1440,
+          "height": 720,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 4,
+          "links": 2,
+          "canvases": 1,
+          "svgs": 1
+        },
+        "capabilities": {
+          "heading": "从一项数据，到完整的碳管理视角。",
+          "width": 1240,
+          "height": 666,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 2,
+          "links": 3,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "spatial": {
+          "heading": "理解位置，才能看清关联。",
+          "width": 1376,
+          "height": 736,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "linear-gradient(110deg, rgb(13, 20, 18), rgb(18, 28, 23))",
+          "directChildren": 2,
+          "links": 1,
+          "canvases": 0,
+          "svgs": 1
+        },
+        "applications": {
+          "heading": "从排放清单，进入具体环境场景。",
+          "width": 1240,
+          "height": 822,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 2,
+          "links": 3,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "provenance": {
+          "heading": "让每一步核算，都有清楚的来路。",
+          "width": 1240,
+          "height": 762,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 4,
+          "links": 0,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "roles": {
+          "heading": "让管理、核算与空间分析，在各自需要的尺度上工作。",
+          "width": 1240,
+          "height": 722,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 2,
+          "links": 0,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "enter": {
+          "heading": "从数据开始，建立可追溯的碳管理路径。",
+          "width": 1376,
+          "height": 560,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "linear-gradient(135deg, rgb(23, 35, 29), rgb(16, 23, 21) 64%)",
+          "directChildren": 4,
+          "links": 2,
+          "canvases": 0,
+          "svgs": 0
+        }
+      },
+      "page": {
+        "scrollWidth": 1440,
+        "clientWidth": 1440,
+        "scrollHeight": 5257,
+        "canvasCount": 1,
+        "sectionCount": 7,
+        "reducedMotionSupport": "(prefers-reduced-motion: reduce)"
+      }
+    },
+    "mobile-390": {
+      "consoleErrors": [],
+      "failedRequests": [],
+      "sections": {
+        "overview": {
+          "heading": "看清排放。理解空间。让决策有据。",
+          "width": 390,
+          "height": 780,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 4,
+          "links": 2,
+          "canvases": 0,
+          "svgs": 1
+        },
+        "capabilities": {
+          "heading": "从一项数据，到完整的碳管理视角。",
+          "width": 390,
+          "height": 865,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 2,
+          "links": 3,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "spatial": {
+          "heading": "理解位置，才能看清关联。",
+          "width": 390,
+          "height": 763,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "linear-gradient(110deg, rgb(13, 20, 18), rgb(18, 28, 23))",
+          "directChildren": 2,
+          "links": 1,
+          "canvases": 0,
+          "svgs": 1
+        },
+        "applications": {
+          "heading": "从排放清单，进入具体环境场景。",
+          "width": 390,
+          "height": 855,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 2,
+          "links": 3,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "provenance": {
+          "heading": "让每一步核算，都有清楚的来路。",
+          "width": 390,
+          "height": 995,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 4,
+          "links": 0,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "roles": {
+          "heading": "让管理、核算与空间分析，在各自需要的尺度上工作。",
+          "width": 390,
+          "height": 903,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "none",
+          "directChildren": 2,
+          "links": 0,
+          "canvases": 0,
+          "svgs": 0
+        },
+        "enter": {
+          "heading": "从数据开始，建立可追溯的碳管理路径。",
+          "width": 350,
+          "height": 540,
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "backgroundImage": "linear-gradient(135deg, rgb(23, 35, 29), rgb(16, 23, 21) 64%)",
+          "directChildren": 4,
+          "links": 2,
+          "canvases": 0,
+          "svgs": 0
+        }
+      },
+      "page": {
+        "scrollWidth": 390,
+        "clientWidth": 390,
+        "scrollHeight": 5981,
+        "canvasCount": 0,
+        "sectionCount": 7,
+        "reducedMotionSupport": "(prefers-reduced-motion: reduce)"
+      }
+    }
+  }
+}

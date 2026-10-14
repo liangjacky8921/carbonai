@@ -1,0 +1,22 @@
+{
+  "baseUrl": "http://127.0.0.1:4173",
+  "capturedAt": "2026-10-14T06:17:16.875Z",
+  "captures": {
+    "dashboard": {
+      "title": "数据大屏 · CarbonAI V6.0 时空智能碳管理平台",
+      "url": "http://127.0.0.1:4173/dashboard",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "capturedViewport": "1440x900"
+    },
+    "gis": {
+      "title": "GIS碳源热力图 · CarbonAI V6.0 时空智能碳管理平台",
+      "url": "http://127.0.0.1:4173/gis",
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "capturedViewport": "1440x900"
+    }
+  }
+}

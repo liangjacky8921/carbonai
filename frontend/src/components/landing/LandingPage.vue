@@ -3,11 +3,10 @@ import { ref } from 'vue'
 import IcpRecord from '@/components/IcpRecord.vue'
 import { useLandingStory } from '@/composables/useLandingStory'
 import LandingCapabilities from './LandingCapabilities.vue'
-import LandingApplications from './LandingApplications.vue'
 import LandingClosing from './LandingClosing.vue'
 import LandingHero from './LandingHero.vue'
+import LandingProduct from './LandingProduct.vue'
 import LandingProvenance from './LandingProvenance.vue'
-import LandingRoles from './LandingRoles.vue'
 import LandingSpatial from './LandingSpatial.vue'
 import LandingStoryProgress from './LandingStoryProgress.vue'
 
@@ -15,12 +14,11 @@ const storyRoot = ref<HTMLElement | null>(null)
 const mobileMenu = ref<HTMLDetailsElement | null>(null)
 const storyItems = [
   { id: 'overview', index: '01', label: '首页' },
-  { id: 'capabilities', index: '02', label: '平台能力' },
-  { id: 'spatial', index: '03', label: '空间视角' },
-  { id: 'applications', index: '04', label: '环境场景' },
-  { id: 'provenance', index: '05', label: '核算路径' },
-  { id: 'roles', index: '06', label: '应用角色' },
-  { id: 'enter', index: '07', label: '进入平台' },
+  { id: 'capabilities', index: '02', label: '空间宣言' },
+  { id: 'provenance', index: '03', label: '数据路径' },
+  { id: 'spatial', index: '04', label: '空间视角' },
+  { id: 'product', index: '05', label: '产品界面' },
+  { id: 'enter', index: '06', label: '进入平台' },
 ] as const
 const { activeSection, enhanced } = useLandingStory(storyRoot)
 
@@ -41,19 +39,19 @@ function closeMobileMenu() {
         CarbonAI
       </RouterLink>
       <nav class="navigation" aria-label="首页导航">
-        <a href="#capabilities">平台能力</a>
+        <a href="#capabilities">空间宣言</a>
+        <a href="#provenance">数据路径</a>
         <a href="#spatial">空间视角</a>
-        <a href="#applications">环境场景</a>
-        <a href="#provenance">核算路径</a>
+        <a href="#product">产品界面</a>
       </nav>
       <RouterLink class="header-login" :to="{ name: 'login' }">账户登录</RouterLink>
       <details ref="mobileMenu" class="mobile-nav" @keydown.esc="closeMobileMenu">
         <summary aria-label="打开首页目录">目录</summary>
         <nav aria-label="移动端首页导航">
-          <a href="#capabilities" @click="closeMobileMenu">平台能力</a>
+          <a href="#capabilities" @click="closeMobileMenu">空间宣言</a>
+          <a href="#provenance" @click="closeMobileMenu">数据路径</a>
           <a href="#spatial" @click="closeMobileMenu">空间视角</a>
-          <a href="#applications" @click="closeMobileMenu">环境场景</a>
-          <a href="#provenance" @click="closeMobileMenu">核算路径</a>
+          <a href="#product" @click="closeMobileMenu">产品界面</a>
           <RouterLink :to="{ name: 'login' }" @click="closeMobileMenu">账户登录</RouterLink>
         </nav>
       </details>
@@ -65,10 +63,9 @@ function closeMobileMenu() {
     <main id="landing-main" tabindex="-1">
       <LandingHero />
       <LandingCapabilities />
-      <LandingSpatial />
-      <LandingApplications />
       <LandingProvenance />
-      <LandingRoles />
+      <LandingSpatial />
+      <LandingProduct />
       <LandingClosing />
     </main>
 
