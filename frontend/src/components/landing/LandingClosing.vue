@@ -43,10 +43,10 @@ h2 { position: relative; z-index: 1; max-width: 790px; margin: 0; font-size: cla
 .orbit--middle { stroke: #54735c; opacity: .72; transition-delay: 120ms; }
 .orbit--inner { stroke: #769a7e; opacity: .54; transition-delay: 220ms; }
 .orbit-axis { fill: none; stroke: rgb(98 137 108 / 16%); stroke-width: 1; vector-effect: non-scaling-stroke; }
-:global(.story-enhanced) .closing:not(.is-story-visible) .orbit { opacity: 0; stroke-dashoffset: 150; }
+:global(.story-enhanced .closing:not(.is-story-visible) .orbit) { opacity: 0; stroke-dashoffset: 150; }
 .orbit-dot { position: absolute; width: 6px; height: 6px; border-radius: 50%; background: #b6d9bd; box-shadow: 0 0 18px rgb(112 202 135 / 72%); offset-path: ellipse(43.5% 36% at 50% 50%); offset-rotate: 0deg; animation: orbit-travel 24s linear infinite; animation-play-state: running; }
 .orbit-dot--two { width: 4px; height: 4px; opacity: .72; offset-path: ellipse(34% 27.5% at 50% 50%); animation-duration: 31s; animation-direction: reverse; }
-:global(.story-enhanced) .closing:not(.is-story-visible) .orbit-dot { animation-play-state: paused; opacity: 0; }
+:global(.story-enhanced .closing:not(.is-story-visible) .orbit-dot) { animation-play-state: paused; opacity: 0; }
 @keyframes orbit-travel { to { offset-distance: 100%; } }
 @media (max-width: 1440px) { .closing { margin-right: 32px; margin-left: 32px; } }
 @media (max-width: 760px) { .closing { min-height: 650px; margin: 0 20px 48px; padding: 72px 24px 280px; }.closing-copy { align-self: start; }.actions { flex-direction: column; align-items: flex-start; gap: 16px; }.closing-orbit { top: auto; right: 50%; bottom: 18px; width: calc(100% - 32px); height: 235px; opacity: .5; transform: translateX(50%); }.orbit-dot { width: 5px; height: 5px; } }

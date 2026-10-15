@@ -1,0 +1,300 @@
+{
+  "url": "http://127.0.0.1:4173/",
+  "browser": "155.0.8059.40",
+  "cases": {
+    "pc-1440": {
+      "initial": {
+        "title": "CarbonAI · 时空智能碳管理平台",
+        "rootOpacity": "1",
+        "heroVisible": true,
+        "navigation": true,
+        "cta": true,
+        "sections": [
+          {
+            "id": "overview",
+            "exists": true,
+            "height": 720
+          },
+          {
+            "id": "capabilities",
+            "exists": true,
+            "height": 760
+          },
+          {
+            "id": "provenance",
+            "exists": true,
+            "height": 754.21875
+          },
+          {
+            "id": "spatial",
+            "exists": true,
+            "height": 1340.296875
+          },
+          {
+            "id": "product",
+            "exists": true,
+            "height": 2056.859375
+          },
+          {
+            "id": "enter",
+            "exists": true,
+            "height": 640.296875
+          }
+        ],
+        "globe": {
+          "ready": true,
+          "static": false,
+          "canvas": 1
+        },
+        "horizontalOverflow": false
+      },
+      "sectionScroll": [
+        {
+          "id": "overview",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "capabilities",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "provenance",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "spatial",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "product",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "enter",
+          "inViewport": true,
+          "visible": true
+        }
+      ],
+      "anchor": {
+        "hash": "#capabilities",
+        "targetInViewport": true
+      },
+      "dashboard": {
+        "url": "http://127.0.0.1:4173/dashboard",
+        "bodyTextLength": 871
+      },
+      "refresh": {
+        "rootOpacity": "1",
+        "titleVisible": true
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failed": [],
+      "screenshot": "p2-pc-1440.png"
+    },
+    "pc-1280": {
+      "initial": {
+        "title": "CarbonAI · 时空智能碳管理平台",
+        "rootOpacity": "1",
+        "heroVisible": true,
+        "navigation": true,
+        "cta": true,
+        "sections": [
+          {
+            "id": "overview",
+            "exists": true,
+            "height": 720
+          },
+          {
+            "id": "capabilities",
+            "exists": true,
+            "height": 760
+          },
+          {
+            "id": "provenance",
+            "exists": true,
+            "height": 655.875
+          },
+          {
+            "id": "spatial",
+            "exists": true,
+            "height": 1173.984375
+          },
+          {
+            "id": "product",
+            "exists": true,
+            "height": 1994.484375
+          },
+          {
+            "id": "enter",
+            "exists": true,
+            "height": 620.734375
+          }
+        ],
+        "globe": {
+          "ready": true,
+          "static": false,
+          "canvas": 1
+        },
+        "horizontalOverflow": false
+      },
+      "sectionScroll": [
+        {
+          "id": "overview",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "capabilities",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "provenance",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "spatial",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "product",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "enter",
+          "inViewport": true,
+          "visible": true
+        }
+      ],
+      "anchor": {
+        "hash": "#capabilities",
+        "targetInViewport": true
+      },
+      "dashboard": {
+        "url": "http://127.0.0.1:4173/dashboard",
+        "bodyTextLength": 871
+      },
+      "refresh": {
+        "rootOpacity": "1",
+        "titleVisible": true
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failed": [],
+      "screenshot": "p2-pc-1280.png"
+    },
+    "mobile-sim-390": {
+      "initial": {
+        "title": "CarbonAI · 时空智能碳管理平台",
+        "rootOpacity": "1",
+        "heroVisible": true,
+        "navigation": true,
+        "cta": true,
+        "sections": [
+          {
+            "id": "overview",
+            "exists": true,
+            "height": 780
+          },
+          {
+            "id": "capabilities",
+            "exists": true,
+            "height": 819.484375
+          },
+          {
+            "id": "provenance",
+            "exists": true,
+            "height": 1262.8125
+          },
+          {
+            "id": "spatial",
+            "exists": true,
+            "height": 1132.484375
+          },
+          {
+            "id": "product",
+            "exists": true,
+            "height": 2401
+          },
+          {
+            "id": "enter",
+            "exists": true,
+            "height": 878.109375
+          }
+        ],
+        "globe": {
+          "ready": false,
+          "static": true,
+          "canvas": 0
+        },
+        "horizontalOverflow": false
+      },
+      "sectionScroll": [
+        {
+          "id": "overview",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "capabilities",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "provenance",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "spatial",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "product",
+          "inViewport": true,
+          "visible": true
+        },
+        {
+          "id": "enter",
+          "inViewport": true,
+          "visible": true
+        }
+      ],
+      "anchor": {
+        "hash": "#capabilities",
+        "targetInViewport": true
+      },
+      "dashboard": {
+        "url": "http://127.0.0.1:4173/dashboard",
+        "bodyTextLength": 715
+      },
+      "refresh": {
+        "rootOpacity": "1",
+        "titleVisible": true
+      },
+      "errors": [
+        "Failed to load resource: the server responded with a status of 404 (Not Found)"
+      ],
+      "failed": [],
+      "screenshot": "p2-mobile-sim-390.png"
+    }
+  },
+  "webglUnavailable": {
+    "static": true,
+    "canvas": 0,
+    "rootOpacity": "1",
+    "fallbackOpacity": "0.78"
+  }
+}
