@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
+    <div class="c-card p-4 asset-context" role="note"><strong>碳资产资料概览</strong><span>行情来源：{{ marketOrigin }}；快照时间与独立版本号未提供。组合比例、58,200 tCO₂ 配额和履约日历为内置演示，不代表当前账户资产或实时交易数据。</span></div>
     <!-- 行情卡片 -->
     <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-7 gap-3">
       <div v-for="q in dynamicQuotes" :key="q.key" class="c-card p-3.5 asset-card">
@@ -11,17 +12,18 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      <ChartCard title="碳资产组合结构" height="300" class="lg:col-span-5">
+      <ChartCard title="碳资产组合结构 · 内置演示" height="300" class="lg:col-span-5" sample source-note="前端内置演示组合">
         <div ref="portfolioEl" class="w-full h-full" />
       </ChartCard>
-      <ChartCard title="CEA 碳价走势 & 复旦碳价指数预测" height="300" class="lg:col-span-7">
+      <ChartCard title="CEA 碳价走势与预测参考" height="300" class="lg:col-span-7" :source-note="marketOrigin">
         <div ref="priceEl" class="w-full h-full" />
       </ChartCard>
     </div>
 
     <!-- 配额盈缺分析 -->
     <div class="c-card p-4">
-      <div class="c-card-title mb-3">配额盈缺分析（2026年度）</div>
+      <div class="c-card-title mb-3">配额盈缺示意（假设持有配额 58,200 tCO₂）</div>
+      <p class="asset-note">排放量取核算页当前年份 {{ dataStore.currentYear }} 的{{ dataStore.source.emissions === 'sample' ? '示例' : '用户上传' }}记录；假设配额与价格用于界面演示，不应作为履约判断。</p>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div class="stat-box"><div class="num text-blue">58,200</div><div class="lbl">配额持有 (tCO₂)</div></div>
         <div class="stat-box"><div class="num text-amber">{{ Math.round(dataStore.yearTotal).toLocaleString() }}</div><div class="lbl">预计排放 (tCO₂，取当前核算年度)</div></div>
@@ -32,7 +34,7 @@
 
     <!-- 履约日历 -->
     <div class="c-card p-4">
-      <div class="c-card-title mb-3">碳市场履约日历</div>
+      <div class="c-card-title mb-3">履约日期示意（需核对现行规则）</div>
       <el-timeline>
         <el-timeline-item v-for="e in calendar" :key="e.date" :timestamp="e.date" :type="e.done ? 'success' : 'warning'" :hollow="!e.done">
           {{ e.text }}
@@ -56,6 +58,7 @@ import { bizApi, backendOnline } from '@/api/client'
 const dataStore = useDataStore()
 const dynamicQuotes = ref(REALTIME_QUOTES)
 const dynamicPriceSeries = ref(PRICE_SERIES)
+const marketOrigin = ref('前端内置行情参考（非实时）')
 const portfolioEl = ref<HTMLElement | null>(null)
 const priceEl = ref<HTMLElement | null>(null)
 let c1: echarts.ECharts | null = null
@@ -78,12 +81,15 @@ const calendar = [
 onMounted(async () => {
   // 优先拉取后端行情快照，离线回退本地静态
   if (backendOnline.value) {
-    const r = await bizApi.getMarketQuotes()
-    if (r.code === 200 && r.data) {
-      const d: any = r.data
-      if (d.quotes) dynamicQuotes.value = d.quotes
-      if (d.priceSeries) dynamicPriceSeries.value = d.priceSeries
-    }
+    try {
+      const r = await bizApi.getMarketQuotes()
+      if (r.code === 200 && r.data) {
+        const d: any = r.data
+        if (d.quotes) dynamicQuotes.value = d.quotes
+        if (d.priceSeries) dynamicPriceSeries.value = d.priceSeries
+        marketOrigin.value = '现有后端行情接口（快照时间未提供）'
+      }
+    } catch { marketOrigin.value = '前端内置行情参考（后端请求失败）' }
   }
   await dataStore.loadSampleData()
   const tt = CHART_TOOLTIP
@@ -128,6 +134,10 @@ onBeforeUnmount(() => { c1?.dispose(); c2?.dispose() })
 </script>
 
 <style scoped>
+.asset-context { display: grid; gap: .35rem; }
+.asset-context strong { color: var(--c-text); }
+.asset-context span, .asset-note { color: var(--c-text-3); font-size: .76rem; line-height: 1.65; }
+.asset-note { margin-bottom: .75rem; }
 .asset-card { transition: transform 0.25s, box-shadow 0.25s; }
 .asset-card:hover { transform: translateY(-3px); box-shadow: 0 6px 28px rgba(16, 185, 129, 0.12); }
 </style>

@@ -29,7 +29,7 @@
         <nav class="nav-list">
           <template v-for="group in navGroups" :key="group.label">
             <div v-show="!collapsed" class="nav-group-label">{{ group.label }}</div>
-            <router-link v-for="item in group.items" :key="item.path" :to="item.path"
+            <router-link v-for="item in group.items" :key="item.path" :to="item.path" :aria-label="item.title"
               class="nav-item" :class="{ active: route.path === item.path }">
               <el-tooltip :content="item.title" placement="right" :disabled="!collapsed">
                 <el-icon :size="17"><component :is="item.icon" /></el-icon>
@@ -54,9 +54,12 @@
       <!-- 顶栏 -->
       <header class="topbar">
         <div class="flex items-center gap-3 min-w-0">
-          <h1 class="text-[15px] font-semibold truncate">{{ route.meta.title }}</h1>
+          <div class="min-w-0 topbar-location">
+            <nav class="topbar-breadcrumb" aria-label="面包屑"><router-link to="/dashboard">工作台</router-link><span aria-hidden="true">/</span><span>{{ currentGroup }}</span><span aria-hidden="true">/</span><span aria-current="page">{{ route.meta.title }}</span></nav>
+            <h1 class="text-[15px] font-semibold truncate">{{ route.meta.title }}</h1>
+          </div>
           <span class="conn-badge" :class="backendOnline ? 'online' : 'offline'" role="status">
-            <span class="conn-wide">{{ backendOnline ? '后端已连接' : '离线降级（示例数据）' }}</span>
+            <span class="conn-wide">{{ backendOnline ? '后端已连接' : '后端离线 · 本地模式' }}</span>
             <span class="conn-short">{{ backendOnline ? '在线' : '离线' }}</span>
           </span>
         </div>
@@ -172,6 +175,7 @@ const navGroups = [
 ]
 
 const flatNav = computed(() => navGroups.flatMap((g) => g.items))
+const currentGroup = computed(() => navGroups.find((g) => g.items.some((item) => item.path === route.path))?.label || '工作台')
 
 function goSearch(path: string) {
   if (path) router.push(path)
@@ -201,7 +205,7 @@ async function onToggleSample() {
 onMounted(() => {
   // 后端探测已前移到 main.ts（挂载前执行），这里只做日志与示例数据加载
   if (!backendOnline.value) {
-    console.info('[CarbonAI] 后端未连接，进入离线降级模式（示例数据）')
+    console.info('[CarbonAI] 后端未连接，使用可用的本地数据')
   }
   dataStore.loadSampleData()
 })
@@ -263,6 +267,11 @@ onMounted(() => {
 .conn-badge {
   font-size: 11px; padding: 3px 10px; border-radius: 999px; font-weight: 500;
 }
+.topbar-location { display: grid; gap: 1px; }
+.topbar-breadcrumb { display: flex; align-items: center; gap: 5px; max-width: 50vw; overflow: hidden; white-space: nowrap; color: var(--c-text-3); font-size: 10px; }
+.topbar-breadcrumb a { color: inherit; text-decoration: none; }
+.topbar-breadcrumb a:hover { color: var(--c-green); }
+.topbar-breadcrumb [aria-current="page"] { overflow: hidden; text-overflow: ellipsis; }
 .conn-badge.online { background: var(--c-green-soft); color: var(--c-green); }
 .conn-badge.offline { background: rgba(245, 158, 11, 0.1); color: var(--c-amber); }
 .conn-short { display: none; }
@@ -287,7 +296,7 @@ onMounted(() => {
 }
 @media (max-width: 640px) {
   .app-shell { min-height: 100dvh; }
-  .sidebar, .sidebar.collapsed { width: 56px; }
+  .sidebar, .sidebar.collapsed { width: 56px; min-width: 0; }
   .logo-row { padding: 12px 10px; }
   .sidebar.collapsed .nav-item, .nav-item { margin-inline: 8px; }
   .topbar {

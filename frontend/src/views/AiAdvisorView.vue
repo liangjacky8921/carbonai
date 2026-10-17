@@ -4,8 +4,10 @@
       <div class="c-card-title py-3">
         AI 碳管理顾问
         <el-tag size="small" type="success" effect="plain" style="margin-left: 8px">登录后可用</el-tag>
-        <span class="ml-auto text-[11px] text-[var(--c-text-3)]">{{ backendOnline ? '🛡️ 服务器安全代理 · 密钥不出服务器' : '本地知识库模式' }}</span>
+        <span class="ml-auto text-[11px] text-[var(--c-text-3)]">{{ backendOnline ? '服务器问答接口' : '本地知识库模式' }}</span>
       </div>
+      <p class="advisor-note">当前回答来源：{{ backendOnline ? '现有后端接口，失败时回退本地知识库' : '前端内置知识库' }}。本地资料没有独立更新时间或版本号；法规、市场行情及核算结论请以原始资料复核。</p>
+      <p v-if="replyError" class="advisor-error" role="alert">{{ replyError }}</p>
 
       <div class="flex-1 min-h-0 overflow-auto px-4 py-3 space-y-4" ref="chatBox">
         <div class="text-center py-8">
@@ -23,7 +25,7 @@
         <div v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">
           <div class="bubble">{{ m.content }}</div>
         </div>
-        <div v-if="thinking" class="msg assistant">
+        <div v-if="thinking" class="msg assistant" role="status" aria-label="正在生成回答">
           <div class="bubble typing"><span /><span /><span /></div>
         </div>
       </div>
@@ -50,6 +52,7 @@ const toast = useToast()
 const dataStore = useDataStore()
 const input = ref('')
 const thinking = ref(false)
+const replyError = ref('')
 const chatBox = ref<HTMLElement | null>(null)
 const messages = ref<{ role: 'user' | 'assistant'; content: string }[]>([])
 
@@ -90,13 +93,19 @@ async function send(q?: string) {
   input.value = ''
   messages.value.push({ role: 'user', content: text })
   thinking.value = true
+  replyError.value = ''
   await nextTick()
   chatBox.value?.scrollTo({ top: chatBox.value.scrollHeight, behavior: 'smooth' })
 
   let answer = ''
   if (backendOnline.value) {
-    const r = await bizApi.chat(text, messages.value.slice(-8))
-    answer = r.code === 200 ? String(r.data) : `后端暂不可用：${r.message}\n\n已自动回退到本地碳管理知识库。`
+    try {
+      const r = await bizApi.chat(text, messages.value.slice(-8))
+      if (r.code === 200 && r.data != null) answer = String(r.data)
+      else replyError.value = '后端问答暂不可用，已切换到本地知识库。'
+    } catch {
+      replyError.value = '后端问答请求失败，已切换到本地知识库。'
+    }
   }
   if (!answer) {
     await new Promise((res) => setTimeout(res, 700))
@@ -118,6 +127,8 @@ async function send(q?: string) {
 </script>
 
 <style scoped>
+.advisor-note { padding: .6rem 1rem; color: var(--c-text-3); font-size: .75rem; line-height: 1.6; border-bottom: 1px solid var(--c-border); }
+.advisor-error { padding: .45rem 1rem; color: var(--c-amber); font-size: .75rem; }
 .msg { display: flex; }
 .msg.user { justify-content: flex-end; }
 .bubble {

@@ -131,6 +131,16 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* 内部工作台沿用大厅的石墨面板层级；公开首页保留独立视觉。 */
+.app-shell {
+  --c-surface: #0e1714;
+  --c-surface-2: #16231d;
+  --c-border: #2a3e33;
+  --c-border-2: #3b5747;
+  --c-text-3: #8aa796;
+  --c-accent: #6fac83;
+}
+
 /* 标题：Apple 字重阶梯 + 负字距（SF Pro/PingFang 同源，Windows 回退微软雅黑） */
 h1, h2, h3, .c-card-title {
   font-family: var(--font-head);
@@ -155,6 +165,16 @@ h1, h2, h3, .c-card-title {
   border-color: var(--c-border-2);
   box-shadow: var(--shadow-card);
   transform: translateY(-1px);
+}
+.app-shell .c-card {
+  background: linear-gradient(155deg, #121d19, #0e1714 72%);
+  border-color: var(--c-border);
+  box-shadow: inset 0 1px rgba(194, 236, 207, 0.035);
+}
+.app-shell .c-card:hover {
+  border-color: var(--c-border-2);
+  box-shadow: inset 0 1px rgba(194, 236, 207, 0.04);
+  transform: none;
 }
 
 /* 按钮按压：克制的学术交互（少 bounce，精确按下） */
@@ -184,6 +204,12 @@ h1, h2, h3, .c-card-title {
   transition: border-color var(--dur-micro) var(--ease-apple), box-shadow var(--dur-micro) var(--ease-apple), transform var(--dur-micro) var(--ease-apple);
 }
 .stat-box:hover { border-color: var(--c-border-2); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.07); transform: translateY(-1px); }
+.app-shell .stat-box {
+  background: linear-gradient(155deg, #17231e, #101a16 76%);
+  border-color: #304439;
+  box-shadow: inset 0 1px rgba(217, 245, 225, 0.04);
+}
+.app-shell .stat-box:hover { border-color: #466551; box-shadow: inset 0 1px rgba(217, 245, 225, 0.04); transform: none; }
 .stat-box .num { font-size: 24px; font-weight: 700; line-height: 1.2; }
 .stat-box .lbl { font-size: 12px; color: var(--c-text-3); margin-top: 4px; letter-spacing: -0.011em; }
 .text-green { color: var(--c-green); }
@@ -281,6 +307,8 @@ h1, h2, h3, .c-card-title {
 .dark-table td { padding: 8px 10px; border-bottom: 1px solid var(--c-border-light, #14231d); color: var(--c-text-2); }
 .dark-table tr:hover td { background: rgba(16, 185, 129, 0.04); color: var(--c-text); }
 .dark-table tr.total-row td { color: var(--c-green); font-weight: 700; background: rgba(16, 185, 129, 0.06); }
+.app-shell .dark-table th { background: #17251e; color: #b7ccbd; }
+.app-shell .dark-table td { border-bottom-color: #294035; }
 
 /* ECharts 数据标签继承学术等宽（全局覆盖） */
 text, .echarts-tooltip { font-family: var(--font-mono); }
@@ -301,6 +329,11 @@ input, textarea { caret-color: var(--c-green); }
 .el-input__wrapper:hover,
 .el-select__wrapper:hover,
 .el-textarea__inner:hover { box-shadow: 0 0 0 1px var(--c-border-2) inset; }
+.app-shell .el-input__wrapper:focus-within,
+.app-shell .el-select__wrapper:focus-within,
+.app-shell .el-textarea__inner:focus-visible {
+  box-shadow: 0 0 0 1px var(--c-green) inset, 0 0 0 2px rgba(16, 185, 129, 0.22);
+}
 .el-dialog,
 .el-drawer,
 .el-message-box,

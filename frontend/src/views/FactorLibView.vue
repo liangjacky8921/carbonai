@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
+    <div class="c-card p-4 factor-context"><strong>排放因子资料</strong><p>当前来源：{{ factorOrigin }}。表内“年份”为资料年份，并非独立版本号；因子授权、适用边界与核查适用性需逐项核实。</p></div>
     <!-- 统计与筛选 -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <div class="stat-box"><div class="num text-green">{{ filtered.length }}</div><div class="lbl">收录因子总数（当前筛选）</div></div>
@@ -16,14 +17,15 @@
         <el-option v-for="r in regionOptions" :key="r" :label="r" :value="r" />
       </el-select>
       <el-input v-model="keyword" placeholder="搜索因子名称…" clearable size="small" style="width: 200px" :prefix-icon="Search" aria-label="搜索因子名称" />
-      <el-button size="small" type="primary" plain @click="exportCsv">导出因子表(含溯源)</el-button>
+      <el-button size="small" type="primary" plain :disabled="!filtered.length" @click="exportCsv">导出当前因子表</el-button>
     </div>
 
     <!-- 因子库表格 -->
     <div class="c-card">
-      <div class="c-card-title">排放因子数据库（可溯源 · 满足核查机构 DQR 要求）</div>
+      <div class="c-card-title">排放因子资料（来源与资料年份见明细）</div>
       <div class="p-4 max-h-[460px] overflow-auto">
-        <table class="dark-table">
+        <div v-if="!filtered.length" class="factor-empty" role="status">当前筛选条件下没有因子，请调整来源、地区或关键词。</div>
+        <table v-else class="dark-table">
           <thead>
             <tr>
               <th>排放因子名称</th><th class="text-right">数值</th><th>单位</th><th>来源</th>
@@ -77,6 +79,7 @@ const keyword = ref('')
 
 // 因子库：默认使用前端静态数据，后端在线时拉取服务端版本覆盖
 const factorLib = ref(FACTOR_LIB)
+const factorOrigin = ref('前端内置资料')
 
 const sources = computed(() => new Set(factorLib.value.map((f) => f.source)))
 const regions = computed(() => new Set(factorLib.value.map((f) => f.region)))
@@ -115,6 +118,7 @@ async function loadFactors() {
     const res = await bizApi.getFactors()
     if (res.code === 200 && Array.isArray(res.data) && res.data.length) {
       factorLib.value = res.data
+      factorOrigin.value = '现有后端因子接口'
     }
   } catch {
     // 后端不可用则保留前端静态因子库
@@ -169,3 +173,9 @@ function resize() { c1?.resize(); c2?.resize() }
 useElementResize([gridEl, srcEl], resize)
 onBeforeUnmount(() => { c1?.dispose(); c2?.dispose() })
 </script>
+
+<style scoped>
+.factor-context strong { color: var(--c-text); font-size: 1.1rem; }
+.factor-context p { margin-top: .35rem; color: var(--c-text-3); font-size: .76rem; line-height: 1.65; }
+.factor-empty { padding: 1rem; color: var(--c-text-3); text-align: center; }
+</style>

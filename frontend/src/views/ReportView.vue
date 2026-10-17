@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
+    <div class="c-card p-4 report-context" role="note"><strong>报告草稿工作区</strong><span>数据来自碳排放核算页的 {{ dataStore.source.emissions === 'sample' ? '虚拟企业示例' : '用户上传记录' }}；模板版本与数据更新时间未提供。选择模板不等于完成对应标准的合规披露，导出前请复核边界、因子和证明材料。</span></div>
     <!-- 区域选择 -->
     <div class="c-card p-4 flex flex-wrap items-center gap-4">
       <div class="flex items-center gap-2">
@@ -42,10 +43,11 @@
       </div>
       <div class="lg:col-span-4 space-y-4">
         <div class="c-card p-4 space-y-3">
-          <el-button type="primary" class="w-full" @click="generate">一键生成报告</el-button>
+          <el-button type="primary" class="w-full" :disabled="!dataStore.yearRecords.length" @click="generate">生成报告草稿</el-button>
+          <router-link v-if="!dataStore.yearRecords.length" class="report-data-link" to="/accounting">前往碳排放核算加载数据</router-link>
           <div class="grid grid-cols-2 gap-2">
-            <el-button size="small" type="success" plain :loading="exporting === 'pdf'" :disabled="Boolean(exporting)" @click="exportPdf">导出 PDF</el-button>
-            <el-button size="small" type="success" plain :loading="exporting === 'word'" :disabled="Boolean(exporting)" @click="exportWord">导出 Word</el-button>
+            <el-button size="small" type="success" plain :loading="exporting === 'pdf'" :disabled="Boolean(exporting) || !dataStore.yearRecords.length" @click="exportPdf">导出 PDF</el-button>
+            <el-button size="small" type="success" plain :loading="exporting === 'word'" :disabled="Boolean(exporting) || !dataStore.yearRecords.length" @click="exportWord">导出 Word</el-button>
           </div>
           <div class="text-[11px] text-[var(--c-text-3)] leading-5">
             报告数据取自「碳排放核算」模块（{{ dataStore.currentYear }} 年度，{{ dataStore.yearRecords.length }} 条记录）。
@@ -57,17 +59,18 @@
         <div class="c-card">
           <div class="c-card-title">
             历史报告
-            <el-button size="small" text type="danger" style="margin-left: auto" @click="clearHistory">清空</el-button>
+            <el-button size="small" text type="danger" style="margin-left: auto" :disabled="!history.length" @click="clearHistory">清空</el-button>
           </div>
           <div class="p-3 max-h-[320px] overflow-auto">
-            <table class="dark-table">
+            <p v-if="!history.length" class="report-empty" role="status">暂无历史报告草稿。</p>
+            <table v-else class="dark-table">
               <thead><tr><th>报告名称</th><th>标准</th><th>日期</th><th>状态</th></tr></thead>
               <tbody>
                 <tr v-for="h in history" :key="h.name + h.date">
                   <td class="text-[11.5px] text-[var(--c-text)]">{{ h.name }}</td>
                   <td class="text-[11px]">{{ h.standard }}</td>
                   <td class="text-[11px] num">{{ h.date }}</td>
-                  <td><el-tag size="small" :type="h.status === '已生成' ? 'success' : 'info'" effect="plain">{{ h.status }}</el-tag></td>
+                  <td><el-tag size="small" type="info" effect="plain">本地记录</el-tag></td>
                 </tr>
               </tbody>
             </table>
@@ -98,12 +101,13 @@ const regionStandards = computed(() => (region.value === 'auto' ? [] : REGION_ST
 const currentName = computed(() => STANDARD_NAMES[current.value] || current.value)
 const regionHint = computed(() =>
   region.value === 'auto' ? '自动检测所有区域标准' : `当前区域：${REGION_LABELS[region.value]} | ${regionStandards.value.length} 个标准模板可用`)
+const draftBanner = '<div style="padding:10px 14px;margin-bottom:12px;border:2px solid #d97706;color:#78350f;background:#fffbeb;font-weight:700">报告草稿 / DRAFT：数据、边界、因子、标准适用性及授权未经核验，不代表合规披露。</div>'
 
 const previewHtml = computed(() => {
   if (!dataStore.yearRecords.length) {
     return '<p style="color:#64748b;text-align:center;padding:30px">请先在「碳排放核算」页面加载数据（示例数据或上传数据），系统将自动按所选标准填充报告内容</p>'
   }
-  return buildStandardReportHtml(current.value, dataStore.yearRecords, dataStore.currentYear)
+  return draftBanner + buildStandardReportHtml(current.value, dataStore.yearRecords, dataStore.currentYear)
 })
 
 function selectReport(key: string) {
@@ -122,12 +126,12 @@ function onRegionChange() {
 function generate() {
   if (!dataStore.yearRecords.length) { toast.warning('请先在「碳排放核算」加载数据'); return }
   addReportHistory({
-    name: `${dataStore.currentYear}年度${currentName.value}`, standard: currentName.value,
+    name: `${dataStore.currentYear}年度${currentName.value}草稿`, standard: currentName.value,
     region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10),
     format: 'PDF', type: 'standard',
   })
   history.value = getReportHistory()
-  toast.success('✅ 报告已生成，请查看预览（已计入历史记录）')
+  toast.success('报告草稿已加入历史记录，请核对预览内容')
 }
 
 async function exportPdf() {
@@ -135,7 +139,7 @@ async function exportPdf() {
   exporting.value = 'pdf'
   try {
     toast.info('正在生成 PDF 报告…')
-    await exportHtmlToPdf(previewHtml.value, `合规报告_${currentName.value}_${dataStore.currentYear}.pdf`)
+    await exportHtmlToPdf(previewHtml.value, `报告草稿_${currentName.value}_${dataStore.currentYear}.pdf`)
     addReportHistory({ name: `${dataStore.currentYear}年度${currentName.value}`, standard: currentName.value, region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10), format: 'PDF', type: 'standard' })
     history.value = getReportHistory()
     toast.success('✅ PDF 报告已导出')
@@ -149,9 +153,9 @@ async function exportWord() {
   try {
     toast.info('正在生成 Word 报告…')
     await exportReportWord(
-      `${currentName.value}（${dataStore.currentYear}年度）`,
-      `合规碳排放报告 | CarbonAI V6.0 | ${new Date().toLocaleDateString('zh-CN')}`,
-      previewHtml.value, `合规报告_${currentName.value}_${dataStore.currentYear}.docx`,
+      `${currentName.value}草稿（${dataStore.currentYear}年度）`,
+      `报告草稿，待核验 | CarbonAI V6.0 | ${new Date().toLocaleDateString('zh-CN')}`,
+      previewHtml.value, `报告草稿_${currentName.value}_${dataStore.currentYear}.docx`,
     )
     addReportHistory({ name: `${dataStore.currentYear}年度${currentName.value}`, standard: currentName.value, region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10), format: 'Word', type: 'standard' })
     history.value = getReportHistory()
@@ -175,6 +179,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.report-context { display: grid; gap: .3rem; }
+.report-context strong { color: var(--c-text); }
+.report-context span, .report-empty { color: var(--c-text-3); font-size: .76rem; line-height: 1.65; }
+.report-empty { padding: 1rem; text-align: center; }
+.report-data-link { display: inline-block; color: var(--c-green); font-size: .8rem; text-decoration: underline; text-underline-offset: 3px; }
 .rpt-card { width: 100%; appearance: none; color: inherit; font: inherit; text-align: left; cursor: pointer; transition: transform var(--dur-micro) var(--ease-apple), border-color var(--dur-micro) var(--ease-apple), background-color var(--dur-micro) var(--ease-apple), box-shadow var(--dur-micro) var(--ease-apple), opacity var(--dur-micro) var(--ease-apple); }
 .rpt-card:hover { transform: translateY(-3px); border-color: var(--c-border-2); }
 .rpt-card.selected { border-color: rgba(16, 185, 129, 0.55); background: rgba(16, 185, 129, 0.06); box-shadow: 0 0 24px rgba(16, 185, 129, 0.1); }

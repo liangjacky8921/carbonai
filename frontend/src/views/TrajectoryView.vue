@@ -1,5 +1,7 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
+    <div class="c-card p-4 trajectory-context" role="note"><strong>轨迹碳核算工作区</strong><span>当前轨迹：{{ dataStore.source.trajectory === 'user' ? '用户上传' : '内置示例或未加载' }}；计算使用页面内置近似参数。所选标准仅作界面分类，结果需核对路径坐标、载重、因子来源及适用范围。</span></div>
+    <div v-if="loadError" class="trajectory-error" role="alert">{{ loadError }}</div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- 地图 + 上传 -->
       <div class="c-card lg:col-span-2 overflow-hidden relative" style="height: 480px">
@@ -32,7 +34,7 @@
             <el-option label="中国道路运输碳核算指南" value="cn-road" />
           </el-select>
           <el-button type="primary" size="small" class="w-full" @click="calculate" :loading="calculating">
-            执行轨迹碳核算（Scope 3）
+            生成轨迹估算（Scope 3）
           </el-button>
         </div>
       </div>
@@ -47,10 +49,10 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ChartCard title="路段碳排放分布" height="300">
+        <ChartCard title="路段碳排放分布 · kgCO₂" height="300" :sample="dataStore.source.trajectory !== 'user'" :user-tag="dataStore.source.trajectory === 'user'" source-note="当前轨迹与页面内置估算参数">
           <div ref="segEl" class="w-full h-full" />
         </ChartCard>
-        <ChartCard title="各车型单位排放对比" height="300">
+        <ChartCard title="各车型单位排放对比 · kgCO₂e/t·km" height="300" :sample="dataStore.source.trajectory !== 'user'" :user-tag="dataStore.source.trajectory === 'user'" source-note="当前轨迹与页面内置估算参数">
           <div ref="vehEl" class="w-full h-full" />
         </ChartCard>
       </div>
@@ -75,17 +77,17 @@
       </div>
     </template>
     <div v-else class="c-card">
-      <EmptyState icon="Guide" title="尚未执行轨迹碳核算"
-        description="上传车队 GPS/北斗轨迹 CSV（或加载示例轨迹），选择货物类型与排放标准后执行核算。核算基于 GLEC 3.0 / ISO 14083 吨·公里方法学。">
-        <el-button type="primary" size="small" @click="loadDemo">🚀 一键加载示例轨迹试试</el-button>
+      <EmptyState icon="Guide" title="尚无轨迹估算结果"
+        description="上传轨迹 CSV 或加载示例，选择参数后查看页面内置估算；此处未核实为所选标准的合规核算。">
+        <el-button type="primary" size="small" @click="loadDemo">加载示例轨迹</el-button>
       </EmptyState>
     </div>
 
     <!-- 首次访问引导条：3 步走完核算流程，看过即消失 -->
     <div v-if="showGuide" class="c-card p-3 flex items-center gap-3 bg-[var(--c-green-soft)] border border-[rgba(16,185,129,0.4)]">
-      <span class="text-green text-lg">💡</span>
+      <span class="text-green text-lg" aria-hidden="true">·</span>
       <div class="text-xs text-[var(--c-text)] leading-6 flex-1">
-        <b>新手三步速通：</b> ① 在左侧点「加载示例轨迹」→ ② 中间选货物类型（如普通货物）→ ③ 点「执行轨迹碳核算」按钮，600ms 出结果 📊
+        <b>使用步骤：</b>加载示例轨迹或上传 CSV → 选择货物类型与标准选项 → 生成轨迹估算并核对来源。
       </div>
       <el-button size="small" text @click="dismissGuide">知道了</el-button>
     </div>
@@ -93,7 +95,7 @@
 </template>
 
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import L from 'leaflet'
 import * as echarts from 'echarts'
 import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
@@ -116,6 +118,7 @@ const vehEl = ref<HTMLElement | null>(null)
 const cargoType = ref('normal')
 const standard = ref('glec')
 const calculating = ref(false)
+const loadError = ref('')
 
 let map: L.Map | null = null
 let trajLine: L.Polyline | null = null
@@ -157,8 +160,10 @@ function renderTrajectory(pts: TrajPoint[]) {
 }
 
 async function loadDemo() {
+  loadError.value = ''
   const csv = await dataStore.loadSampleTrajectory()
   if (!csv.length) {
+    loadError.value = '示例轨迹加载失败，请稍后重试。'
     toast.error('示例轨迹加载失败')
     return
   }
@@ -168,7 +173,9 @@ async function loadDemo() {
 }
 
 async function onFile(file: File) {
+  loadError.value = ''
   try {
+    if (!file.name.toLowerCase().endsWith('.csv') || !file.size) throw new Error('请选择非空的 CSV 轨迹文件。')
     const text = await file.text()
     const pts = parseTrajCsv(text)
     if (!pts.length) throw new Error('未解析到有效轨迹点，请检查 CSV 表头')
@@ -177,6 +184,7 @@ async function onFile(file: File) {
     renderTrajectory(pts)
     toast.success(`已加载用户轨迹：${pts.length} 个点（用户数据优先展示）`)
   } catch (e: any) {
+    loadError.value = e.message || '解析失败'
     toast.error(e.message || '解析失败')
   }
 }
@@ -221,8 +229,8 @@ function calculate() {
       carbon: totalCarbon.toFixed(1),
     }
     calculating.value = false
-    renderCharts(vehStats)
-    toast.success(`✅ 轨迹碳核算完成：${totalCarbon.toFixed(1)} kgCO₂（${standard.value === 'glec' ? 'GLEC 3.0' : standard.value === 'iso14083' ? 'ISO 14083:2023' : '中国道路运输指南'}）`)
+    nextTick(() => renderCharts(vehStats))
+    toast.info(`轨迹示意估算：${totalCarbon.toFixed(1)} kgCO₂；请核对参数和数据来源。`)
   }, 600)
 }
 
@@ -258,3 +266,10 @@ useElementResize([mapEl, segEl, vehEl], resize)
 onMounted(() => { initMap() })
 onBeforeUnmount(() => { map?.remove(); segChart?.dispose(); vehChart?.dispose() })
 </script>
+
+<style scoped>
+.trajectory-context { display: grid; gap: .35rem; }
+.trajectory-context strong { color: var(--c-text); }
+.trajectory-context span { color: var(--c-text-3); font-size: .76rem; line-height: 1.65; }
+.trajectory-error { padding: .75rem 1rem; border: 1px solid var(--c-amber); color: var(--c-amber); border-radius: .5rem; font-size: .8rem; }
+</style>

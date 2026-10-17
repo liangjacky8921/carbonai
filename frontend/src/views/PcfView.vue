@@ -1,5 +1,6 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
+    <div class="c-card p-4 pcf-disclosure" role="note"><strong>产品碳足迹演示</strong><span>当前页面“计算”使用现有随机示意算法；标准选项用于展示，不代表完成对应标准的合规核算。BOM、阶段来源与行业基准应逐项核实，不可将结果作为真实产品排放报告。</span></div>
     <!-- LCA 阶段流程 -->
     <div class="c-card p-4">
       <div class="flex flex-wrap items-center gap-2 lca-flow">
@@ -32,7 +33,7 @@
           <el-option label="欧盟 PEF" value="欧盟 PEF" />
         </el-select>
         <div class="flex gap-2">
-          <el-button type="primary" size="small" class="flex-1" @click="calcPcf">计算产品碳足迹</el-button>
+          <el-button type="primary" size="small" class="flex-1" @click="calcPcf">生成演示估算</el-button>
           <el-button size="small" @click="loadDemo">加载演示数据</el-button>
         </div>
         <div class="flex gap-2">
@@ -74,10 +75,10 @@
     <template v-if="hasResult">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="c-card p-5 text-center flex flex-col justify-center">
-          <div class="text-xs text-[var(--c-text-3)] mb-2">碳足迹核算结果</div>
+          <div class="text-xs text-[var(--c-text-3)] mb-2">{{ resultKind === 'sample' ? '内置示例结果' : '随机演示估算结果' }}</div>
           <div class="num text-[38px] font-bold text-green">{{ total.toFixed(2) }}</div>
           <div class="text-xs text-[var(--c-text-2)] mt-1">kgCO₂e / {{ unit }}</div>
-          <div class="text-[11px] text-[var(--c-text-3)] mt-3">全生命周期碳排放（{{ standard }}）</div>
+          <div class="text-[11px] text-[var(--c-text-3)] mt-3">演示数据 · 标准选项：{{ standard }} · 非合规结论</div>
         </div>
         <ChartCard title="各阶段碳排放占比" height="300" class="lg:col-span-2">
           <div ref="stageEl" class="w-full h-full" />
@@ -125,8 +126,8 @@
       </div>
     </template>
     <div v-else class="c-card">
-      <EmptyState icon="Box" title="尚未执行碳足迹核算"
-        description="填写产品参数后点击「计算产品碳足迹」，或加载演示数据。支持 ISO 14067:2018 / PAS 2050 / GHG Protocol / 欧盟 PEF 标准，可一键生成中英文双语 PDF/Word 碳足迹报告。" />
+      <EmptyState icon="Box" title="尚无演示估算结果"
+        description="可生成随机演示估算，或加载内置示例数据。当前页面不提供经核验的产品碳足迹结论。" />
     </div>
   </div>
 </template>
@@ -146,6 +147,7 @@ import { buildPcfHtml, exportHtmlToPdf, exportReportWord, addReportHistory, type
 const dataStore = useDataStore()
 const toast = useToast()
 const exporting = ref<'' | 'pdf' | 'word'>('')
+const resultKind = ref<'sample' | 'random'>('random')
 
 const stageList = [
   { stage: 'raw', name: '原材料获取', icon: '⛏️', nameEn: 'Raw Materials' },
@@ -181,7 +183,8 @@ const pcfData = computed<PcfData>(() => ({
   standard: standard.value,
   stages: stageList.map((s) => ({ ...s, emission: stageData.value[s.stage] || 0, mainSource: sourceMap[s.stage] })),
 }))
-const previewHtml = computed(() => (hasResult.value ? buildPcfHtml(pcfData.value, reportLang.value) : ''))
+const demoBanner = '<div style="padding:10px 14px;margin-bottom:12px;border:2px solid #d97706;color:#78350f;background:#fffbeb;font-weight:700">演示资料 / DEMO ONLY：阶段数据和结果未经核验，不可用于正式产品碳足迹声明或合规报告。</div>'
+const previewHtml = computed(() => (hasResult.value ? demoBanner + buildPcfHtml(pcfData.value, reportLang.value) : ''))
 
 async function loadDemo() {
   await dataStore.loadSampleData()
@@ -190,12 +193,14 @@ async function loadDemo() {
   unit.value = '件'
   standard.value = b.product.standard
   stageData.value = Object.fromEntries(b.lcaStages.map((s: any) => [s.stage, s.emission]))
+  resultKind.value = 'sample'
   dataStore.setUserPcf({ productName: productName.value, stages: { ...stageData.value } })
   nextTick(renderCharts)
   toast.success('已加载演示数据（示例产品 BOM + LCA 阶段排放）')
 }
 
 function calcPcf() {
+  resultKind.value = 'random'
   const base = 20 + Math.random() * 40
   stageData.value = {
     raw: +(base * 0.22 * (0.8 + Math.random() * 0.4)).toFixed(2),
@@ -205,7 +210,7 @@ function calcPcf() {
     eol: +(base * 0.05 * (0.8 + Math.random() * 0.4)).toFixed(2),
   }
   nextTick(renderCharts)
-  toast.success(`✅ 「${productName.value || '未命名产品'}」产品碳足迹核算完成：${total.value.toFixed(2)} kgCO₂e/${unit.value}`)
+  toast.info(`「${productName.value || '未命名产品'}」随机演示估算：${total.value.toFixed(2)} kgCO₂e/${unit.value}，不可用于正式核算。`)
 }
 
 function renderCharts() {
@@ -246,8 +251,8 @@ function renderCharts() {
 }
 
 async function exportPcf(format: 'pdf' | 'word') {
-  const html = buildPcfHtml(pcfData.value, reportLang.value)
-  const name = `产品碳足迹报告_${productName.value || '未命名'}_${new Date().toISOString().slice(0, 10)}`
+  const html = previewHtml.value
+  const name = `演示资料_产品碳足迹_${productName.value || '未命名'}_${new Date().toISOString().slice(0, 10)}`
   exporting.value = format
   try {
     if (format === 'pdf') {
@@ -256,12 +261,12 @@ async function exportPcf(format: 'pdf' | 'word') {
     } else {
       toast.info('正在生成双语 Word 报告…')
       await exportReportWord(
-        `${productName.value} 产品碳足迹核算报告 / Product Carbon Footprint Report`,
-        `${standard.value} | 功能单位: 1 ${unit.value} | CarbonAI V6.0 双语报告`,
+        `${productName.value} 产品碳足迹演示资料 / Demo Product Carbon Footprint`,
+        `演示资料，非合规报告 | 标准选项: ${standard.value} | 功能单位: 1 ${unit.value}`,
         html, name + '.docx',
       )
     }
-    addReportHistory({ name: `${productName.value} 碳足迹报告`, standard: standard.value, region: '中国大陆', date: new Date().toISOString().slice(0, 10), format: format === 'pdf' ? 'PDF' : 'Word', type: 'pcf' })
+    addReportHistory({ name: `${productName.value} 碳足迹演示资料`, standard: standard.value, region: '中国大陆', date: new Date().toISOString().slice(0, 10), format: format === 'pdf' ? 'PDF' : 'Word', type: 'pcf' })
     toast.success(`✅ ${format === 'pdf' ? 'PDF' : 'Word'} 报告已生成并下载`)
   } catch (e: any) {
     toast.error('报告生成失败：' + e.message)
@@ -278,6 +283,9 @@ onBeforeUnmount(() => { c1?.dispose(); c2?.dispose() })
 </script>
 
 <style scoped>
+.pcf-disclosure { display: grid; gap: .35rem; border-left: 2px solid var(--c-green); }
+.pcf-disclosure strong { color: var(--c-text); }
+.pcf-disclosure span { color: var(--c-text-3); font-size: .77rem; line-height: 1.65; }
 .lca-flow { justify-content: space-between; }
 .lca-stage {
   appearance: none; color: inherit; font: inherit;
