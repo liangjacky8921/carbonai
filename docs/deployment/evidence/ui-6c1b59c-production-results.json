@@ -1,0 +1,211 @@
+{
+  "commit": "6c1b59c",
+  "generatedAt": "2026-10-17T08:53:05.733Z",
+  "results": [
+    {
+      "name": "pc-1440-home",
+      "navigationError": null,
+      "state": {
+        "pathname": "/",
+        "mounted": true,
+        "rootTextLength": 1888,
+        "title": "看清排放。理解空间。让决策有据。",
+        "titleVisible": true,
+        "sections": [
+          "overview",
+          "capabilities",
+          "provenance",
+          "spatial",
+          "product",
+          "enter"
+        ],
+        "globeCanvas": 0,
+        "globeFallback": 1,
+        "chartCanvas": 0,
+        "leaflet": false,
+        "exampleLabel": true,
+        "loginInputs": 0,
+        "overflow": false
+      },
+      "errors": {
+        "console": [],
+        "page": [],
+        "assets": [],
+        "api": []
+      },
+      "screenshot": "ui-6c1b59c-pc-1440-home.png"
+    },
+    {
+      "name": "pc-1280-home",
+      "navigationError": null,
+      "state": {
+        "pathname": "/",
+        "mounted": true,
+        "rootTextLength": 1888,
+        "title": "看清排放。理解空间。让决策有据。",
+        "titleVisible": true,
+        "sections": [
+          "overview",
+          "capabilities",
+          "provenance",
+          "spatial",
+          "product",
+          "enter"
+        ],
+        "globeCanvas": 0,
+        "globeFallback": 1,
+        "chartCanvas": 0,
+        "leaflet": false,
+        "exampleLabel": true,
+        "loginInputs": 0,
+        "overflow": false
+      },
+      "errors": {
+        "console": [],
+        "page": [],
+        "assets": [],
+        "api": []
+      },
+      "screenshot": null
+    },
+    {
+      "name": "pc-1440-dashboard",
+      "navigationError": null,
+      "state": {
+        "pathname": "/dashboard",
+        "mounted": true,
+        "rootTextLength": 1597,
+        "title": "数据大屏",
+        "titleVisible": true,
+        "sections": [],
+        "globeCanvas": 0,
+        "globeFallback": 0,
+        "chartCanvas": 6,
+        "leaflet": false,
+        "exampleLabel": true,
+        "loginInputs": 1,
+        "overflow": false
+      },
+      "errors": {
+        "console": [],
+        "page": [],
+        "assets": [],
+        "api": [
+          "https://www.carbontool.cn/api/health: net::ERR_ABORTED"
+        ]
+      },
+      "screenshot": "ui-6c1b59c-pc-1440-dashboard.png"
+    },
+    {
+      "name": "pc-1440-gis",
+      "navigationError": null,
+      "state": {
+        "pathname": "/gis",
+        "mounted": true,
+        "rootTextLength": 634,
+        "title": "GIS碳源热力图",
+        "titleVisible": true,
+        "sections": [],
+        "globeCanvas": 0,
+        "globeFallback": 0,
+        "chartCanvas": 0,
+        "leaflet": true,
+        "exampleLabel": true,
+        "loginInputs": 5,
+        "overflow": false
+      },
+      "errors": {
+        "console": [],
+        "page": [],
+        "assets": [],
+        "api": []
+      },
+      "screenshot": null
+    },
+    {
+      "name": "pc-1440-login",
+      "navigationError": null,
+      "state": {
+        "pathname": "/auth/login",
+        "mounted": true,
+        "rootTextLength": 211,
+        "title": "CarbonAI",
+        "titleVisible": true,
+        "sections": [],
+        "globeCanvas": 0,
+        "globeFallback": 0,
+        "chartCanvas": 0,
+        "leaflet": false,
+        "exampleLabel": false,
+        "loginInputs": 3,
+        "overflow": false
+      },
+      "errors": {
+        "console": [],
+        "page": [],
+        "assets": [],
+        "api": []
+      },
+      "screenshot": null
+    },
+    {
+      "name": "mobile-sim-390-home",
+      "navigationError": null,
+      "state": {
+        "pathname": "/",
+        "mounted": true,
+        "rootTextLength": 1788,
+        "title": "看清排放。理解空间。让决策有据。",
+        "titleVisible": true,
+        "sections": [
+          "overview",
+          "capabilities",
+          "provenance",
+          "spatial",
+          "product",
+          "enter"
+        ],
+        "globeCanvas": 0,
+        "globeFallback": 1,
+        "chartCanvas": 0,
+        "leaflet": false,
+        "exampleLabel": true,
+        "loginInputs": 0,
+        "overflow": false
+      },
+      "errors": {
+        "console": [],
+        "page": [],
+        "assets": [],
+        "api": []
+      },
+      "screenshot": null
+    },
+    {
+      "name": "mobile-sim-390-dashboard",
+      "navigationError": null,
+      "state": {
+        "pathname": "/dashboard",
+        "mounted": true,
+        "rootTextLength": 1439,
+        "title": "数据大屏",
+        "titleVisible": true,
+        "sections": [],
+        "globeCanvas": 0,
+        "globeFallback": 0,
+        "chartCanvas": 6,
+        "leaflet": false,
+        "exampleLabel": true,
+        "loginInputs": 1,
+        "overflow": false
+      },
+      "errors": {
+        "console": [],
+        "page": [],
+        "assets": [],
+        "api": []
+      },
+      "screenshot": "ui-6c1b59c-mobile-sim-390-dashboard.png"
+    }
+  ]
+}
