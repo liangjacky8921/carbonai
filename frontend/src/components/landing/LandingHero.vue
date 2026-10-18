@@ -14,7 +14,7 @@ const paused = shallowRef(false)
     </div>
     <div class="hero-content">
       <p class="product-line">时空智能碳管理平台</p>
-      <h1 id="hero-title">看清排放。<br />理解空间。<br />让决策有据。</h1>
+      <h1 id="hero-title">看清排放<br />理解空间<br />让决策有据</h1>
       <p class="hero-description">
         连接碳核算、地理空间分析与报告工作流，<br class="desktop-break" />把分散的数据，转化为可追溯的管理依据。
       </p>
