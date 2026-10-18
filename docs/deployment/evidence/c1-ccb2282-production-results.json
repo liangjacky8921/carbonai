@@ -1,0 +1,72 @@
+[
+  {
+    "label": "pc-1440",
+    "homeVisible": true,
+    "chart": {
+      "canvas": 1,
+      "empty": 0,
+      "hasUndefined": false,
+      "overflow": false,
+      "records": [
+        {
+          "month": "2026-10",
+          "status": "expected",
+          "kind": "expected_mid"
+        },
+        {
+          "month": "2026-12",
+          "status": "expected",
+          "kind": "expected_mid"
+        }
+      ]
+    },
+    "gis": {
+      "sizes": {
+        "red": 48,
+        "yellow": 32,
+        "green": 18
+      },
+      "clickedCity": "江门",
+      "centerOffset": 0.5775440493211319,
+      "markerCount": 11,
+      "overflow": false
+    },
+    "errors": [],
+    "badAssets": []
+  },
+  {
+    "label": "mobile-sim-390",
+    "homeVisible": true,
+    "chart": {
+      "canvas": 1,
+      "empty": 0,
+      "hasUndefined": false,
+      "overflow": false,
+      "records": [
+        {
+          "month": "2026-10",
+          "status": "expected",
+          "kind": "expected_mid"
+        },
+        {
+          "month": "2026-12",
+          "status": "expected",
+          "kind": "expected_mid"
+        }
+      ]
+    },
+    "gis": {
+      "sizes": {
+        "red": 48,
+        "yellow": 32,
+        "green": 18
+      },
+      "clickedCity": "江门",
+      "centerOffset": 0,
+      "markerCount": 11,
+      "overflow": false
+    },
+    "errors": [],
+    "badAssets": []
+  }
+]
