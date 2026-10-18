@@ -78,16 +78,16 @@
     </div>
     <p class="dashboard-data-note indicator-note">碳强度缺少已核实的营收或产值分母；能源活动记录含不同单位，暂不汇总为能源消耗指标。</p>
 
-    <div class="dashboard-section-label"><h3>碳市场参考</h3><span>价格与指数快照</span></div>
+    <div class="dashboard-section-label"><h3>碳市场参考</h3><span>交易价与价格预期</span></div>
     <div class="chart-grid grid grid-cols-1 lg:grid-cols-2 gap-4">
-      <ChartCard title="CEA、CCER 与复旦指数参考走势（2026）" height="320" :loading="chartsLoading" :empty="!priceSeriesAvailable" empty-text="暂无可展示的价格序列">
+      <ChartCard title="CEA、CCER 交易价与复旦价格预期（2026）" height="320" :loading="chartsLoading || marketLoading" :empty="!priceSeriesAvailable" empty-text="暂无带来源与日期的可核验价格记录">
         <div ref="priceEl" class="w-full h-full" />
       </ChartCard>
       <ChartCard title="区域碳配额参考价格（¥/t）" height="320" :loading="chartsLoading" :empty="!dynamicMarketShare.length" empty-text="暂无区域参考价格">
         <div ref="marketEl" class="w-full h-full" />
       </ChartCard>
     </div>
-    <p class="dashboard-source-note">{{ marketSourceText }}{{ marketTimestamp ? ` · 接口响应 ${marketTimestamp}` : '' }}。各行情原始发布时间未统一提供。</p>
+    <p class="dashboard-source-note">走势图仅展示逐条标注来源与日期的交易价或官方价格预期；CCER 无可核验交易记录时留空。{{ marketSourceText }}{{ marketTimestamp ? ` · 接口响应 ${marketTimestamp}` : '' }}。接口响应时间不是行情发布时间。</p>
 
     <div class="dashboard-section-label"><h3>排放与空间</h3><span>区域图为示例数据</span></div>
     <div class="chart-grid grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -153,20 +153,23 @@ import ChartCard from '@/components/ChartCard.vue'
 import MotionNumber from '@/components/MotionNumber.vue'
 import { useReducedMotion } from '@/composables/useReducedMotion'
 import { useDataStore, type EmissionRecord } from '@/stores/data'
-import { REALTIME_QUOTES, PRICE_SERIES, MARKET_SHARE, GBA_CITIES, type GbaCity } from '@/data/carbonMarket'
+import { REALTIME_QUOTES, MARKET_SHARE, GBA_CITIES, type GbaCity } from '@/data/carbonMarket'
+import { formatPriceTooltip, makePricePlot, parsePriceRecords, type PriceRecord } from '@/utils/carbonPriceChart'
 import { fmt } from '@/utils/format'
 import { DataLine } from '@element-plus/icons-vue'
-import { bizApi, backendOnline } from '@/api/client'
+import { bizApi, backendOnline, probeBackend } from '@/api/client'
 
 const dataStore = useDataStore()
 const reducedMotion = useReducedMotion()
 const tickerPaused = ref(false)
 const tickerStopped = computed(() => tickerPaused.value || reducedMotion.value)
 const chartsLoading = ref(true)
+const marketLoading = ref(true)
 
 // ============ 碳市场行情（后端在线则拉取实时快照，离线回退本地静态） ============
 const dynamicQuotes = ref(REALTIME_QUOTES)
-const dynamicPriceSeries = ref(PRICE_SERIES)
+const priceRecords = ref<PriceRecord[]>([])
+const pricePlot = computed(() => makePricePlot(priceRecords.value, 2026))
 const dynamicMarketShare = ref(MARKET_SHARE)
 const marketTimestamp = ref('')
 const marketLiveSources = ref<string[]>([])
@@ -218,14 +221,10 @@ const recordRange = computed(() => {
 const emissionLoadError = computed(() => !chartsLoading.value && !dataStore.emissions.length
   ? '排放记录未载入，请检查示例数据文件或重新上传数据'
   : undefined)
-const priceSeriesAvailable = computed(() => {
-  const series = dynamicPriceSeries.value
-  return series.months.length > 0 && [series.cea, series.ccer, series.fudan, series.euaCny]
-    .some((values) => values.some((value) => typeof value === 'number'))
-})
+const priceSeriesAvailable = computed(() => pricePlot.value.series.length > 0)
 const marketSourceText = computed(() => marketLiveSources.value.length
   ? `${marketLiveSources.value.join('、')}取自公开页面；其余为参考快照`
-  : marketFetchFailed.value ? '行情接口请求失败，展示内置参考快照' : '内置或接口参考快照，未确认实源更新')
+  : marketFetchFailed.value ? '行情接口不可用；走势图留空，其他报价为内置参考快照' : '内置或接口参考快照，未确认实源更新')
 const statCards = computed(() => {
   const s = filteredScope.value
   return [
@@ -291,25 +290,17 @@ function init(el: HTMLElement | null): echarts.ECharts | null {
 }
 
 function renderPrice(c: echarts.ECharts) {
-  const ds = dynamicPriceSeries.value
+  const plot = pricePlot.value
   c.setOption({
     animation: !reducedMotion.value,
-    tooltip: { ...tt, trigger: 'axis', valueFormatter: (value: number | string) => `${value} ¥/t` },
-    legend: { type: 'scroll', data: ['CEA收盘价', '复旦碳价指数预测中值', 'CCER均价', 'EUA(¥等值)'], bottom: 0, left: 8, right: 8, textStyle: { color: '#b4c9bc', fontSize: 10 } },
+    tooltip: { ...tt, trigger: 'axis', enterable: true, formatter: (params: unknown) => formatPriceTooltip(params, plot) },
+    legend: { type: 'scroll', data: plot.series.map((entry) => entry.name), bottom: 0, left: 8, right: 8, textStyle: { color: '#b4c9bc', fontSize: 10 } },
     grid: { left: 44, right: 46, bottom: 62, top: 28 },
-    xAxis: { type: 'category', data: ds.months, ...axis, axisLabel: { interval: 'auto', hideOverlap: true, color: '#aac1b2', fontSize: 10 } },
-    yAxis: [
-      { type: 'value', name: '¥/t', nameTextStyle: { color: '#92ad9d' }, ...axis },
-      { type: 'value', name: 'EUA 折算', nameTextStyle: { color: '#92ad9d' }, ...axis },
-    ],
-    series: [
-      { name: 'CEA收盘价', type: 'line', data: ds.cea, color: '#10b981', smooth: true, symbolSize: 6,
-        areaStyle: { color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: 'rgba(16,185,129,0.25)' }, { offset: 1, color: 'rgba(16,185,129,0)' }]) },
-        animationDuration: 1500 },
-      { name: '复旦碳价指数预测中值', type: 'line', data: ds.fudan, color: '#f59e0b', lineStyle: { type: 'dashed', width: 2 }, smooth: true, animationDuration: 2000 },
-      { name: 'CCER均价', type: 'line', data: ds.ccer, color: '#0ea5e9', smooth: true, animationDuration: 1800 },
-      { name: 'EUA(¥等值)', type: 'line', yAxisIndex: 1, data: ds.euaCny, color: '#8b5cf6', lineStyle: { type: 'dotted', width: 1.5 }, smooth: true, animationDuration: 2200 },
-    ],
+    xAxis: { type: 'category', data: plot.months, ...axis, axisLabel: { interval: 'auto', hideOverlap: true, color: '#aac1b2', fontSize: 10 } },
+    yAxis: { type: 'value', name: '¥/t', nameTextStyle: { color: '#92ad9d' }, ...axis },
+    series: plot.series.map((entry) => ({ name: entry.name, type: 'line', data: entry.data, color: entry.color,
+      lineStyle: { type: entry.dashed ? 'dashed' : 'solid', width: 2 }, smooth: true, symbolSize: 6,
+      showSymbol: true, connectNulls: false, animationDuration: 1200 })),
   })
 }
 
@@ -486,32 +477,46 @@ watch(reducedMotion, (reduced) => {
   if (gba) gba.setOption({ grid3D: { viewControl: { autoRotate: !reduced } } })
 })
 
-onMounted(async () => {
-  // 优先拉取后端行情快照（含时间戳），离线自动降级本地静态
+let marketViewDisposed = false
+async function loadMarketRecords() {
+  // 仅带逐点来源的价格记录入图；其他行情卡片仍保留参考快照降级。
   try {
-    if (backendOnline.value) {
+    if (backendOnline.value || await probeBackend()) {
+      if (marketViewDisposed) return
       const r = await bizApi.getMarketQuotes()
+      if (marketViewDisposed) return
       if (r.code === 200 && r.data) {
         const d: any = r.data
         if (d.quotes) dynamicQuotes.value = d.quotes
-        if (d.priceSeries) dynamicPriceSeries.value = d.priceSeries
+        priceRecords.value = parsePriceRecords(d.priceRecords)
         if (d.marketShare) dynamicMarketShare.value = d.marketShare
         if (d.timestamp) marketTimestamp.value = d.timestamp
         if (Array.isArray(d.liveSources)) marketLiveSources.value = d.liveSources.filter((source: unknown): source is string => typeof source === 'string')
       } else {
         marketFetchFailed.value = true
       }
+    } else {
+      marketFetchFailed.value = true
     }
   } catch {
-    // 行情接口失败时继续使用已标注来源的本地静态快照。
-    marketFetchFailed.value = true
+    if (!marketViewDisposed) marketFetchFailed.value = true
   }
+  if (marketViewDisposed) return
+  marketLoading.value = false
+  await nextTick()
+  const price = init(priceEl.value); if (price) renderPrice(price)
+  const market = init(marketEl.value); if (market) renderMarket(market)
+}
+
+onMounted(async () => {
   await dataStore.loadSampleData()
   chartsLoading.value = false
   await nextTick()
   renderAll()
+  void loadMarketRecords()
 })
 onBeforeUnmount(() => {
+  marketViewDisposed = true
   charts.forEach((c) => c.dispose())
 })
 </script>

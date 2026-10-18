@@ -56,7 +56,7 @@ export const bizApi = {
     wrap(http.get('/factors')),
   generateReport: (payload: { standard: string; year: number; format: string; records?: unknown[] }) =>
     wrap(http.post('/reports/generate', payload)),
-  /** 碳市场行情快照（含时间戳 + 免责声明），离线时各视图回退 carbonMarket.ts 静态数据 */
+  /** 碳市场行情；官方页面读取可能较慢，仅此请求延长超时。 */
   getMarketQuotes: () =>
-    wrap(http.get('/market/quotes')),
+    wrap(http.get('/market/quotes', { timeout: 20000 })),
 }

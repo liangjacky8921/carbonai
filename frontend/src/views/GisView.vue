@@ -37,6 +37,15 @@
           <div class="flex items-center gap-1 text-[10px]"><span class="lg-dot" style="background:#84cc16" />0.3-0.6 中等</div>
           <div class="flex items-center gap-1 text-[10px]"><span class="lg-dot" style="background:#10b981" />&gt;0.6 茂密</div>
         </div>
+        <div class="map-legend gba-legend" v-else-if="mode === 'gba'" aria-label="大湾区城市分级图例">
+          <div class="gba-legend-title">城市分级 · 内置示例</div>
+          <div class="gba-legend-levels">
+            <div><span class="gba-legend-circle gba-legend-circle--red" />红 · 大</div>
+            <div><span class="gba-legend-circle gba-legend-circle--yellow" />黄 · 中</div>
+            <div><span class="gba-legend-circle gba-legend-circle--green" />绿 · 小</div>
+          </div>
+          <p class="gba-legend-note">圆圈大小表示分级，不代表实际排放量或污染扩散半径。</p>
+        </div>
       </div>
 
       <!-- 控制面板 -->
@@ -521,9 +530,17 @@ function renderGba() {
   pointMarkers.clear()
   if (heatLayer) { map.removeLayer(heatLayer); heatLayer = null }
   map.setView([22.85, 113.85], 8)
-  GBA_CITIES.forEach((city) => {
-    const color = city.emission > 4000 ? '#ef4444' : city.emission > 2500 ? '#f59e0b' : '#10b981'
-    const marker = L.circleMarker([city.lat, city.lon], { radius: 8 + city.emission / 900, color, weight: 2, fillColor: color, fillOpacity: 0.35 })
+  // 大圈先绘制，小圈后绘制，避免相邻城市的小标记被遮住。
+  const citiesByMarkerSize = [...GBA_CITIES].sort((a, b) => b.emission - a.emission)
+  citiesByMarkerSize.forEach((city) => {
+    const isRed = city.emission > 4000
+    const isYellow = city.emission > 2500
+    const color = isRed ? '#ef4444' : isYellow ? '#f59e0b' : '#10b981'
+    const marker = L.circleMarker([city.lat, city.lon], {
+      radius: isRed ? 24 : isYellow ? 16 : 9,
+      color, weight: 2, fillColor: color, fillOpacity: isRed ? 0.2 : isYellow ? 0.27 : 0.35,
+      className: `gba-city-marker gba-city-marker--${isRed ? 'red' : isYellow ? 'yellow' : 'green'}`,
+    })
       .bindTooltip(`${city.name} · ${city.emission} 万tCO₂`)
       .on('click', () => { selectedCity.value = city })
       .addTo(drawnItems!)
@@ -589,6 +606,15 @@ onBeforeUnmount(() => {
   border: 1px solid var(--c-border-2); border-radius: 10px; padding: 10px 12px;
 }
 .lg-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.gba-legend { width: 220px; max-width: calc(100% - 16px); color: var(--c-text); pointer-events: none; }
+.gba-legend-title { font-size: 11px; font-weight: 600; }
+.gba-legend-levels { display: flex; align-items: end; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: 10px; text-align: center; }
+.gba-legend-levels > div { display: flex; flex-direction: column; align-items: center; gap: 4px; white-space: nowrap; }
+.gba-legend-circle { display: block; border-radius: 50%; border: 2px solid currentColor; }
+.gba-legend-circle--red { width: 48px; height: 48px; color: #ef4444; background: rgba(239, 68, 68, .2); }
+.gba-legend-circle--yellow { width: 32px; height: 32px; color: #f59e0b; background: rgba(245, 158, 11, .27); }
+.gba-legend-circle--green { width: 18px; height: 18px; color: #10b981; background: rgba(16, 185, 129, .35); }
+.gba-legend-note { margin-top: 8px; color: var(--c-text-2); font-size: 10px; line-height: 1.5; }
 .city-detail .cell {
   background: var(--c-surface-2); border: 1px solid var(--c-border);
   border-radius: 8px; padding: 8px 10px;

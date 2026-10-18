@@ -4,6 +4,7 @@
 契约 {code, message, data} 由 app.schemas 提供。
 """
 import csv
+import html as html_lib
 import io
 import json
 import os
@@ -11,6 +12,7 @@ import re
 import time
 from datetime import datetime
 from typing import List, Optional
+from urllib.parse import urljoin
 
 from fastapi import APIRouter, UploadFile, File, Form
 from fastapi.responses import Response
@@ -415,16 +417,46 @@ def _http_text(url: str, timeout: int = 6) -> str:
 
 
 def _fetch_fudan_index() -> Optional[dict]:
-    """复旦碳价指数当期值（复旦大学可持续发展研究中心「当期指数」页，首条即最新 CEA 指数）。"""
+    """只读取复旦 2026 年最新一期文章中明确标注的 CEA 价格预期。"""
     try:
-        html = _http_text("https://rcsd.fudan.edu.cn/fdtjzs/zsdt/dqzs.htm")
-        title = re.search(r"(\d{4})年(\d{1,2})月全国碳排放配额（CEA）", html)
-        m = re.search(r"买入价格预期为([\d.]+)元/吨，卖出价格预期为([\d.]+)元/吨，中间价为([\d.]+)元/吨", html)
-        if not m:
+        listing_url = "https://rcsd.fudan.edu.cn/fdtjzs/zscx/a2026nfdtjzs.htm"
+        listing = _http_text(listing_url)
+        entries = re.findall(r'<a\s+href="([^"]+)"\s+class="mid">(.*?)</a>', listing, re.S)
+        latest = None
+        for href, entry in entries:
+            issue = re.search(r'<h3>2026年(\d{1,2})月复旦碳价指数</h3>', entry)
+            published = re.search(r'<time>(\d{4}-\d{2}-\d{2})</time>', entry)
+            if (issue and published and published.group(1) <= datetime.now().strftime("%Y-%m-%d")
+                    and (latest is None or published.group(1) > latest[0])):
+                latest = (published.group(1), int(issue.group(1)), href)
+        if latest is None:
             return None
-        month = f"{title.group(2)}月" if title else "当期"
-        return {"month": month, "buy": float(m.group(1)),
-                "sell": float(m.group(2)), "mid": float(m.group(3))}
+        published_at, issue_month, href = latest
+        source_url = urljoin(listing_url, href)
+        if not source_url.startswith("https://rcsd.fudan.edu.cn/info/"):
+            return None
+        article = _http_text(source_url)
+        if 'id="vsb_content"' not in article:
+            return None
+        body = article.split('id="vsb_content"', 1)[1]
+        plain = html_lib.unescape(re.sub(r'<[^>]+>', '', body))
+        pattern = (r'(2026)年(\d{1,2})月全国碳排放配额（CEA）的买入价格预期为'
+                   r'([\d.]+)元/吨，卖出价格预期为([\d.]+)元/吨，中间价为([\d.]+)元/吨')
+        forecasts = []
+        for match in re.finditer(pattern, plain):
+            month = int(match.group(2))
+            buy, sell, mid = map(float, match.group(3, 4, 5))
+            if 1 <= month <= 12 and 0 < buy <= mid <= sell:
+                forecasts.append({"product": "CEA", "kind": "expected_mid", "status": "expected",
+                                  "targetMonth": f"2026-{month:02d}", "value": mid, "unit": "¥/t",
+                                  "publishedAt": published_at, "sourceUrl": source_url})
+        if not forecasts:
+            return None
+        current = next((item for item in forecasts if item["targetMonth"] == f"2026-{issue_month:02d}"), None)
+        if current is None:
+            return None
+        return {"month": f'{int(current["targetMonth"][-2:])}月',
+                "mid": current["value"], "forecasts": forecasts}
     except Exception:
         return None
 
@@ -443,7 +475,7 @@ def _fetch_cea_official() -> Optional[dict]:
         newest = max(items, key=lambda t: (t[1], t[2], t[3]))
         date_str = f"{newest[1]}-{newest[2]}-{newest[3]}"
         age = (datetime.now() - datetime.strptime(date_str, "%Y-%m-%d")).days
-        if age > 7:  # 文章停更/滞后时放弃实源，保留快照值
+        if age < 0 or age > 7:  # 只采纳近期已经发布的交易日
             return None
         art = _http_text("https://www.cneeex.com" + newest[0])
         close = re.search(r"收盘价([\d.]+)元/吨", art)
@@ -453,6 +485,7 @@ def _fetch_cea_official() -> Optional[dict]:
         open_ = re.search(r"开盘价([\d.]+)元/吨", art)
         return {
             "date": date_str,
+            "sourceUrl": "https://www.cneeex.com" + newest[0],
             "close": float(close.group(1)),
             "open": float(open_.group(1)) if open_ else None,
             "chg": (f"较前日{'+' if chg.group(1) == '上涨' else '-'}{chg.group(2)}%") if chg else "",
@@ -469,6 +502,7 @@ def _live_market_snapshot() -> dict:
         return cached
     snap = json.loads(json.dumps(_MARKET_SNAPSHOT))
     live = []
+    price_records = []
     cea = _fetch_cea_official()
     if cea:
         for q in snap["quotes"]:
@@ -477,18 +511,24 @@ def _live_market_snapshot() -> dict:
                 q["note"] = f"{cea['date']} 收盘 {cea['chg']}".strip()
                 q["source"] = "上海环交所·实源"
         snap["marketShare"][0]["value"] = cea["close"]
+        price_records.append({"product": "CEA", "kind": "spot_close", "status": "observed",
+                              "targetMonth": cea["date"][:7], "observedAt": cea["date"],
+                              "publishedAt": cea["date"], "sourceUrl": cea["sourceUrl"],
+                              "value": cea["close"], "unit": "¥/t"})
         live.append("CEA官方日度")
     fd = _fetch_fudan_index()
     if fd:
         for q in snap["quotes"]:
             if q["key"] == "fdi":
-                q["name"] = f"复旦碳价指数({fd['month']})"
+                q["name"] = f"复旦 CEA 价格预期({fd['month']})"
                 q["price"] = f"{fd['mid']:.2f}"
-                q["note"] = f"买入{fd['buy']:.2f} 卖出{fd['sell']:.2f}"
+                q["note"] = "官方价格预期中间价；非成交价"
                 q["source"] = "复旦研究中心·实源"
-        live.append("复旦碳价指数")
+        price_records.extend(fd["forecasts"])
+        live.append("复旦 CEA 价格预期")
+    snap["priceRecords"] = price_records
     snap["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    snap["disclaimer"] = ("CEA/复旦碳价指数为官方公开页实源数据（按交易日/按月更新），"
+    snap["disclaimer"] = ("CEA 日收盘价/复旦 CEA 价格预期取自官方公开页（按交易日/发布期更新），"
                           "其余为参考快照；实时交易请以交易所官网为准")
     snap["liveSources"] = live
     _MARKET_CACHE["data"] = snap
