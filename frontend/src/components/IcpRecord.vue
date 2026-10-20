@@ -7,6 +7,7 @@
       rel="noopener noreferrer"
     >{{ icp }}</a>
     <span class="author-credit" aria-label="作者署名">Lam Jacky梁家深</span>
+    <router-link class="data-use-link" to="/data-use/carbon-mapper">遥感数据使用说明</router-link>
   </div>
 </template>
 
@@ -45,4 +46,6 @@ const icp = '粤ICP备2026140571号'
   color: color-mix(in srgb, currentColor 52%, transparent);
   content: '·';
 }
+.data-use-link { color: var(--c-text-2, #b8c0cc); text-decoration: underline; text-underline-offset: 3px; }
+.data-use-link:hover { color: #d8e9de; }
 </style>

@@ -46,6 +46,7 @@
           </div>
           <p class="gba-legend-note">圆圈大小表示分级，不代表实际排放量或污染扩散半径。</p>
         </div>
+        <div v-if="observationEnabled && observationStatus === 'ready'" class="observation-map-legend">● CH₄ 甲烷 / ● CO₂ 二氧化碳 · 离散遥感观测</div>
       </div>
 
       <!-- 控制面板 -->
@@ -54,9 +55,17 @@
           <div class="gis-panel-title">图层与来源</div>
           <div class="gis-layer-row"><span>高德底图</span><span>已启用</span></div>
           <div class="gis-layer-row"><span>{{ mode === 'forest' ? '林地边界' : mode === 'heatmap' ? '排放热力与点位' : '城市点位' }}</span><span>{{ mode === 'forest' ? (gisResult ? '已显示' : '暂无边界') : mode === 'heatmap' ? (dataStore.points.length ? `${dataStore.points.length} 个点位` : '暂无点位') : '内置示例' }}</span></div>
-          <div class="gis-layer-row gis-layer-disabled"><span>外部卫星观测</span><span>预留 · 未接入</span></div>
+          <div class="gis-layer-row"><span>温室气体遥感观测</span><span>{{ observationEnabled ? '已开启' : '已关闭' }}</span></div>
           <p class="gis-note">点位输入为经纬度；高德底图采用其自身坐标体系，跨来源叠加可能有位置偏差。用户上传不代表已核实监测数据。更新时间未提供。</p>
         </div>
+        <RemoteObservationPanel
+          :enabled="observationEnabled" :gas="observationGas" :from-date="observationFrom"
+          :to-date="observationTo" :status="observationStatus" :count="observations.length"
+          :items="observations"
+          :fetched-at="observationFetchedAt" :selected="selectedObservation" :detail-loading="observationDetailLoading"
+          :message="observationMessage" @toggle="setObservationEnabled" @gas="setObservationGas"
+          @from-date="setObservationFrom" @to-date="setObservationTo" @query="queryObservations" @select="selectObservationById"
+        />
         <!-- 林地碳汇面板 -->
         <div v-if="mode === 'forest'" class="c-card p-4 space-y-3">
           <div class="gis-panel-title">林地边界与估算</div>
@@ -182,6 +191,8 @@ import { GBA_CITIES } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
 import { useConfirmAction } from '@/composables/useConfirmAction'
 import { MONITORING_CONFIG } from '@/utils/format'
+import RemoteObservationPanel from '@/components/gis/RemoteObservationPanel.vue'
+import { gcj02ToWgs84, getRemoteObservation, listRemoteObservations, wgs84ToGcj02, type RemoteObservation } from '@/api/carbonMapper'
 
 const dataStore = useDataStore()
 const toast = useToast()
@@ -198,11 +209,24 @@ let map: L.Map | null = null
 let heatLayer: any = null
 let drawnItems: L.LayerGroup | null = null
 let basemapTiles: L.TileLayer | null = null
+let observationLayer: L.LayerGroup | null = null
 let selectedMarker: L.CircleMarker | null = null
 let forestPolygon: L.Polygon | null = null
 const pointMarkers = new Map<EmissionPoint, L.CircleMarker>()
 const basemapError = ref(false)
 const mapError = ref('')
+const observationEnabled = ref(false)
+const observationGas = ref<'CH4' | 'CO2'>('CH4')
+const observationFrom = ref('')
+const observationTo = ref('')
+const observationStatus = ref<'idle' | 'loading' | 'ready' | 'empty' | 'disabled' | 'error'>('idle')
+const observationMessage = ref('')
+const observationFetchedAt = ref<string | null>(null)
+const observations = ref<RemoteObservation[]>([])
+const selectedObservation = ref<RemoteObservation | null>(null)
+const observationDetailLoading = ref(false)
+let observationRequest: AbortController | null = null
+let observationDetailRequest: AbortController | null = null
 const dataError = ref('')
 const pointQuery = ref('')
 const selectedPoint = ref<EmissionPoint | null>(null)
@@ -242,6 +266,12 @@ function initMap() {
       subdomains: ['1', '2', '3', '4'], attribution: '© 高德地图 | CarbonAI', maxZoom: 18,
     }).on('tileerror', () => { basemapError.value = true }).on('tileload', () => { basemapError.value = false }).addTo(map)
     drawnItems = L.layerGroup().addTo(map)
+    observationLayer = L.layerGroup().addTo(map)
+    map.on('moveend', () => {
+      if (observationEnabled.value && ['loading', 'ready', 'empty'].includes(observationStatus.value)) {
+        resetObservations()
+      }
+    })
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (!drawMode || !currentPolygon) return
       currentPolygon.addLatLng(e.latlng)
@@ -255,6 +285,86 @@ function initMap() {
 
 function escapeHtml(value: unknown) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] || char)
+}
+
+function resetObservations() {
+  observationRequest?.abort()
+  observationDetailRequest?.abort()
+  observationLayer?.clearLayers()
+  observations.value = []
+  selectedObservation.value = null
+  observationFetchedAt.value = null
+  observationStatus.value = 'idle'
+  observationMessage.value = ''
+  observationDetailLoading.value = false
+}
+
+function setObservationEnabled(enabled: boolean) {
+  observationEnabled.value = enabled
+  resetObservations()
+}
+function setObservationGas(gas: 'CH4' | 'CO2') { observationGas.value = gas; resetObservations() }
+function setObservationFrom(date: string) { observationFrom.value = date; resetObservations() }
+function setObservationTo(date: string) { observationTo.value = date; resetObservations() }
+
+async function selectObservation(item: RemoteObservation) {
+  observationDetailRequest?.abort()
+  selectedObservation.value = item
+  observationDetailLoading.value = true
+  const request = new AbortController()
+  observationDetailRequest = request
+  try {
+    const detail = await getRemoteObservation(item.id, request.signal)
+    if (!request.signal.aborted && observationEnabled.value) selectedObservation.value = detail
+  } catch {
+    if (!request.signal.aborted) observationMessage.value = '详情暂时无法更新；当前显示列表中的观测信息。'
+  } finally {
+    if (observationDetailRequest === request) observationDetailLoading.value = false
+  }
+}
+
+function selectObservationById(id: string) {
+  const item = observations.value.find((candidate) => candidate.id === id)
+  if (item) void selectObservation(item)
+}
+
+async function queryObservations() {
+  if (!observationEnabled.value || !map) return
+  resetObservations()
+  const bounds = map.getBounds()
+  const [west, south] = gcj02ToWgs84(bounds.getWest(), bounds.getSouth())
+  const [east, north] = gcj02ToWgs84(bounds.getEast(), bounds.getNorth())
+  const request = new AbortController()
+  observationRequest = request
+  observationStatus.value = 'loading'
+  try {
+    const result = await listRemoteObservations({
+      bbox: [west, south, east, north], gas: observationGas.value,
+      from: observationFrom.value || undefined, to: observationTo.value || undefined, limit: 100,
+    }, request.signal)
+    if (request.signal.aborted || !observationEnabled.value) return
+    observations.value = result.items
+    observationFetchedAt.value = result.fetchedAt
+    observationStatus.value = result.items.length ? 'ready' : 'empty'
+    result.items.forEach((item) => {
+      const [lon, lat] = wgs84ToGcj02(item.longitude, item.latitude)
+      L.circleMarker([lat, lon], {
+        radius: 6, color: item.gas === 'CH4' ? '#80e4ad' : '#69b8dc',
+        fillColor: item.gas === 'CH4' ? '#10b981' : '#0ea5e9', fillOpacity: .75, weight: 2,
+        className: 'remote-observation-marker',
+      }).bindTooltip(`${item.gas === 'CH4' ? 'CH₄' : 'CO₂'} · ${escapeHtml(item.observedAt || '时间未提供')}`)
+        .on('click', () => { void selectObservation(item) }).addTo(observationLayer!)
+    })
+  } catch (error: any) {
+    if (request.signal.aborted) return
+    const detail = String(error?.response?.data?.detail || '')
+    observationStatus.value = error?.response?.status === 503 && /disabled|credential/i.test(detail) ? 'disabled' : 'error'
+    const status = error?.response?.status
+    observationMessage.value = status === 401 ? '请先登录平台账户，再查询受控研究观测。'
+      : status === 403 ? '当前账户未获遥感观测访问权限。'
+        : status === 429 ? '查询额度已用完，请稍后重试。'
+          : '观测服务暂时不可用；未使用示例数据替代。'
+  }
 }
 
 function selectPoint(index: number) {
@@ -568,6 +678,9 @@ onMounted(async () => {
 function resize() { map?.invalidateSize(); ndviChart?.resize(); biomassChart?.resize() }
 useElementResize([mapEl, ndviEl, biomassEl], resize)
 onBeforeUnmount(() => {
+  observationRequest?.abort()
+  observationDetailRequest?.abort()
+  observationLayer?.clearLayers()
   // T10: 清理 SSE + 实时点位层
   sseClient?.close()
   realtimePoints?.remove()
@@ -591,6 +704,7 @@ onBeforeUnmount(() => {
 .gis-layer-row { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--c-border); padding: 9px 0; color: var(--c-text-2); font-size: 11px; }
 .gis-layer-row span:last-child { color: var(--c-green); white-space: nowrap; }
 .gis-layer-disabled span:last-child { color: var(--c-text-3); }
+.observation-map-legend { position: absolute; z-index: 500; left: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: 7px 10px; border: 1px solid var(--c-border-2); border-radius: 6px; background: rgba(8,20,16,.92); color: var(--c-text); font-size: 10px; pointer-events: none; }
 .gis-note { color: var(--c-text-3); font-size: 11px; line-height: 1.6; }
 .gis-map-label { position: absolute; z-index: 500; top: 12px; left: 50px; max-width: calc(100% - 64px); padding: 7px 10px; border: 1px solid var(--c-border-2); border-radius: 6px; background: rgba(8,20,16,.92); color: var(--c-text); font-size: 11px; pointer-events: none; }
 .gis-map-alert { position: absolute; z-index: 1001; left: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px)); padding: 10px 12px; border: 1px solid #b0783d; border-radius: 6px; background: #241c12; color: #ffdaad; font-size: 12px; }
@@ -631,6 +745,7 @@ onBeforeUnmount(() => {
 @media (max-width: 480px) {
   .gis-map-frame { height: 430px; }
   .gis-map-label { left: 12px; top: 60px; }
+  .observation-map-legend { top: 94px; bottom: auto; }
   .map-legend { right: 8px; bottom: 28px; padding: 6px 8px; }
   .gis-meta span { font-size: 10px; }
 }
