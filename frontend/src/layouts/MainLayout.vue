@@ -259,7 +259,7 @@ onMounted(() => {
 .collapse-btn:hover { color: var(--c-green); border-color: var(--c-green); }
 .topbar {
   height: 54px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 18px; border-bottom: 0.5px solid var(--c-border);
+  padding: 0 18px; border-bottom: 1px solid var(--c-border);
   background: rgba(13, 23, 20, 0.72);
   backdrop-filter: blur(20px) saturate(1.5);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);

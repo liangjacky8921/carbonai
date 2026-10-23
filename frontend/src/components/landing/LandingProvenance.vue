@@ -6,7 +6,7 @@ const steps = [
   { number: '02', title: '数据校验', summary: '核对边界与单位', description: '检查字段完整性、统计边界与计量单位，并呈现已有的低置信提示。', iconPath: 'm5 12 4 4L19 6' },
   { number: '03', title: '排放核算', summary: '匹配因子并计算', description: '匹配排放因子来源与版本，执行现有核算流程并形成可复核的核算明细。', iconPath: 'M5 5h14v14H5zM8 9h8M8 13h8' },
   { number: '04', title: 'GIS 时空分析', summary: '理解空间关系', description: '结合现有地图图层、排放点位与轨迹，在地理上下文中查看位置关系。', iconPath: 'M12 21s6-5.1 6-11a6 6 0 1 0-12 0c0 5.9 6 11 6 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z' },
-  { number: '05', title: '预警与报告', summary: '复核提示与输出', description: '复核已有阈值提示，并衔接报告查看与导出；具体内容以实际配置为准。', iconPath: 'M6 3h9l3 3v15H6zM15 3v4h4M9 12h6M9 16h6' },
+  { number: '05', title: '预警与报告', summary: '复核提示与输出', description: '复核已有阈值提示，并衔接报告查看与导出。具体内容以实际配置为准。', iconPath: 'M6 3h9l3 3v15H6zM15 3v4h4M9 12h6M9 16h6' },
 ] as const
 
 const activeIndex = ref(0)
@@ -27,8 +27,8 @@ const activeStep = computed(() => steps[activeIndex.value])
       </g>
     </svg>
     <div class="provenance-heading">
-      <p class="chapter">03 / 06 · DATA INTELLIGENCE</p>
-      <h2 id="provenance-title">让每一步核算，<br />都有清楚的<span>来路。</span></h2>
+      <p class="chapter">03 / 06 · 数据路径</p>
+      <h2 id="provenance-title">让每一步核算<br />都有清楚的<span>来路</span></h2>
       <p class="intro">平台将数据整理、边界校验、排放核算、空间分析与报告衔接放进同一条可检查的工作路径。</p>
       <nav class="process-actions" aria-label="数据链路相关功能">
         <RouterLink :to="{ name: 'accounting' }">核算模块</RouterLink>
@@ -70,7 +70,7 @@ const activeStep = computed(() => steps[activeIndex.value])
 .contour-field__lines path:nth-child(2n) { stroke: rgb(139 194 151 / 14%); }
 .provenance-heading, .process-stage { position: relative; z-index: 1; }
 .provenance-heading { align-self: start; }
-.chapter { margin: 6px 0 30px; color: #82978a; font-size: 10px; letter-spacing: .14em; }
+.chapter { margin: 6px 0 30px; color: #82978a; font-size: 11px; letter-spacing: .14em; }
 h2 { margin: 0; font-size: clamp(38px, 4.2vw, 62px); font-weight: 470; line-height: 1.22; letter-spacing: -.045em; text-wrap: balance; }
 h2 span { color: #a8cfb2; }
 .intro { max-width: 420px; margin: 34px 0 0; color: var(--landing-muted); font-size: 14px; line-height: 1.95; }
@@ -86,9 +86,9 @@ h2 span { color: #a8cfb2; }
 .process-list button:focus-visible { outline: 1px solid #84a88f; outline-offset: 4px; }
 .node-mark { position: relative; z-index: 1; display: grid; width: 66px; height: 66px; margin-bottom: 25px; place-items: center; border: 1px solid #405849; border-radius: 50%; background: #0d1511; box-shadow: 0 0 0 7px rgb(14 22 18 / 82%); transition: border-color 180ms, background-color 180ms, box-shadow 180ms; }
 .node-mark svg { width: 23px; height: 23px; fill: none; stroke: #82998a; stroke-width: 1.25; stroke-linecap: round; stroke-linejoin: round; transition: stroke 180ms; }
-.node-number { position: absolute; top: 5px; right: 10px; color: #52675a; font-size: 9px; letter-spacing: .1em; font-variant-numeric: tabular-nums; }
+.node-number { position: absolute; top: 5px; right: 10px; color: #52675a; font-size: 11px; letter-spacing: .1em; font-variant-numeric: tabular-nums; }
 .process-list strong { display: block; min-height: 44px; font-size: 14px; font-weight: 520; line-height: 1.45; }
-.process-list small { display: block; margin-top: 8px; color: #718379; font-size: 10px; line-height: 1.55; }
+.process-list small { display: block; margin-top: 8px; color: #718379; font-size: 11px; line-height: 1.55; }
 .process-list li.active button { border-color: #70927b; background: linear-gradient(180deg, rgb(77 124 91 / 8%), transparent); }
 .process-list li.active .node-mark { border-color: #94bea0; background: #132119; box-shadow: 0 0 0 7px rgb(14 22 18 / 90%), 0 0 30px rgb(83 153 103 / 18%); }
 .process-list li.active .node-mark svg { stroke: #b9d9c0; }
@@ -96,9 +96,9 @@ h2 span { color: #a8cfb2; }
 .process-detail { display: grid; grid-template-columns: 56px minmax(0, 1fr); gap: 22px; min-height: 154px; margin-top: 42px; padding: 28px 30px; border: 1px solid #293b30; background: rgb(8 14 11 / 72%); }
 .detail-number { padding-top: 3px; color: #73927c; font-size: 11px; letter-spacing: .12em; font-variant-numeric: tabular-nums; }
 .process-detail p { max-width: 590px; margin: 0; color: var(--landing-muted); font-size: 12px; line-height: 1.8; }
-.process-detail div > p:first-child { margin-bottom: 6px; color: #71867a; font-size: 9px; letter-spacing: .12em; }
+.process-detail div > p:first-child { margin-bottom: 6px; color: #71867a; font-size: 11px; letter-spacing: .12em; }
 .process-detail h3 { margin: 0 0 10px; font-size: 19px; font-weight: 520; }
-.scope-note { max-width: 680px; margin: 17px 0 0; color: #72857a; font-size: 10px; line-height: 1.7; }
+.scope-note { max-width: 680px; margin: 17px 0 0; color: #72857a; font-size: 11px; line-height: 1.7; }
 @keyframes contour-drift { from { transform: translate3d(-1%, 0, 0) scale(1.01); } to { transform: translate3d(1%, -.8%, 0) scale(1.025); } }
 @media (max-width: 960px) { .provenance { grid-template-columns: 1fr; gap: 74px; }.provenance-heading { max-width: 700px; }.intro { max-width: 600px; }.process-stage { width: 100%; } }
 @media (max-width: 700px) { .provenance { gap: 58px; padding: 88px 24px 78px; }.contour-field { opacity: .25; }.contour-field__lines path:nth-child(even) { display: none; }.process-list { grid-template-columns: 1fr; gap: 0; }.process-list::before { top: 28px; bottom: 28px; left: 28px; width: 1px; height: auto; background: linear-gradient(180deg, transparent, #56705f 8%, #56705f 92%, transparent); }.process-list button { grid-template-columns: 58px 36px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 12px; min-height: 94px; padding: 10px 8px 16px 0; align-items: center; border-bottom-color: #233229; }.node-mark { grid-row: 1 / 3; width: 56px; height: 56px; margin: 0; }.node-number { position: static; grid-column: 2; grid-row: 1 / 3; align-self: center; }.process-list strong { grid-column: 3; min-height: 0; align-self: end; }.process-list small { grid-column: 3; margin-top: 2px; align-self: start; }.process-detail { grid-template-columns: 42px minmax(0, 1fr); min-height: 170px; margin-top: 30px; padding: 24px 20px; } }
