@@ -92,6 +92,16 @@ function closeMobileMenu() {
   -webkit-font-smoothing: antialiased;
 }
 
+
+/* Homepage display titles share the Hero font; keep body text and business pages independent. */
+.landing-page :deep(:is(#hero-title, #capabilities-title, #provenance-title, #spatial-heading, #product-title, #closing-title)) {
+  font-family: var(--font-head);
+  font-size: clamp(34px, 4vw, 58px);
+  font-weight: 500;
+  line-height: 1.23;
+  letter-spacing: -0.045em;
+}
+
 .landing-page :deep(a) {
   color: inherit;
   text-decoration: none;

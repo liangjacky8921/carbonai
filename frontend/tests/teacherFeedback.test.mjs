@@ -27,5 +27,9 @@ test('Regional geometry stays finite and uses outward surface triangles on the o
 test('Existing headline text and breaks retained with smaller bounded typography',()=>{
  const source=readFileSync(new URL('../src/components/landing/LandingHero.vue',import.meta.url),'utf8')
  assert.match(source,/看清排放<br \/>理解空间<br \/>让决策有据/)
- assert.match(source,/clamp\(40px, 4.6vw, 66px\)/)
+ const page=readFileSync(new URL('../src/components/landing/LandingPage.vue',import.meta.url),'utf8')
+ assert.match(page,/font-size: clamp\(34px, 4vw, 58px\)/)
+ for(const id of ['hero-title','capabilities-title','provenance-title','spatial-heading','product-title','closing-title'])assert.ok(page.includes('#'+id))
+ const globe=readFileSync(new URL('../src/components/landing/PointCloudGlobe.vue',import.meta.url),'utf8')
+ assert.doesNotMatch(globe,/class="china-key"/)
 })
