@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
-    <div class="c-card p-4 trajectory-context" role="note"><strong>轨迹碳核算工作区</strong><span>当前轨迹：{{ dataStore.source.trajectory === 'user' ? '用户上传' : '内置示例或未加载' }}；计算使用页面内置近似参数。所选标准仅作界面分类，结果需核对路径坐标、载重、因子来源及适用范围。</span></div>
+    <div class="c-card p-4 trajectory-context" role="note"><strong>轨迹碳核算工作区</strong><span>当前轨迹：{{ dataStore.source.trajectory === 'user' ? '用户上传' : '内置示例或未加载' }}；点间距离为球面距离（非道路里程）；载重单位 t，缺失时不估算。无车辆ID时按单车处理；无时区时间按东八区解析。计算保留内置示意因子0.078及原修正系数，按 kgCO₂/(t·km) 作展示假设，来源与气体口径未核实，不能作为正式核算依据。所选标准仅作界面分类，结果需核对路径坐标、载重、因子来源及适用范围。</span></div>
     <div v-if="loadError" class="trajectory-error" role="alert">{{ loadError }}</div>
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- 地图 + 上传 -->
@@ -52,7 +52,7 @@
         <ChartCard title="路段碳排放分布 · kgCO₂" height="300" :sample="dataStore.source.trajectory !== 'user'" :user-tag="dataStore.source.trajectory === 'user'" source-note="当前轨迹与页面内置估算参数">
           <div ref="segEl" class="w-full h-full" />
         </ChartCard>
-        <ChartCard title="各车型单位排放对比 · kgCO₂e/t·km" height="300" :sample="dataStore.source.trajectory !== 'user'" :user-tag="dataStore.source.trajectory === 'user'" source-note="当前轨迹与页面内置估算参数">
+        <ChartCard title="各车型单位排放对比 · kgCO₂/t·km" height="300" :sample="dataStore.source.trajectory !== 'user'" :user-tag="dataStore.source.trajectory === 'user'" source-note="当前轨迹与页面内置估算参数">
           <div ref="vehEl" class="w-full h-full" />
         </ChartCard>
       </div>
@@ -66,10 +66,10 @@
               <tr v-for="(s, i) in segments" :key="i">
                 <td>{{ i + 1 }}</td>
                 <td>{{ s.vehicle }}</td>
-                <td class="num text-right">{{ s.dist }}</td>
+                <td class="num text-right">{{ s.dist.toFixed(2) }}</td>
                 <td class="num text-right">{{ s.load }}</td>
-                <td class="num text-right">{{ s.tonKm }}</td>
-                <td class="num text-right text-[var(--c-green)] font-semibold">{{ s.carbon }}</td>
+                <td class="num text-right">{{ s.tonKm.toFixed(2) }}</td>
+                <td class="num text-right text-[var(--c-green)] font-semibold">{{ s.carbon.toFixed(3) }}</td>
               </tr>
             </tbody>
           </table>
@@ -103,7 +103,7 @@ import { useElementResize } from '@/composables/useElementResize'
 import ChartCard from '@/components/ChartCard.vue'
 import DataUpload from '@/components/DataUpload.vue'
 import EmptyState from '@/components/EmptyState.vue'
-import { Guide } from '@element-plus/icons-vue'
+import { groupTrajectory, estimateTrajectory } from '@/utils/trajectory'
 import { useDataStore, parseTrajCsv, type TrajPoint } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
 import { useConfirmAction } from '@/composables/useConfirmAction'
@@ -121,13 +121,15 @@ const calculating = ref(false)
 const loadError = ref('')
 
 let map: L.Map | null = null
-let trajLine: L.Polyline | null = null
+let trajLine: L.FeatureGroup | null = null
 let segChart: echarts.ECharts | null = null
 let vehChart: echarts.ECharts | null = null
 let trajData: TrajPoint[] = []
+let sizeTimer: ReturnType<typeof setTimeout> | null = null
+let disposed = false
 
 const result = ref<{ dist: string; tonKm: string; carbon: string } | null>(null)
-const segments = ref<{ dist: string; tonKm: string; carbon: string; load: number; vehicle: string }[]>([])
+const segments = ref<ReturnType<typeof estimateTrajectory>['segments']>([])
 
 // 新手引导：首次访问显示，用户关闭后 localStorage 标记不再显示
 const GUIDE_KEY = 'carbonai_traj_guided_v6'
@@ -140,40 +142,56 @@ function dismissGuide() {
 const cargoFactor: Record<string, number> = { normal: 1, cold: 1.32, danger: 1.18, bulk: 1.1 }
 
 function initMap() {
-  if (map || !mapEl.value) return
+  if (disposed || map || !mapEl.value) return
   map = L.map(mapEl.value, { center: [22.75, 114.15], zoom: 11 })
   L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
     subdomains: ['1', '2', '3', '4'], attribution: '© 高德地图 | 轨迹碳核算', maxZoom: 18,
   }).addTo(map)
-  setTimeout(() => map?.invalidateSize(), 300)
+  sizeTimer = setTimeout(() => { if (!disposed) map?.invalidateSize() }, 300)
+}
+
+function clearTrajectory() {
+  trajData = []
+  result.value = null
+  segments.value = []
+  if (trajLine && map) { map.removeLayer(trajLine); trajLine = null }
+  segChart?.clear(); vehChart?.clear()
 }
 
 function renderTrajectory(pts: TrajPoint[]) {
+  const groups = groupTrajectory(pts)
   initMap()
   if (!map || !pts.length) return
   if (trajLine) map.removeLayer(trajLine)
-  const coords = pts.map((p) => [p.lat, p.lon] as [number, number])
-  trajLine = L.polyline(coords, { color: '#10b981', weight: 4, opacity: 0.85 }).addTo(map)
+  trajLine = L.featureGroup().addTo(map)
+  for (const [id, group] of groups) {
+    const coords = group.map(p => [p.lat, p.lon] as [number, number])
+    L.polyline(coords, { color: '#10b981', weight: 4, opacity: 0.85 }).addTo(trajLine)
+    L.circleMarker(coords[0], { radius: 4 }).bindPopup(() => {
+      const label = document.createElement('span'); label.textContent = `${id} · 起点`; return label
+    }).addTo(trajLine)
+    L.circleMarker(coords[coords.length - 1], { radius: 4 }).bindPopup('终点').addTo(trajLine)
+  }
   map.fitBounds(trajLine.getBounds().pad(0.15))
-  L.marker(coords[0]).bindPopup('🚩 起点').addTo(map)
-  L.marker(coords[coords.length - 1]).bindPopup('🏁 终点').addTo(map)
 }
 
 async function loadDemo() {
   loadError.value = ''
-  const csv = await dataStore.loadSampleTrajectory()
-  if (!csv.length) {
-    loadError.value = '示例轨迹加载失败，请稍后重试。'
-    toast.error('示例轨迹加载失败')
-    return
+  clearTrajectory()
+  try {
+    const points = await dataStore.loadSampleTrajectory()
+    trajData = points
+    renderTrajectory(points)
+    toast.success(`已加载示例轨迹：${groupTrajectory(points).size} 辆车 ${points.length} 个轨迹点`)
+  } catch (error) {
+    loadError.value = error instanceof Error ? error.message : '示例轨迹加载失败'
+    toast.error(loadError.value)
   }
-  trajData = csv
-  renderTrajectory(csv)
-  toast.success(`已加载示例轨迹：${new Set(csv.map((c) => c.vehicleId || 'default')).size} 辆车 ${csv.length} 个轨迹点`)
 }
 
 async function onFile(file: File) {
   loadError.value = ''
+  clearTrajectory()
   try {
     if (!file.name.toLowerCase().endsWith('.csv') || !file.size) throw new Error('请选择非空的 CSV 轨迹文件。')
     const text = await file.text()
@@ -193,45 +211,30 @@ async function resetTraj() {
   const confirmed = await confirmAction('这会删除当前浏览器中保存的轨迹数据和当前核算结果，且无法撤销。', '清除轨迹数据？', '删除轨迹')
   if (!confirmed) return
   dataStore.resetTrajectory()
-  trajData = []
-  result.value = null
-  segments.value = []
-  if (trajLine && map) { map.removeLayer(trajLine); trajLine = null }
+  clearTrajectory()
   toast.info('已清除轨迹数据')
 }
 
 function calculate() {
-  if (!trajData.length) { toast.warning('请先加载轨迹数据'); return }
   calculating.value = true
-  setTimeout(() => {
-    let totalDist = 0, totalTonKm = 0, totalCarbon = 0
-    const segs: typeof segments.value = []
-    const vehStats: Record<string, { carbon: number; tonKm: number }> = {}
-    for (let i = 1; i < trajData.length; i++) {
-      const p1 = trajData[i - 1], p2 = trajData[i]
-      const dist = Math.sqrt(Math.pow(p2.lat - p1.lat, 2) + Math.pow(p2.lon - p1.lon, 2)) * 111
-      totalDist += dist
-      const speedFactor = p1.speed > 60 ? 1.15 : p1.speed < 30 ? 1.3 : 1
-      const loadFactor = 1 + (p1.load || 15) / 30 * 0.3
-      const ef = 0.078 * speedFactor * loadFactor * (cargoFactor[cargoType.value] || 1)
-      const tonKm = dist * (p1.load || 15) / 1000
-      totalTonKm += tonKm
-      const carbon = ef * tonKm
-      totalCarbon += carbon
-      segs.push({ dist: dist.toFixed(2), tonKm: tonKm.toFixed(2), carbon: carbon.toFixed(2), load: p1.load, vehicle: p1.vehicle })
-      const vs = vehStats[p1.vehicle] || (vehStats[p1.vehicle] = { carbon: 0, tonKm: 0 })
-      vs.carbon += carbon; vs.tonKm += tonKm
-    }
-    segments.value = segs
+  loadError.value = ''
+  try {
+    const estimate = estimateTrajectory(trajData, cargoFactor[cargoType.value] || 1)
+    segments.value = estimate.segments
     result.value = {
-      dist: (totalDist / 1000 * 111 / 111).toFixed(1),
-      tonKm: totalTonKm.toFixed(1),
-      carbon: totalCarbon.toFixed(1),
+      dist: estimate.totals.dist.toFixed(1),
+      tonKm: estimate.totals.tonKm.toFixed(1),
+      carbon: estimate.totals.carbon.toFixed(1),
     }
+    nextTick(() => renderCharts(estimate.vehStats))
+    toast.info(`轨迹示意估算：${result.value.carbon} kgCO₂；非标准合规核算，请核对参数来源。`)
+  } catch (error) {
+    result.value = null; segments.value = []
+    loadError.value = error instanceof Error ? error.message : '轨迹估算失败'
+    toast.error(loadError.value)
+  } finally {
     calculating.value = false
-    nextTick(() => renderCharts(vehStats))
-    toast.info(`轨迹示意估算：${totalCarbon.toFixed(1)} kgCO₂；请核对参数和数据来源。`)
-  }, 600)
+  }
 }
 
 function renderCharts(vehStats: Record<string, { carbon: number; tonKm: number }>) {
@@ -251,7 +254,7 @@ function renderCharts(vehStats: Record<string, { carbon: number; tonKm: number }
     tooltip: { trigger: 'axis', ...tt },
     grid: { left: '3%', right: '5%', bottom: '12%', top: '12%', containLabel: true },
     xAxis: { type: 'category', data: vehEntries.map((v) => v[0]), ...axis },
-    yAxis: { type: 'value', name: 'kgCO₂e/t·km', nameTextStyle: { color: '#5f7a6f' }, ...axis },
+    yAxis: { type: 'value', name: 'kgCO₂/t·km', nameTextStyle: { color: '#5f7a6f' }, ...axis },
     series: [{
       type: 'bar', barWidth: '40%',
       data: vehEntries.map(([, v]) => +(v.tonKm ? v.carbon / v.tonKm : 0).toFixed(3)),
@@ -264,7 +267,12 @@ function renderCharts(vehStats: Record<string, { carbon: number; tonKm: number }
 function resize() { map?.invalidateSize(); segChart?.resize(); vehChart?.resize() }
 useElementResize([mapEl, segEl, vehEl], resize)
 onMounted(() => { initMap() })
-onBeforeUnmount(() => { map?.remove(); segChart?.dispose(); vehChart?.dispose() })
+onBeforeUnmount(() => {
+  disposed = true
+  if (sizeTimer) clearTimeout(sizeTimer)
+  map?.off(); map?.remove(); map = null
+  segChart?.dispose(); vehChart?.dispose()
+})
 </script>
 
 <style scoped>

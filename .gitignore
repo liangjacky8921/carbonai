@@ -31,3 +31,6 @@ vite.config.ts.timestamp-*
 
 # 历史大文件（体积大且不应进入软著源码材料，建议移出主仓库）
 # legacy/
+
+# Private collection uploads; never commit user photographs
+backend/var/collection/

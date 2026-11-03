@@ -46,7 +46,6 @@
           </div>
           <p class="gba-legend-note">圆圈大小表示分级，不代表实际排放量或污染扩散半径。</p>
         </div>
-        <div v-if="observationEnabled && observationStatus === 'ready'" class="observation-map-legend">● CH₄ 甲烷 / ● CO₂ 二氧化碳 · 离散遥感观测</div>
       </div>
 
       <!-- 控制面板 -->
@@ -55,17 +54,13 @@
           <div class="gis-panel-title">图层与来源</div>
           <div class="gis-layer-row"><span>高德底图</span><span>已启用</span></div>
           <div class="gis-layer-row"><span>{{ mode === 'forest' ? '林地边界' : mode === 'heatmap' ? '排放热力与点位' : '城市点位' }}</span><span>{{ mode === 'forest' ? (gisResult ? '已显示' : '暂无边界') : mode === 'heatmap' ? (dataStore.points.length ? `${dataStore.points.length} 个点位` : '暂无点位') : '内置示例' }}</span></div>
-          <div class="gis-layer-row"><span>温室气体遥感观测</span><span>{{ observationEnabled ? '已开启' : '已关闭' }}</span></div>
           <p class="gis-note">点位输入为经纬度；高德底图采用其自身坐标体系，跨来源叠加可能有位置偏差。用户上传不代表已核实监测数据。更新时间未提供。</p>
         </div>
-        <RemoteObservationPanel
-          :enabled="observationEnabled" :gas="observationGas" :from-date="observationFrom"
-          :to-date="observationTo" :status="observationStatus" :count="observations.length"
-          :items="observations"
-          :fetched-at="observationFetchedAt" :selected="selectedObservation" :detail-loading="observationDetailLoading"
-          :message="observationMessage" @toggle="setObservationEnabled" @gas="setObservationGas"
-          @from-date="setObservationFrom" @to-date="setObservationTo" @query="queryObservations" @select="selectObservationById"
-        />
+        <div class="c-card p-4 space-y-2" aria-live="polite">
+          <div class="gis-panel-title">SSE 示例点位 · {{ streamState }}</div>
+          <p class="gis-note">{{ streamSource }} · 固定示例坐标；传输连接不等于设备认证。</p>
+          <p class="gis-note">最后接收：{{ lastReceivedAt || '暂无数据' }}{{ streamState !== '已连接' && lastReceivedAt ? '（保留旧值，非持续更新）' : '' }}</p>
+        </div>
         <!-- 林地碳汇面板 -->
         <div v-if="mode === 'forest'" class="c-card p-4 space-y-3">
           <div class="gis-panel-title">林地边界与估算</div>
@@ -99,9 +94,9 @@
           <div v-if="selectedPoint" class="gis-selection" aria-live="polite"><strong>{{ selectedPoint.name }}</strong><span>{{ selectedPoint.emission }} tCO₂e · {{ selectedPoint.industry }}</span><span>{{ selectedPoint.city?.trim() || '城市未提供' }} · {{ selectedPoint.lat.toFixed(4) }}, {{ selectedPoint.lon.toFixed(4) }}</span></div>
           <p v-else-if="!filteredPoints.length" class="gis-empty" role="status">{{ pointQuery ? '没有匹配的点位；请调整筛选条件。' : dataError || '暂无点位；可上传文件或加载内置示例。' }}</p>
           <div class="flex gap-2 items-center">
-            <span class="text-xs text-[var(--c-text-3)]">热力半径</span>
-            <el-slider v-model="heatRadius" :min="200" :max="2000" :step="100" style="flex:1" @input="renderHeatmap" />
-            <span class="num text-xs w-12 text-right">{{ heatRadius }}m</span>
+            <span class="text-xs text-[var(--c-text-3)]">热力半径（像素）</span>
+            <el-slider v-model="heatRadius" :min="4" :max="40" :step="2" style="flex:1" @input="renderHeatmap" />
+            <span class="num text-xs w-12 text-right">{{ heatRadius }}px</span>
           </div>
           <div class="flex gap-2 items-center">
             <span class="text-xs text-[var(--c-text-3)]">模糊度</span>
@@ -191,8 +186,7 @@ import { GBA_CITIES } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
 import { useConfirmAction } from '@/composables/useConfirmAction'
 import { MONITORING_CONFIG } from '@/utils/format'
-import RemoteObservationPanel from '@/components/gis/RemoteObservationPanel.vue'
-import { gcj02ToWgs84, getRemoteObservation, listRemoteObservations, wgs84ToGcj02, type RemoteObservation } from '@/api/carbonMapper'
+import { prepareForestGeometry, parseMonitoringPacket, monitoringSource, createPacketGuard } from '@/utils/gisSafety'
 
 const dataStore = useDataStore()
 const toast = useToast()
@@ -209,24 +203,11 @@ let map: L.Map | null = null
 let heatLayer: any = null
 let drawnItems: L.LayerGroup | null = null
 let basemapTiles: L.TileLayer | null = null
-let observationLayer: L.LayerGroup | null = null
 let selectedMarker: L.CircleMarker | null = null
 let forestPolygon: L.Polygon | null = null
 const pointMarkers = new Map<EmissionPoint, L.CircleMarker>()
 const basemapError = ref(false)
 const mapError = ref('')
-const observationEnabled = ref(false)
-const observationGas = ref<'CH4' | 'CO2'>('CH4')
-const observationFrom = ref('')
-const observationTo = ref('')
-const observationStatus = ref<'idle' | 'loading' | 'ready' | 'empty' | 'disabled' | 'error'>('idle')
-const observationMessage = ref('')
-const observationFetchedAt = ref<string | null>(null)
-const observations = ref<RemoteObservation[]>([])
-const selectedObservation = ref<RemoteObservation | null>(null)
-const observationDetailLoading = ref(false)
-let observationRequest: AbortController | null = null
-let observationDetailRequest: AbortController | null = null
 const dataError = ref('')
 const pointQuery = ref('')
 const selectedPoint = ref<EmissionPoint | null>(null)
@@ -241,10 +222,17 @@ let currentPolygon: L.Polygon | null = null
 let realtimePoints: L.LayerGroup | null = null
 let sseClient: EventSource | null = null
 let lastRealtimeMarker: L.CircleMarker | null = null
+let streamTimer: ReturnType<typeof setTimeout> | null = null
+let sizeTimer: ReturnType<typeof setTimeout> | null = null
+let disposed = false
+const packetGuard = createPacketGuard()
+const streamState = ref(MONITORING_CONFIG.realtime_enabled ? '连接中' : '未配置')
+const streamSource = ref('未知来源（未认证）')
+const lastReceivedAt = ref('')
 let ndviChart: echarts.ECharts | null = null
 let biomassChart: echarts.ECharts | null = null
 
-const heatRadius = ref(800)
+const heatRadius = ref(16)
 const heatBlur = ref(15)
 const drawing = ref(false)
 const selectedCity = ref<typeof GBA_CITIES[number] | null>(null)
@@ -259,25 +247,19 @@ const gisResult = ref<{ areaHa: string; ndvi: string; agb: string; co2e: string;
 const badgeCls = (key: string) => dataStore.source[key] === 'user' ? 'user-badge' : 'sample-badge'
 
 function initMap() {
-  if (map || !mapEl.value) return
+  if (disposed || map || !mapEl.value) return
   try {
-    map = L.map(mapEl.value, { center: [22.65, 114.05], zoom: 11, zoomControl: true })
+    map = L.map(mapEl.value, { center: [22.65, 114.05], zoom: 11, zoomControl: true, zoomAnimation: false })
     basemapTiles = L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
       subdomains: ['1', '2', '3', '4'], attribution: '© 高德地图 | CarbonAI', maxZoom: 18,
     }).on('tileerror', () => { basemapError.value = true }).on('tileload', () => { basemapError.value = false }).addTo(map)
     drawnItems = L.layerGroup().addTo(map)
-    observationLayer = L.layerGroup().addTo(map)
-    map.on('moveend', () => {
-      if (observationEnabled.value && ['loading', 'ready', 'empty'].includes(observationStatus.value)) {
-        resetObservations()
-      }
-    })
     map.on('click', (e: L.LeafletMouseEvent) => {
       if (!drawMode || !currentPolygon) return
       currentPolygon.addLatLng(e.latlng)
     })
     map.on('dblclick', () => { if (drawMode) finishDraw() })
-    setTimeout(() => map?.invalidateSize(), 300)
+    sizeTimer = setTimeout(() => { if (!disposed) map?.invalidateSize() }, 300)
   } catch {
     mapError.value = '地图初始化失败，请刷新页面重试。'
   }
@@ -285,86 +267,6 @@ function initMap() {
 
 function escapeHtml(value: unknown) {
   return String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char] || char)
-}
-
-function resetObservations() {
-  observationRequest?.abort()
-  observationDetailRequest?.abort()
-  observationLayer?.clearLayers()
-  observations.value = []
-  selectedObservation.value = null
-  observationFetchedAt.value = null
-  observationStatus.value = 'idle'
-  observationMessage.value = ''
-  observationDetailLoading.value = false
-}
-
-function setObservationEnabled(enabled: boolean) {
-  observationEnabled.value = enabled
-  resetObservations()
-}
-function setObservationGas(gas: 'CH4' | 'CO2') { observationGas.value = gas; resetObservations() }
-function setObservationFrom(date: string) { observationFrom.value = date; resetObservations() }
-function setObservationTo(date: string) { observationTo.value = date; resetObservations() }
-
-async function selectObservation(item: RemoteObservation) {
-  observationDetailRequest?.abort()
-  selectedObservation.value = item
-  observationDetailLoading.value = true
-  const request = new AbortController()
-  observationDetailRequest = request
-  try {
-    const detail = await getRemoteObservation(item.id, request.signal)
-    if (!request.signal.aborted && observationEnabled.value) selectedObservation.value = detail
-  } catch {
-    if (!request.signal.aborted) observationMessage.value = '详情暂时无法更新；当前显示列表中的观测信息。'
-  } finally {
-    if (observationDetailRequest === request) observationDetailLoading.value = false
-  }
-}
-
-function selectObservationById(id: string) {
-  const item = observations.value.find((candidate) => candidate.id === id)
-  if (item) void selectObservation(item)
-}
-
-async function queryObservations() {
-  if (!observationEnabled.value || !map) return
-  resetObservations()
-  const bounds = map.getBounds()
-  const [west, south] = gcj02ToWgs84(bounds.getWest(), bounds.getSouth())
-  const [east, north] = gcj02ToWgs84(bounds.getEast(), bounds.getNorth())
-  const request = new AbortController()
-  observationRequest = request
-  observationStatus.value = 'loading'
-  try {
-    const result = await listRemoteObservations({
-      bbox: [west, south, east, north], gas: observationGas.value,
-      from: observationFrom.value || undefined, to: observationTo.value || undefined, limit: 100,
-    }, request.signal)
-    if (request.signal.aborted || !observationEnabled.value) return
-    observations.value = result.items
-    observationFetchedAt.value = result.fetchedAt
-    observationStatus.value = result.items.length ? 'ready' : 'empty'
-    result.items.forEach((item) => {
-      const [lon, lat] = wgs84ToGcj02(item.longitude, item.latitude)
-      L.circleMarker([lat, lon], {
-        radius: 6, color: item.gas === 'CH4' ? '#80e4ad' : '#69b8dc',
-        fillColor: item.gas === 'CH4' ? '#10b981' : '#0ea5e9', fillOpacity: .75, weight: 2,
-        className: 'remote-observation-marker',
-      }).bindTooltip(`${item.gas === 'CH4' ? 'CH₄' : 'CO₂'} · ${escapeHtml(item.observedAt || '时间未提供')}`)
-        .on('click', () => { void selectObservation(item) }).addTo(observationLayer!)
-    })
-  } catch (error: any) {
-    if (request.signal.aborted) return
-    const detail = String(error?.response?.data?.detail || '')
-    observationStatus.value = error?.response?.status === 503 && /disabled|credential/i.test(detail) ? 'disabled' : 'error'
-    const status = error?.response?.status
-    observationMessage.value = status === 401 ? '请先登录平台账户，再查询受控研究观测。'
-      : status === 403 ? '当前账户未获遥感观测访问权限。'
-        : status === 429 ? '查询额度已用完，请稍后重试。'
-          : '观测服务暂时不可用；未使用示例数据替代。'
-  }
 }
 
 function selectPoint(index: number) {
@@ -384,55 +286,39 @@ function selectCity(name: string) {
   if (selectedCity.value) map?.setView([selectedCity.value.lat, selectedCity.value.lon], 10)
 }
 
-// T10: 建立 SSE 实时流 + 更新地图点位图层
+// Existing SSE demonstration; source declarations are not device authentication.
+function closeStream() {
+  if (sseClient) { sseClient.onmessage = null; sseClient.onopen = null; sseClient.onerror = null; sseClient.close(); sseClient = null }
+}
 function initRealtime() {
-  if (!map) return
-  // 未启用实时流（生产环境未配置 VITE_MONITORING_SSE_URL）→ 不创建图层、不发起连接
-  if (!MONITORING_CONFIG.realtime_enabled) return
+  if (disposed || !map || sseClient || !MONITORING_CONFIG.realtime_enabled) return
   realtimePoints = L.layerGroup().addTo(map)
   const { sse_url, critical_threshold, warning_threshold, demo_point_lat, demo_point_lon } = MONITORING_CONFIG
-
-  try {
-    sseClient = new EventSource(sse_url)
-  } catch { /* EventSource 不可用（非 http 或环境限制） → 静默降级 */ return }
-
+  try { sseClient = new EventSource(sse_url) } catch { streamState.value = '连接失败'; return }
   sseClient.onmessage = (ev) => {
+    if (disposed) return
     try {
-      const payload = JSON.parse(ev.data)
-      if (payload.type === 'connected') return  // 握手包跳过
-      if (!payload.co2e_rate) return
-
-      // 颜色映射：绿色=正常 / 琥珀色=warning / 红色=critical
-      const rate = payload.co2e_rate
-      let color = '#10b981'
-      let fillColor = 'rgba(16,185,129,0.45)'
-      if (rate >= critical_threshold) { color = '#ef4444'; fillColor = 'rgba(239,68,68,0.45)' }
-      else if (rate >= warning_threshold) { color = '#f59e0b'; fillColor = 'rgba(245,158,11,0.45)' }
-
-      // 节流：5s 推送本来就不频繁，直接更新 marker（CircleMarker 支持 setStyle 动画）
+      const p = parseMonitoringPacket(JSON.parse(ev.data))
+      if (!p || !packetGuard.accept(p.pointId, p.time)) return
+      const color = p.rate >= critical_threshold ? '#ef4444' : p.rate >= warning_threshold ? '#f59e0b' : '#10b981'
+      const radius = 10 + Math.min(p.rate / 10, 30)
+      streamSource.value = monitoringSource(p.dataSource)
+      lastReceivedAt.value = new Date().toLocaleString('zh-CN')
+      const popup = `<b>${escapeHtml(p.pointId)}</b><br/>CO₂e: <b>${p.rate} kg/h</b><br/>状态: ${escapeHtml(p.operatingStatus)}<br/>数据源: ${escapeHtml(streamSource.value)}<br/>观测时间: ${escapeHtml(p.timestamp)}`
       if (lastRealtimeMarker && realtimePoints?.hasLayer(lastRealtimeMarker)) {
-        lastRealtimeMarker.setStyle({ color, fillColor, radius: 10 + rate / 10 })
-        lastRealtimeMarker.bindPopup(
-          `<b>${escapeHtml(payload.point_id)}</b><br/>CO₂e: <b>${escapeHtml(rate)} kg/h</b><br/>状态: ${escapeHtml(payload.operating_status)}<br/>数据源: ${escapeHtml(payload.data_source)}<br/>时间: ${escapeHtml(payload.timestamp)}`
-        )
+        lastRealtimeMarker.setStyle({ color, fillColor: color, radius }).bindPopup(popup)
       } else {
-        // 首次或被清理：新建 marker
-        lastRealtimeMarker = L.circleMarker([demo_point_lat, demo_point_lon], {
-          radius: 10 + rate / 10, color, fillColor, weight: 2, fillOpacity: 0.5,
-        }).bindPopup(
-          `<b>${escapeHtml(payload.point_id)}</b><br/>CO₂e: <b>${escapeHtml(rate)} kg/h</b><br/>状态: ${escapeHtml(payload.operating_status)}<br/>数据源: ${escapeHtml(payload.data_source)}<br/>时间: ${escapeHtml(payload.timestamp)}`
-        )
-        realtimePoints!.addLayer(lastRealtimeMarker)
+        lastRealtimeMarker = L.circleMarker([demo_point_lat, demo_point_lon], { radius, color, fillColor: color, weight: 2, fillOpacity: 0.5 }).bindPopup(popup)
+        realtimePoints?.addLayer(lastRealtimeMarker)
       }
-    } catch { /* 坏包跳过 */ }
+    } catch { /* Invalid JSON/packets do not replace the last valid state. */ }
   }
-
-  // 断线有限重连：连续失败 max_retries 次后关闭连接，防止服务不存在时无限重试刷屏
-  let rtFailures = 0
-  sseClient.onopen = () => { rtFailures = 0 }
+  let failures = 0
+  sseClient.onopen = () => { if (!disposed) { failures = 0; streamState.value = '已连接' } }
   sseClient.onerror = () => {
-    rtFailures++
-    if (rtFailures >= MONITORING_CONFIG.max_retries) { sseClient?.close(); sseClient = null }
+    if (disposed) return
+    streamState.value = '连接异常'
+    if (++failures >= MONITORING_CONFIG.max_retries) { closeStream(); streamState.value = '已断开' }
   }
 }
 
@@ -456,6 +342,7 @@ async function loadSampleBoundary() {
     processGeometry(geo.features[0].geometry)
     toast.success(dataStore.source.boundary === 'user' ? '已加载当前用户边界' : '已加载示例林地边界（示例数据）')
   } catch (e) {
+    clearForestResult()
     dataError.value = e instanceof Error ? e.message : '示例边界加载失败'
     toast.error(dataError.value)
   }
@@ -466,12 +353,14 @@ async function onBoundaryFile(file: File) {
     if (file.name.endsWith('.zip')) throw new Error('Shapefile zip 请先转换为 GeoJSON（推荐 mapshaper.org）')
     const geo = JSON.parse(await file.text())
     const geom = geo.type === 'FeatureCollection' ? geo.features[0].geometry : geo.type === 'Feature' ? geo.geometry : geo
+    processGeometry(geom)
     dataStore.setUserBoundary(geo)
     dataError.value = ''
-    processGeometry(geom)
     toast.success('林地边界已上传（用户数据优先）')
   } catch (e: any) {
-    toast.error(e.message || '文件解析失败')
+    clearForestResult()
+    dataError.value = e.message || '文件解析失败'
+    toast.error(dataError.value)
   }
 }
 
@@ -494,60 +383,47 @@ function finishDraw() {
   drawnItems?.addLayer(currentPolygon)
   const coords = latlngs[0].map((ll) => [ll.lng, ll.lat])
   coords.push(coords[0])
-  processGeometry({ type: 'Polygon', coordinates: [coords as [number, number][]] })
+  try { processGeometry({ type: 'Polygon', coordinates: [coords as [number, number][]] }) }
+  catch (e: any) { clearForestResult(); dataError.value = e.message; toast.error(e.message) }
   currentPolygon = null
 }
 
-function polygonAreaHa(coords: [number, number][][]): number {
-  // 球面多边形面积（近似，turf 算法的简化版）
-  const R = 6371000
-  const ring = coords[0]
-  let total = 0
-  for (let i = 0; i < ring.length - 1; i++) {
-    const [x1, y1] = ring[i], [x2, y2] = ring[i + 1]
-    total += (x2 - x1) * Math.PI / 180 * (2 + Math.sin(y1 * Math.PI / 180) + Math.sin(y2 * Math.PI / 180))
-  }
-  return Math.abs(total * R * R / 2) / 10000
-}
-
-function processGeometry(geometry: { type: string; coordinates: any }) {
-  initMap()
-  if (!map) return
-  if (geometry.type !== 'Polygon' && geometry.type !== 'MultiPolygon') {
-    toast.error('仅支持 Polygon / MultiPolygon')
-    return
-  }
+function clearForestResult() {
+  gisResult.value = null
+  forestPolygon = null
   drawnItems?.clearLayers()
-  // 展示多边形
-  const latlngs = geometry.type === 'Polygon'
-    ? geometry.coordinates[0].map((c: number[]) => [c[1], c[0]] as [number, number])
-    : geometry.coordinates[0][0].map((c: number[]) => [c[1], c[0]] as [number, number])
+  ndviChart?.dispose(); biomassChart?.dispose(); ndviChart = null; biomassChart = null
+}
+function processGeometry(geometry: { type: string; coordinates: any }) {
+  const { areaHa, latlngs } = prepareForestGeometry(geometry)
+  const ndviBase = 0.55 + Math.random() * 0.2
+  const rows: { year: number; ndvi: number; agb: number; carbon: number; co2e: number }[] = []
+  for (let year = 2022; year <= 2026; year++) {
+    const ndvi = Math.max(0.1, ndviBase - 0.05 * (2026 - year) + (Math.random() - 0.5) * 0.03)
+    const agb = 120 * Math.pow(ndvi, 1.8) * areaHa
+    const carbon = agb * 1.26 * 0.47
+    const co2e = carbon * 3.664
+    if (![ndvi, agb, carbon, co2e, agb / areaHa].every(Number.isFinite)) throw new Error('示意估算结果无效')
+    rows.push({ year, ndvi, agb, carbon, co2e })
+  }
+  if (disposed) throw new Error('页面已离开，未保存边界')
+  initMap()
+  if (!map) throw new Error('地图未就绪，未保存边界')
   const poly = L.polygon(latlngs, { color: '#10b981', weight: 2, fillColor: '#10b981', fillOpacity: 0.25 })
+  clearForestResult()
   forestPolygon = poly
   drawnItems?.addLayer(poly)
   map.fitBounds(poly.getBounds().pad(0.2))
-
-  // 碳汇估算（NDVI 生物量模型，与原 v5.2 一致）
-  const areaHa = polygonAreaHa(geometry.coordinates)
-  const ndviBase = 0.55 + Math.random() * 0.2
-  const rows: { year: number; ndvi: number; agb: number; carbon: number; co2e: number }[] = []
-  for (let y = 2022; y <= 2026; y++) {
-    const ndvi = Math.max(0.1, ndviBase - 0.05 * (2026 - y) + (Math.random() - 0.5) * 0.03)
-    const agb = 120 * Math.pow(ndvi, 1.8) * areaHa
-    const carbon = agb * 1.26 * 0.47
-    rows.push({ year: y, ndvi, agb, carbon, co2e: carbon * 3.664 })
-  }
   const latest = rows[rows.length - 1]
-  gisResult.value = {
-    areaHa: areaHa.toFixed(1), ndvi: latest.ndvi.toFixed(3),
-    agb: (latest.agb / areaHa).toFixed(1), co2e: latest.co2e.toFixed(1), rows,
-  }
+  gisResult.value = { areaHa: areaHa.toFixed(1), ndvi: latest.ndvi.toFixed(3), agb: (latest.agb / areaHa).toFixed(1), co2e: latest.co2e.toFixed(1), rows }
+  dataError.value = ''
   renderForestCharts(rows)
-  toast.success(`林地碳汇盘查完成：${areaHa.toFixed(1)} ha，${latest.co2e.toFixed(0)} tCO₂e`)
+  toast.success(`林地示意估算完成：${areaHa.toFixed(1)} ha，${latest.co2e.toFixed(0)} tCO₂e`)
 }
 
 function renderForestCharts(rows: { year: number; ndvi: number; carbon: number; co2e: number }[]) {
   nextTick(() => {
+    if (disposed) return
     if (ndviEl.value && !ndviChart) ndviChart = echarts.init(ndviEl.value)
     if (biomassEl.value && !biomassChart) biomassChart = echarts.init(biomassEl.value)
     const tt = CHART_TOOLTIP
@@ -615,7 +491,7 @@ function renderHeatmap() {
   const heatData = pts.map((p) => [p.lat, p.lon, Math.min(p.emission / maxVal, 1)])
   // @ts-ignore leaflet.heat 扩展
   heatLayer = L.heatLayer(heatData, {
-    radius: heatRadius.value / 50, blur: heatBlur.value, max: 1,
+    radius: heatRadius.value, blur: heatBlur.value, max: 1,
     gradient: { 0.2: '#22c55e', 0.4: '#eab308', 0.6: '#f97316', 0.8: '#ef4444' },
   }).addTo(map)
   map.fitBounds(L.latLngBounds(pts.map((p) => [p.lat, p.lon] as [number, number])).pad(0.15))
@@ -669,23 +545,28 @@ watch(pointQuery, () => { if (mode.value === 'heatmap') renderHeatmap() })
 
 onMounted(async () => {
   await nextTick()
+  if (disposed) return
   initMap()
   // T10: 初始化实时点位图层（不阻塞主线程，失败静默降级）
-  setTimeout(initRealtime, 500)
+  streamTimer = setTimeout(initRealtime, 500)
   await dataStore.loadSampleData()
-  if (!dataStore.points.length) dataError.value = '示例点位未能加载；请检查数据文件或上传点位。'
+  if (!disposed && !dataStore.points.length) dataError.value = '示例点位未能加载；请检查数据文件或上传点位。'
 })
 function resize() { map?.invalidateSize(); ndviChart?.resize(); biomassChart?.resize() }
 useElementResize([mapEl, ndviEl, biomassEl], resize)
 onBeforeUnmount(() => {
-  observationRequest?.abort()
-  observationDetailRequest?.abort()
-  observationLayer?.clearLayers()
+  disposed = true
+  if (streamTimer) clearTimeout(streamTimer)
+  if (sizeTimer) clearTimeout(sizeTimer)
+  closeStream()
+  packetGuard.clear()
+  lastRealtimeMarker = null
   // T10: 清理 SSE + 实时点位层
-  sseClient?.close()
   realtimePoints?.remove()
   basemapTiles?.off()
-  map?.remove(); ndviChart?.dispose(); biomassChart?.dispose()
+  map?.off(); map?.remove(); map = null
+  realtimePoints = null; drawnItems = null; forestPolygon = null
+  ndviChart?.dispose(); biomassChart?.dispose(); ndviChart = null; biomassChart = null
 })
 </script>
 
@@ -704,7 +585,6 @@ onBeforeUnmount(() => {
 .gis-layer-row { display: flex; justify-content: space-between; gap: 8px; border-top: 1px solid var(--c-border); padding: 9px 0; color: var(--c-text-2); font-size: 11px; }
 .gis-layer-row span:last-child { color: var(--c-green); white-space: nowrap; }
 .gis-layer-disabled span:last-child { color: var(--c-text-3); }
-.observation-map-legend { position: absolute; z-index: 500; left: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: 7px 10px; border: 1px solid var(--c-border-2); border-radius: 6px; background: rgba(8,20,16,.92); color: var(--c-text); font-size: 10px; pointer-events: none; }
 .gis-note { color: var(--c-text-3); font-size: 11px; line-height: 1.6; }
 .gis-map-label { position: absolute; z-index: 500; top: 12px; left: 50px; max-width: calc(100% - 64px); padding: 7px 10px; border: 1px solid var(--c-border-2); border-radius: 6px; background: rgba(8,20,16,.92); color: var(--c-text); font-size: 11px; pointer-events: none; }
 .gis-map-alert { position: absolute; z-index: 1001; left: 12px; bottom: 12px; max-width: min(360px, calc(100% - 24px)); padding: 10px 12px; border: 1px solid #b0783d; border-radius: 6px; background: #241c12; color: #ffdaad; font-size: 12px; }
@@ -745,7 +625,6 @@ onBeforeUnmount(() => {
 @media (max-width: 480px) {
   .gis-map-frame { height: 430px; }
   .gis-map-label { left: 12px; top: 60px; }
-  .observation-map-legend { top: 94px; bottom: auto; }
   .map-legend { right: 8px; bottom: 28px; padding: 6px 8px; }
   .gis-meta span { font-size: 10px; }
 }

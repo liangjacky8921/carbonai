@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, shallowRef, useTemplateRef, watch } from 'vue'
-import globeFallback from '@/assets/globe/globe-fallback.svg'
+import globeFallback from '@/assets/globe/globe-china-fallback.svg'
+import { buildChinaHighlight, type RegionPolygons } from './chinaRegion'
 
 const props = defineProps<{ paused: boolean }>()
 const host = useTemplateRef<HTMLElement>('host')
@@ -145,9 +146,10 @@ async function initScene() {
   }
 
   try {
-    const [THREE, pointsModule] = await Promise.all([
+    const [THREE, pointsModule, regionModule] = await Promise.all([
       import('./globeThree'),
       import('@/assets/globe/land-points.json'),
+      import('@/assets/globe/china-region.json'),
     ])
     if (destroyed || !canvasHost.value) return
     const landPoints = pointsModule.default as number[]
@@ -188,6 +190,18 @@ async function initScene() {
     landGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
     const landMaterial = new THREE.PointsMaterial({ color: 0x9bea9f, size: 0.018, sizeAttenuation: true, transparent: true, opacity: 0.88 })
     globe.add(new THREE.Points(landGeometry, landMaterial))
+
+    // One regional layer on the same rotating globe; no extra scene, loop or monitoring claim.
+    const highlight = buildChinaHighlight(regionModule.default.coordinates as RegionPolygons, landPoints)
+    const surface = new THREE.BufferGeometry()
+    surface.setAttribute('position', new THREE.BufferAttribute(highlight.surface, 3))
+    globe.add(new THREE.Mesh(surface, new THREE.MeshBasicMaterial({ color: 0x38cc87, transparent: true, opacity: 0.36, depthWrite: false })))
+    const brightPoints = new THREE.BufferGeometry()
+    brightPoints.setAttribute('position', new THREE.BufferAttribute(highlight.points, 3))
+    globe.add(new THREE.Points(brightPoints, new THREE.PointsMaterial({ color: 0xc2ffdb, size: 0.023, transparent: true, opacity: 0.98, depthWrite: false })))
+    const outline = new THREE.BufferGeometry()
+    outline.setAttribute('position', new THREE.BufferAttribute(highlight.outline, 3))
+    globe.add(new THREE.LineSegments(outline, new THREE.LineBasicMaterial({ color: 0xa7ffcc, transparent: true, opacity: 0.85, depthWrite: false })))
 
     const orbitMaterial = new THREE.LineBasicMaterial({ color: 0xb7f4c1, transparent: true, opacity: 0.22 })
     const orbitTilts = [[1.18, -0.28], [0.92, 0.42], [1.48, 0.16]]
@@ -280,11 +294,12 @@ onBeforeUnmount(() => {
     class="globe-visual"
     :class="{ 'is-ready': ready, 'is-static': failed || reduced }"
     role="img"
-    aria-label="基于公开地理轮廓生成的空间地球视觉示意，点位不代表实时排放监测数据"
+    aria-label="基于公开地理轮廓生成的空间地球视觉示意，中国区域以绿色面与轮廓突出，点位不代表实时排放监测数据"
   >
     <div class="globe-halo" aria-hidden="true" />
     <img :src="globeFallback" class="globe-fallback" alt="" aria-hidden="true" />
     <div ref="canvasHost" class="canvas-host" aria-hidden="true" />
+    <span class="china-key" aria-hidden="true">中国区域 · 地理示意</span>
     <figcaption>基于公开地理轮廓生成的视觉示意，不代表实时排放监测点。</figcaption>
   </figure>
 </template>
@@ -299,8 +314,10 @@ onBeforeUnmount(() => {
 .is-ready .canvas-host { opacity: 1; }
 .is-static .globe-fallback { opacity: .78; }
 .canvas-host :deep(.globe-canvas) { display: block; width: 100%; height: 100%; }
+.china-key { position: absolute; right: 12%; bottom: 12%; color: #b6dfc1; font-size: 11px; letter-spacing: .08em; }
 figcaption { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 600px) {
+  .china-key { right: 8%; bottom: 10%; font-size: 10px; }
   .globe-halo { inset: 25% -22% -6% 18%; opacity: .42; }
   .globe-fallback { inset: 25% -28% -7% 23%; width: 105%; height: 82%; opacity: .34; }
 }

@@ -8,7 +8,7 @@
       <!-- 地图 -->
       <div class="c-card grid-map-frame overflow-hidden relative">
         <div ref="mapEl" class="w-full h-full" />
-        <div class="grid-map-label">{{ GRID_REGIONS[regionKey]?.name }} · {{ windowLabel() }}演示</div>
+        <div class="grid-map-label">{{ GRID_REGIONS[appliedRegion]?.name }} · {{ windowLabel(appliedWindow) }}演示</div>
         <div v-if="mapError || basemapError" class="grid-map-alert" role="alert">{{ mapError || '底图加载异常；演示网格仍可查看。' }}</div>
         <div class="grid-legend"><strong>演示强度分级</strong><span><i class="legend-low" />低</span><span><i class="legend-mid" />中</span><span><i class="legend-high" />高</span><span><i class="legend-red" />超红色阈值</span></div>
       </div>
@@ -37,7 +37,7 @@
             <span class="text-[11px] text-red">红色预警</span>
           </div>
           <el-button type="primary" size="small" class="w-full" @click="refresh">重新生成演示网格</el-button>
-          <p class="grid-note">更改区域、时间窗或阈值会重新生成随机演示数据，不保留历史结果。</p>
+          <p class="grid-note">区域和时间窗只改变随机演示幅度，不查询历史。编辑阈值后按按钮应用；不保留历史结果。</p>
         </div>
 
         <div class="c-card p-4 space-y-2" aria-live="polite"><div class="grid-panel-title">选中网格</div><p v-if="!selectedCell" class="grid-note">点击或轻触地图网格查看演示值及位置。</p><template v-else><strong class="grid-cell-value">{{ selectedCell.value.toFixed(2) }}</strong><span class="grid-note">演示强度 · {{ selectedCell.level }}</span><span class="grid-note">{{ selectedCell.lat.toFixed(4) }}, {{ selectedCell.lon.toFixed(4) }}（输入经纬度）</span></template></div>
@@ -45,13 +45,14 @@
         <!-- 预警事件日志 -->
         <div class="c-card p-4">
           <div class="grid-panel-title mb-2">阈值事件</div>
-          <p class="grid-note mb-2">演示事件与已配置的 SSE 实时推送分别标记。</p>
+          <p class="grid-note mb-2">事件仅保留在当前页面内存。随机阈值无实测单位；SSE 独立阈值为50/80 kg/h，不受侧栏阈值影响。</p>
           <div class="space-y-2 max-h-[180px] overflow-auto">
             <div v-for="alert in alerts" :key="alert.id" class="alert-item" :class="alert.level">
-              <b>{{ alert.source === 'realtime' ? 'SSE 实时推送' : '随机演示' }} · {{ alert.level === 'red' ? '红色阈值' : alert.level === 'yellow' ? '黄色阈值' : '正常' }}</b>
+              <b>{{ alert.source === 'realtime' ? `SSE · ${monitoringSource(alert.dataSource ?? null)}` : '随机演示' }} · {{ alert.level === 'red' ? '红色阈值' : alert.level === 'yellow' ? '黄色阈值' : '正常' }}</b>
               <span class="text-[11px]">{{ alert.text }}</span>
             </div>
           </div>
+          <p class="grid-note">SSE仅表示传输方式；接收5分钟内、未来不超过1分钟的数据，同点时间须递增；同级事件另有5/10分钟冷却，不认证设备。最后接收：{{ lastReceivedAt || '暂无数据' }}{{ streamState !== '已连接' && lastReceivedAt ? '（旧值）' : '' }}</p>
         </div>
       </aside>
     </div>
@@ -77,6 +78,7 @@ import ChartCard from '@/components/ChartCard.vue'
 import { GRID_REGIONS } from '@/data/carbonMarket'
 import { useToast } from '@/composables/useToast'
 import { MONITORING_CONFIG } from '@/utils/format'
+import { validGridThresholds, gridLevel, parseMonitoringPacket, monitoringSource, createPacketGuard } from '@/utils/gisSafety'
 
 const toast = useToast()
 const mapEl = ref<HTMLElement | null>(null)
@@ -96,30 +98,44 @@ let map: L.Map | null = null
 let histChart: echarts.ECharts | null = null
 let statChart: echarts.ECharts | null = null
 let selectedRect: L.Rectangle | null = null
+let sizeTimer: ReturnType<typeof setTimeout> | null = null
+let disposed = false
+let eventId = 0
+const lastReceivedAt = ref('')
+const appliedThresholds = ref({ yellow: 6, red: 12 })
+const appliedWindow = ref('realtime')
+const appliedRegion = ref('sz_gm')
+const packetGuard = createPacketGuard()
 let streamTimer: ReturnType<typeof setTimeout> | null = null
 // T11: SSE 实时流客户端
 let sseClient: EventSource | null = null
 
-interface Alert { id: number; level: 'red' | 'yellow' | 'normal'; text: string; source?: string }
+interface Alert { id: number; level: 'red' | 'yellow' | 'normal'; text: string; source?: string; dataSource?: string | null }
 const alerts = ref<Alert[]>([])
 
 function initMap() {
-  if (map || !mapEl.value) return
+  if (disposed || map || !mapEl.value) return
   try {
     const reg = GRID_REGIONS[regionKey.value]
-    map = L.map(mapEl.value, { center: [reg.lat, reg.lon], zoom: reg.zoom })
+    map = L.map(mapEl.value, { center: [reg.lat, reg.lon], zoom: reg.zoom, zoomAnimation: false })
     L.tileLayer('https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}', {
       subdomains: ['1', '2', '3', '4'], attribution: '© 高德地图 | CarbonAI', maxZoom: 18,
     }).on('tileerror', () => { basemapError.value = true }).on('tileload', () => { basemapError.value = false }).addTo(map)
-    setTimeout(() => map?.invalidateSize(), 300)
+    sizeTimer = setTimeout(() => { if (!disposed) map?.invalidateSize() }, 300)
   } catch { mapError.value = '地图初始化失败，请刷新页面重试。' }
 }
 
 let gridLayer: L.LayerGroup | null = null
 
 function refresh() {
+  if (disposed) return
+  if (!validGridThresholds(yellowThreshold.value, redThreshold.value)) { toast.warning('阈值必须为有限数，且0 < 黄色 < 红色；未应用更改'); return }
+  const yellow = yellowThreshold.value, red = redThreshold.value
+  appliedThresholds.value = { yellow, red }
   initMap()
   if (!map) return
+  appliedWindow.value = timeWindow.value
+  appliedRegion.value = regionKey.value
   const reg = GRID_REGIONS[regionKey.value]
   map.setView([reg.lat, reg.lon], reg.zoom)
   if (gridLayer) map.removeLayer(gridLayer)
@@ -133,38 +149,41 @@ function refresh() {
   const values: number[] = []
   const yellowCells: [number, number][] = []
   const redCells: [number, number][] = []
-  for (let lat = reg.lat - span; lat <= reg.lat + span; lat += step) {
-    for (let lng = reg.lon - span; lng <= reg.lon + span; lng += step) {
+  for (let i = 0; i <= 20; i++) {
+    const lat = reg.lat - span + i * step
+    for (let j = 0; j <= 20; j++) {
+      const lng = reg.lon - span + j * step
       const val = Math.random() * 14 * windowFactor / 4
       values.push(val)
-      const color = val > redThreshold.value ? '#ef4444' : val > yellowThreshold.value ? '#f97316' : val > yellowThreshold.value / 2 ? '#eab308' : '#22c55e'
+      const level = gridLevel(val, yellow, red)
+      const color = level === 'red' ? '#ef4444' : level === 'yellow' ? '#f97316' : val > yellow / 2 ? '#eab308' : '#22c55e'
       const cell: [number, number] = [lat, lng]
-      if (val > redThreshold.value) redCells.push(cell)
-      else if (val > yellowThreshold.value) yellowCells.push(cell)
+      if (level === 'red') redCells.push(cell)
+      else if (level === 'yellow') yellowCells.push(cell)
       const rectangle = L.rectangle([[lat - step / 2, lng - step / 2], [lat + step / 2, lng + step / 2]], {
-        color: 'transparent', fillColor: color, fillOpacity: val > redThreshold.value ? 0.6 : 0.4, weight: 0.5,
+        color: 'transparent', fillColor: color, fillOpacity: level === 'red' ? 0.6 : 0.4, weight: 0.5,
       }).on('click', () => {
         selectedRect?.setStyle({ color: 'transparent', weight: 0.5 })
         selectedRect = rectangle
         rectangle.setStyle({ color: '#f2d27a', weight: 2 })
         rectangle.bringToFront()
-        selectedCell.value = { lat, lon: lng, value: val, level: val > redThreshold.value ? '红色阈值' : val > yellowThreshold.value ? '黄色阈值' : '正常范围' }
+        selectedCell.value = { lat, lon: lng, value: val, level: level === 'red' ? '红色阈值' : level === 'yellow' ? '黄色阈值' : '正常范围' }
       }).addTo(gridLayer!)
     }
   }
 
   // 预警日志
-  const newAlerts: Alert[] = [{ id: Date.now(), level: 'normal', source: 'demo', text: `${reg.name} · ${windowLabel()}演示网格已生成，共 ${values.length} 个网格` }]
-  if (redCells.length) newAlerts.unshift({ id: Date.now() + 1, level: 'red', source: 'demo', text: `${reg.name} ${redCells.length} 个随机网格超过红色演示阈值 ${redThreshold.value}` })
-  if (yellowCells.length) newAlerts.unshift({ id: Date.now() + 2, level: 'yellow', source: 'demo', text: `${reg.name} ${yellowCells.length} 个随机网格超过黄色演示阈值 ${yellowThreshold.value}` })
+  const newAlerts: Alert[] = [{ id: ++eventId, level: 'normal', source: 'demo', text: `${reg.name} · ${windowLabel()}演示网格已生成，共 ${values.length} 个网格` }]
+  if (redCells.length) newAlerts.unshift({ id: ++eventId, level: 'red', source: 'demo', text: `${reg.name} ${redCells.length} 个随机网格超过红色演示阈值 ${red}` })
+  if (yellowCells.length) newAlerts.unshift({ id: ++eventId, level: 'yellow', source: 'demo', text: `${reg.name} ${yellowCells.length} 个随机网格超过黄色演示阈值 ${yellow}` })
   alerts.value = [...newAlerts, ...alerts.value].slice(0, 30)
 
   renderCharts(values)
   toast.success(`${reg.name} 演示网格已重新生成（${windowLabel()}）`)
 }
 
-function windowLabel() {
-  return { realtime: '当前', '1h': '近1小时', '24h': '近24小时', '7d': '近7天' }[timeWindow.value]
+function windowLabel(window = timeWindow.value) {
+  return { realtime: '当前', '1h': '近1小时', '24h': '近24小时', '7d': '近7天' }[window]
 }
 
 function renderCharts(values: number[]) {
@@ -173,7 +192,9 @@ function renderCharts(values: number[]) {
   const tt = CHART_TOOLTIP
   const axis = CHART_AXIS
   const bins = [0, 2, 4, 6, 8, 10, 12, 14, 99]
-  const counts = bins.slice(1).map((b, i) => values.filter((v) => v > bins[i] && v <= b).length)
+  const counts = bins.slice(1).map((b, i) => values.filter((v) => (i === 0 ? v >= 0 : v > bins[i]) && v <= b).length)
+  const { yellow, red } = appliedThresholds.value
+  const levels = values.map(v => gridLevel(v, yellow, red))
   histChart?.setOption({
     tooltip: { trigger: 'axis', ...tt },
     grid: { left: '3%', right: '5%', bottom: '12%', top: '14%', containLabel: true },
@@ -188,9 +209,9 @@ function renderCharts(values: number[]) {
       itemStyle: { borderColor: '#0a120f', borderWidth: 2, borderRadius: 6 },
       label: { color: '#9db8ae' },
       data: [
-        { name: '正常网格', value: values.filter((v) => v <= yellowThreshold.value).length, itemStyle: { color: '#22c55e' } },
-        { name: '黄色预警', value: values.filter((v) => v > yellowThreshold.value && v <= redThreshold.value).length, itemStyle: { color: '#eab308' } },
-        { name: '红色预警', value: values.filter((v) => v > redThreshold.value).length, itemStyle: { color: '#ef4444' } },
+        { name: '正常网格', value: levels.filter(level => level === 'normal').length, itemStyle: { color: '#22c55e' } },
+        { name: '黄色预警', value: levels.filter(level => level === 'yellow').length, itemStyle: { color: '#eab308' } },
+        { name: '红色预警', value: levels.filter(level => level === 'red').length, itemStyle: { color: '#ef4444' } },
       ],
       animationType: 'scale', animationEasing: 'elasticOut',
     }],
@@ -203,7 +224,7 @@ useElementResize([mapEl, histEl, statEl], resize)
 // T11: 接 SSE 实时流 → 超 CONFIG 阈值触发预警联动
 function initRealtimeStream() {
   // 未启用实时流（生产环境未配置 VITE_MONITORING_SSE_URL）→ 不发起连接
-  if (!MONITORING_CONFIG.realtime_enabled) return
+  if (disposed || sseClient || !MONITORING_CONFIG.realtime_enabled) return
   const { sse_url, critical_threshold, warning_threshold } = MONITORING_CONFIG
   try {
     sseClient = new EventSource(sse_url)
@@ -214,11 +235,12 @@ function initRealtimeStream() {
 
   sseClient.onmessage = (ev) => {
     try {
-      const p = JSON.parse(ev.data)
-      if (p.type === 'connected' || !p.co2e_rate) return
-
-      const rate = p.co2e_rate
-      const pid = p.point_id
+      if (disposed) return
+      const p = parseMonitoringPacket(JSON.parse(ev.data))
+      if (!p || !packetGuard.accept(p.pointId, p.time)) return
+      lastReceivedAt.value = new Date().toLocaleString('zh-CN')
+      const rate = p.rate
+      const pid = p.pointId
       const now = Date.now()
 
       // 用 CONFIG 阈值判定（kg/h 绝对值，不影响网格密度阈值体系）
@@ -231,15 +253,16 @@ function initRealtimeStream() {
         const last = lastAlertAt.get(pid + level) || 0
         if (now - last > coolMs) {
           lastAlertAt.set(pid + level, now)
+          if (lastAlertAt.size > 512) lastAlertAt.delete(lastAlertAt.keys().next().value!)
           const newAlert: Alert = {
-            id: now + Math.random(),
+            id: ++eventId,
             level,
-            source: 'realtime',
+            source: 'realtime', dataSource: p.dataSource,
             text: `SSE 推送 ${pid}：${rate} kg/h 超过 ${level === 'red' ? 'critical' : 'warning'} 阈值（${level === 'red' ? critical_threshold : warning_threshold} kg/h）· ${p.timestamp}`,
           }
           alerts.value.unshift(newAlert)
           alerts.value = alerts.value.slice(0, 50)
-          toast.warning(`${level === 'red' ? '红色' : '黄色'} SSE 预警：${pid} 排放速率 ${rate} kg/h`)
+          toast.warning(`${level === 'red' ? '红色' : '黄色'} SSE 预警：${pid} 排放速率 ${rate} kg/h · ${monitoringSource(p.dataSource)}`)
         }
       }
     } catch { /* 坏包跳过 */ }
@@ -247,12 +270,17 @@ function initRealtimeStream() {
 
   // 断线有限重连：连续失败 max_retries 次后关闭连接，防止服务不存在时无限重试刷屏
   let rtFailures = 0
-  sseClient.onopen = () => { rtFailures = 0; streamState.value = '已连接' }
+  sseClient.onopen = () => { if (!disposed) { rtFailures = 0; streamState.value = '已连接' } }
   sseClient.onerror = () => {
+    if (disposed) return
     rtFailures++
     streamState.value = '连接异常'
-    if (rtFailures >= MONITORING_CONFIG.max_retries) { sseClient?.close(); sseClient = null; streamState.value = '已断开' }
+    if (rtFailures >= MONITORING_CONFIG.max_retries) { closeStream(); streamState.value = '已断开' }
   }
+}
+
+function closeStream() {
+  if (sseClient) { sseClient.onmessage = null; sseClient.onopen = null; sseClient.onerror = null; sseClient.close(); sseClient = null }
 }
 
 onMounted(() => {
@@ -261,9 +289,13 @@ onMounted(() => {
   streamTimer = setTimeout(initRealtimeStream, 800)  // T11: 延迟启动 SSE，避免阻塞初始渲染
 })
 onBeforeUnmount(() => {
+  disposed = true
+  if (sizeTimer) clearTimeout(sizeTimer)
   if (streamTimer) clearTimeout(streamTimer)
-  sseClient?.close()  // T11: 清理 SSE 连接
-  map?.remove(); histChart?.dispose(); statChart?.dispose()
+  closeStream(); packetGuard.clear()
+  gridLayer?.clearLayers(); gridLayer = null; selectedRect = null
+  map?.off(); map?.remove(); map = null
+  histChart?.dispose(); statChart?.dispose(); histChart = null; statChart = null
 })
 </script>
 

@@ -1,6 +1,8 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
-    <div class="c-card p-4 pcf-disclosure" role="note"><strong>产品碳足迹演示</strong><span>当前页面“计算”使用现有随机示意算法；标准选项用于展示，不代表完成对应标准的合规核算。BOM、阶段来源与行业基准应逐项核实，不可将结果作为真实产品排放报告。</span></div>
+    <div class="c-card p-4 pcf-disclosure" role="note"><strong>产品碳足迹演示</strong><span>当前页面使用固定示例阶段数据，仅作示例估算 / DEMO ONLY；标准选项仅用于展示模板，不代表标准合规核算或真实材料排放因子匹配。比较图为示例倍率示意，不是外部行业数据库。</span></div>
+    <p v-if="dataStore.historicalPcfCache !== null" class="text-xs text-[var(--c-text-3)]" role="note">检测到待确认的历史 PCF 缓存，已保留原始内容，不参与当前示例计算。</p>
+    <p v-if="loadError" role="alert">{{ loadError }}</p>
     <!-- LCA 阶段流程 -->
     <div class="c-card p-4">
       <div class="flex flex-wrap items-center gap-2 lca-flow">
@@ -20,18 +22,18 @@
     <!-- 参数表单 -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <div class="c-card p-4 space-y-3">
-        <el-input v-model="productName" placeholder="产品名称" size="small" aria-label="产品名称" />
-        <el-select v-model="unit" size="small" placeholder="产品单位" aria-label="产品单位">
+        <el-input v-model="productName" readonly placeholder="产品名称" size="small" aria-label="产品名称" />
+        <el-select v-model="unit" disabled size="small" placeholder="产品单位" aria-label="产品单位">
           <el-option label="件 (pcs)" value="件" />
-          <el-option label="公斤 (kg)" value="kg" />
-          <el-option label="吨 (t)" value="t" />
+
         </el-select>
-        <el-select v-model="standard" size="small" placeholder="核算标准" aria-label="核算标准">
+        <el-select v-model="standard" size="small" placeholder="展示模板 / 标准选项" aria-label="展示模板 / 标准选项">
           <el-option label="ISO 14067:2018" value="ISO 14067:2018" />
           <el-option label="PAS 2050" value="PAS 2050" />
           <el-option label="GHG Protocol Product Standard" value="GHG Protocol Product Standard" />
           <el-option label="欧盟 PEF" value="欧盟 PEF" />
         </el-select>
+        <p class="text-xs text-[var(--c-text-3)]">固定示例功能单位：1 件，暂不支持 kg / t 换算。标准切换仅改变展示模板。</p>
         <div class="flex gap-2">
           <el-button type="primary" size="small" class="flex-1" @click="calcPcf">生成演示估算</el-button>
           <el-button size="small" @click="loadDemo">加载演示数据</el-button>
@@ -75,10 +77,10 @@
     <template v-if="hasResult">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div class="c-card p-5 text-center flex flex-col justify-center">
-          <div class="text-xs text-[var(--c-text-3)] mb-2">{{ resultKind === 'sample' ? '内置示例结果' : '随机演示估算结果' }}</div>
+          <div class="text-xs text-[var(--c-text-3)] mb-2">示例估算 / DEMO ONLY</div>
           <div class="num text-[38px] font-bold text-green">{{ total.toFixed(2) }}</div>
           <div class="text-xs text-[var(--c-text-2)] mt-1">kgCO₂e / {{ unit }}</div>
-          <div class="text-[11px] text-[var(--c-text-3)] mt-3">演示数据 · 标准选项：{{ standard }} · 非合规结论</div>
+          <div class="text-[11px] text-[var(--c-text-3)] mt-3">示例数据 · 展示模板 / 标准选项：{{ standard }} · 非合规结论</div>
         </div>
         <ChartCard title="各阶段碳排放占比" height="300" class="lg:col-span-2">
           <div ref="stageEl" class="w-full h-full" />
@@ -86,7 +88,7 @@
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <ChartCard title="与行业基准值对比" height="300">
+        <ChartCard title="示意比较（示例倍率，非外部基准）" height="300">
           <div ref="benchmarkEl" class="w-full h-full" />
         </ChartCard>
 
@@ -111,7 +113,7 @@
         <div class="c-card-title">LCA 各阶段排放明细</div>
         <div class="p-4 table-scroll">
           <table class="dark-table">
-            <thead><tr><th>阶段</th><th>排放量 (kgCO₂e)</th><th class="text-right">占比</th><th>主要排放源</th></tr></thead>
+            <thead><tr><th>阶段</th><th>排放量 (kgCO₂e)</th><th class="text-right">占比</th><th>阶段说明（示例，非因子依据）</th></tr></thead>
             <tbody>
               <tr v-for="s in stageList" :key="s.stage">
                 <td>{{ s.icon }} <b>{{ s.name }}</b></td>
@@ -127,7 +129,7 @@
     </template>
     <div v-else class="c-card">
       <EmptyState icon="Box" title="尚无演示估算结果"
-        description="可生成随机演示估算，或加载内置示例数据。当前页面不提供经核验的产品碳足迹结论。" />
+        description="可加载固定示例阶段数据，重复操作结果一致。当前页面不提供经核验的产品碳足迹结论。" />
     </div>
   </div>
 </template>
@@ -147,7 +149,8 @@ import { buildPcfHtml, exportHtmlToPdf, exportReportWord, addReportHistory, type
 const dataStore = useDataStore()
 const toast = useToast()
 const exporting = ref<'' | 'pdf' | 'word'>('')
-const resultKind = ref<'sample' | 'random'>('random')
+const loadError = ref('')
+let loadVersion = 0
 
 const stageList = [
   { stage: 'raw', name: '原材料获取', icon: '⛏️', nameEn: 'Raw Materials' },
@@ -157,10 +160,9 @@ const stageList = [
   { stage: 'eol', name: '废弃回收', icon: '♻️', nameEn: 'End of Life' },
 ]
 const stageColors: Record<string, string> = { raw: '#8b5cf6', mfg: '#ef4444', tpt: '#f59e0b', use: '#0ea5e9', eol: '#10b981' }
-const sourceMap: Record<string, string> = {
-  raw: 'Ecoinvent 3.9 / 行业LCA数据', mfg: '组装线电力 + 锡焊工艺（南方电网因子）',
-  tpt: '干线公路货运 (GLEC 3.0)', use: '5 年运行电力（南方电网因子）', eol: '拆解回收 + 无害化处理',
-}
+const sourceMap: Record<string, string> = Object.fromEntries(
+  stageList.map(s => [s.stage, `${s.name}固定示例值；未经活动数据与排放因子核验`]),
+)
 
 const productName = ref('')
 const unit = ref('件')
@@ -175,7 +177,7 @@ let c2: echarts.ECharts | null = null
 
 const hasResult = computed(() => Object.keys(stageData.value).length > 0)
 const total = computed(() => stageList.reduce((s, x) => s + (stageData.value[x.stage] || 0), 0))
-const bomRows = computed<any[]>(() => dataStore.bom?.bom || [])
+const bomRows = computed<any[]>(() => hasResult.value ? dataStore.sampleBom?.bom || [] : [])
 
 const pcfData = computed<PcfData>(() => ({
   productName: productName.value || '未命名产品',
@@ -183,34 +185,40 @@ const pcfData = computed<PcfData>(() => ({
   standard: standard.value,
   stages: stageList.map((s) => ({ ...s, emission: stageData.value[s.stage] || 0, mainSource: sourceMap[s.stage] })),
 }))
-const demoBanner = '<div style="padding:10px 14px;margin-bottom:12px;border:2px solid #d97706;color:#78350f;background:#fffbeb;font-weight:700">演示资料 / DEMO ONLY：阶段数据和结果未经核验，不可用于正式产品碳足迹声明或合规报告。</div>'
-const previewHtml = computed(() => (hasResult.value ? demoBanner + buildPcfHtml(pcfData.value, reportLang.value) : ''))
+// PDF 和 Word 共用报告生成器中的完整演示免责声明。
+const previewHtml = computed(() => (hasResult.value ? buildPcfHtml(pcfData.value, reportLang.value) : ''))
 
-async function loadDemo() {
-  await dataStore.loadSampleData()
-  const b = dataStore.bom
-  productName.value = b.product.name
+function clearResult() {
+  loadVersion++
+  stageData.value = {}
+  productName.value = ''
   unit.value = '件'
-  standard.value = b.product.standard
-  stageData.value = Object.fromEntries(b.lcaStages.map((s: any) => [s.stage, s.emission]))
-  resultKind.value = 'sample'
-  dataStore.setUserPcf({ productName: productName.value, stages: { ...stageData.value } })
-  nextTick(renderCharts)
-  toast.success('已加载演示数据（示例产品 BOM + LCA 阶段排放）')
+  loadError.value = ''
+  c1?.dispose(); c2?.dispose()
+  c1 = null; c2 = null
 }
 
-function calcPcf() {
-  resultKind.value = 'random'
-  const base = 20 + Math.random() * 40
-  stageData.value = {
-    raw: +(base * 0.22 * (0.8 + Math.random() * 0.4)).toFixed(2),
-    mfg: +(base * 0.42 * (0.8 + Math.random() * 0.4)).toFixed(2),
-    tpt: +(base * 0.08 * (0.8 + Math.random() * 0.4)).toFixed(2),
-    use: +(base * 0.23 * (0.8 + Math.random() * 0.4)).toFixed(2),
-    eol: +(base * 0.05 * (0.8 + Math.random() * 0.4)).toFixed(2),
+async function loadDemo() {
+  clearResult()
+  const version = loadVersion
+  try {
+    const b = await dataStore.loadPcfSample()
+    if (version !== loadVersion) return
+    productName.value = b.product.name
+    unit.value = '件'
+    stageData.value = Object.fromEntries(b.lcaStages.map((s: any) => [s.stage, s.emission]))
+    nextTick(renderCharts)
+    toast.success('已加载固定示例估算 / DEMO ONLY，非真实产品核算')
+  } catch (e: any) {
+    if (version !== loadVersion) return
+    clearResult()
+    loadError.value = e.message || '示例加载失败，未保留旧结果'
+    toast.error(loadError.value)
   }
-  nextTick(renderCharts)
-  toast.info(`「${productName.value || '未命名产品'}」随机演示估算：${total.value.toFixed(2)} kgCO₂e/${unit.value}，不可用于正式核算。`)
+}
+
+async function calcPcf() {
+  await loadDemo()
 }
 
 function renderCharts() {
@@ -229,11 +237,11 @@ function renderCharts() {
       animationType: 'scale', animationEasing: 'elasticOut', animationDelay: (i: number) => i * 100,
     }],
   }, true)
-  const bench = dataStore.bom?.benchmark || { industryAvg: 1.3, industryBest: 0.55, euPef: 0.7 }
+  const bench = dataStore.sampleBom?.benchmark || { industryAvg: 1.3, industryBest: 0.55, euPef: 0.7 }
   c2?.setOption({
     tooltip: { trigger: 'axis', ...tt },
     grid: { left: '3%', right: '5%', bottom: '12%', top: '12%', containLabel: true },
-    xAxis: { type: 'category', data: ['本品', '行业平均', '行业先进', '欧盟PEF基准'], ...axis },
+    xAxis: { type: 'category', data: ['本示例', '行业平均（示意）', '行业先进（示意）', 'PEF参考（示意）'], ...axis },
     yAxis: { type: 'value', name: 'kgCO₂e/' + unit.value, nameTextStyle: { color: '#5f7a6f' }, ...axis },
     series: [{
       type: 'bar', barWidth: '45%',
@@ -251,7 +259,10 @@ function renderCharts() {
 }
 
 async function exportPcf(format: 'pdf' | 'word') {
+  if (!hasResult.value || exporting.value) return
   const html = previewHtml.value
+  const exportProduct = productName.value
+  const exportStandard = standard.value
   const name = `演示资料_产品碳足迹_${productName.value || '未命名'}_${new Date().toISOString().slice(0, 10)}`
   exporting.value = format
   try {
@@ -262,11 +273,11 @@ async function exportPcf(format: 'pdf' | 'word') {
       toast.info('正在生成双语 Word 报告…')
       await exportReportWord(
         `${productName.value} 产品碳足迹演示资料 / Demo Product Carbon Footprint`,
-        `演示资料，非合规报告 | 标准选项: ${standard.value} | 功能单位: 1 ${unit.value}`,
+        `演示资料，非合规报告 | 展示模板 / 标准选项（非合规依据）: ${exportStandard} | 功能单位: 1 ${unit.value}`,
         html, name + '.docx',
       )
     }
-    addReportHistory({ name: `${productName.value} 碳足迹演示资料`, standard: standard.value, region: '中国大陆', date: new Date().toISOString().slice(0, 10), format: format === 'pdf' ? 'PDF' : 'Word', type: 'pcf' })
+    addReportHistory({ name: `${exportProduct} 碳足迹演示资料 / DEMO ONLY`, standard: `展示选项（非合规依据）：${exportStandard}`, region: '中国大陆', date: new Date().toISOString().slice(0, 10), format: format === 'pdf' ? 'PDF' : 'Word', type: 'pcf' })
     toast.success(`✅ ${format === 'pdf' ? 'PDF' : 'Word'} 报告已生成并下载`)
   } catch (e: any) {
     toast.error('报告生成失败：' + e.message)
@@ -277,9 +288,11 @@ async function exportPcf(format: 'pdf' | 'word') {
 
 function resize() { c1?.resize(); c2?.resize() }
 useElementResize([stageEl, benchmarkEl], resize)
-onMounted(() => { dataStore.loadSampleData() })
+onMounted(loadDemo)
+watch(() => dataStore.pcfResetVersion, clearResult, { flush: 'sync' })
+watch(() => dataStore.source.bom, () => { if (dataStore.source.bom === 'user') clearResult() }, { flush: 'sync' })
 watch(reportLang, () => nextTick())
-onBeforeUnmount(() => { c1?.dispose(); c2?.dispose() })
+onBeforeUnmount(clearResult)
 </script>
 
 <style scoped>

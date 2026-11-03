@@ -55,7 +55,7 @@
       </div>
       <div class="ticker-meta">
         <el-icon color="#81c7a4"><DataLine /></el-icon>
-        <span>{{ marketTimestamp ? `接口响应 ${marketTimestamp}` : '本地参考快照' }}</span>
+        <span>{{ marketTimestamp ? `快照组装/缓存 ${marketTimestamp}` : '本地参考快照' }}</span>
         <button
           type="button"
           class="ticker-control"
@@ -72,7 +72,7 @@
       <div class="stat-box kpi-card" v-for="(s, index) in statCards" :key="s.label" :style="{ '--kpi-index': index }">
         <div class="lbl">{{ s.label }}</div>
         <div v-if="chartsLoading" class="skeleton kpi-skeleton" aria-label="正在加载排放记录" />
-        <div v-else class="kpi-measure"><span v-if="hasYearRecords" class="num" :class="s.color"><MotionNumber :value="s.value" :reduced-motion="reducedMotion" /></span><span v-else class="num kpi-unavailable">—</span><span v-if="hasYearRecords" class="kpi-unit">tCO₂e</span></div>
+        <div v-else class="kpi-measure"><span v-if="hasYearRecords" class="num" :class="s.color"><MotionNumber :value="s.value" :reduced-motion="reducedMotion" /></span><span v-else class="num kpi-unavailable">—</span><span v-if="hasYearRecords" class="kpi-unit">{{ accountingBasis.unit }}</span></div>
         <div class="kpi-meta">{{ chartsLoading ? '正在加载排放记录' : hasYearRecords ? s.meta : emissionEmptyText }}</div>
       </div>
     </div>
@@ -87,7 +87,7 @@
         <div ref="marketEl" class="w-full h-full" />
       </ChartCard>
     </div>
-    <p class="dashboard-source-note">走势图仅展示逐条标注来源与日期的交易价或官方价格预期；CCER 无可核验交易记录时留空。{{ marketSourceText }}{{ marketTimestamp ? ` · 接口响应 ${marketTimestamp}` : '' }}。接口响应时间不是行情发布时间。</p>
+    <p class="dashboard-source-note">走势图仅展示逐条标注来源与日期的交易价或官方价格预期；CCER 无可核验交易记录时留空。{{ marketSourceText }}{{ marketTimestamp ? ` · 快照组装/缓存 ${marketTimestamp}` : '' }}。快照组装/缓存时间不是行情发布时间。{{ accountingBasis.note }}</p>
 
     <div class="dashboard-section-label"><h3>排放与空间</h3><span>区域图为示例数据</span></div>
     <div class="chart-grid grid grid-cols-1 lg:grid-cols-12 gap-4">
@@ -144,6 +144,7 @@
 </template>
 
 <script setup lang="ts">
+import { accountingUnitSummary } from '@/utils/accountingUnits'
 import { computed, nextTick, onMounted, ref, shallowRef, onBeforeUnmount, watch } from 'vue'
 import * as echarts from 'echarts'
 import { CHART_AXIS, CHART_TOOLTIP } from '@/utils/chartTheme'
@@ -188,6 +189,7 @@ const filtersActive = computed(() => selectedDepartment.value !== '' || (hasMont
 const filteredRecords = computed(() => yearRecords.value.filter((record) =>
   (!selectedDepartment.value || record.department === selectedDepartment.value)
   && (!hasMonthData.value || (startMonth.value === 1 && endMonth.value === 12) || (validMonth(record.month) && record.month! >= startMonth.value && record.month! <= endMonth.value))))
+const accountingBasis = computed(() => accountingUnitSummary(filteredRecords.value))
 const hasYearRecords = computed(() => filteredRecords.value.length > 0)
 const hasDatedFilteredRecords = computed(() => filteredRecords.value.some((record) => validMonth(record.month)))
 const filteredTotal = computed(() => filteredRecords.value.reduce((sum, record) => sum + record.emission, 0))
@@ -250,7 +252,7 @@ const hints = computed(() => {
   if (s1 > 0.5) out.push('Scope 1 占比超 50%，建议优先推进燃料替代 / 工艺优化')
   if ((filteredScope.value['Scope 2'] || 0) > 0) out.push('Scope 2 电力排放可通过绿电采购(PPA)或分布式光伏降低')
   if (recs.some((r) => r.confidence === 'low')) out.push('存在低置信度条目，建议人工复核排放因子')
-  out.push(`排放强度示意：${fmt(total / REVENUE_BASELINE, 3)} tCO₂e/万元营收（按示例营收 ${REVENUE_BASELINE} 万元估算，非企业实测）`)
+  out.push(`排放强度示意：${fmt(total / REVENUE_BASELINE, 3)} ${accountingBasis.value.unit}/万元营收（按示例营收 ${REVENUE_BASELINE} 万元估算，非企业实测）`)
   out.push(`配额缺口参考：按 ${QUOTA_HOLDING} tCO₂ 配额持有估算，缺口 ${fmt(Math.max(0, total - QUOTA_HOLDING))} tCO₂`)
   return out
 })
@@ -375,7 +377,7 @@ function renderTop8(c: echarts.ECharts) {
   top8Compact = compact
   c.setOption({
     animation: !reducedMotion.value,
-    tooltip: { trigger: 'item', formatter: '{b}: {c} tCO₂e ({d}%)', ...tt },
+    tooltip: { trigger: 'item', formatter: `{b}: {c} ${accountingBasis.value.unit} ({d}%)`, ...tt },
     legend: compact
       ? { type: 'scroll', orient: 'horizontal', left: 8, right: 8, bottom: 4, textStyle: { color: '#b4c9bc', fontSize: 10 } }
       : { type: 'scroll', orient: 'vertical', right: 6, top: 'center', bottom: 10, textStyle: { color: '#b4c9bc', fontSize: 11 } },
@@ -423,11 +425,11 @@ function renderTrend(c: echarts.ECharts) {
   })
   c.setOption({
     animation: !reducedMotion.value,
-    tooltip: { ...tt, trigger: 'axis', valueFormatter: (value: number | string) => `${value} tCO₂e` },
+    tooltip: { ...tt, trigger: 'axis', valueFormatter: (value: number | string) => `${value} ${accountingBasis.value.unit}` },
     legend: { data: ['Scope1', 'Scope2', 'Scope3'], bottom: 0, textStyle: { color: '#b4c9bc', fontSize: 10 } },
     grid: { left: 54, right: 14, bottom: 48, top: 25 },
     xAxis: { type: 'category', data: months.map((month) => `${month} 月`), ...axis, axisLabel: { color: '#aac1b2', fontSize: 10 } },
-    yAxis: { type: 'value', name: 'tCO₂e', nameTextStyle: { color: '#5f7a6f' }, ...axis },
+    yAxis: { type: 'value', name: accountingBasis.value.unit, nameTextStyle: { color: '#5f7a6f' }, ...axis },
     series: [
       { name: 'Scope1', type: 'line', data: s1, color: '#ef4444', smooth: true, stack: 'x', areaStyle: { opacity: 0.25 }, animationDuration: 1400 },
       { name: 'Scope2', type: 'line', data: s2, color: '#f59e0b', smooth: true, stack: 'x', areaStyle: { opacity: 0.25 }, animationDuration: 1600 },

@@ -11,8 +11,8 @@
       <i class="orbit-dot orbit-dot--two" />
     </div>
     <div class="closing-copy">
-      <p class="chapter">06 / 06 · CARBONAI PLATFORM</p>
-      <h2 id="closing-title">从每一份数据开始，<br />看见更清晰的碳管理未来。</h2>
+      <p class="chapter">06 / 06 · 进入平台</p>
+      <h2 id="closing-title">从每一份数据开始<br />看见更清晰的碳管理未来</h2>
       <p class="closing-intro">连接排放核算、GIS 时空分析与报告工作流，让已有数据进入可检查的管理路径。</p>
       <div class="actions">
         <RouterLink class="primary-action" :to="{ name: 'dashboard' }">进入 CarbonAI 平台</RouterLink>

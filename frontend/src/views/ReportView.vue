@@ -1,6 +1,6 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4">
-    <div class="c-card p-4 report-context" role="note"><strong>报告草稿工作区</strong><span>数据来自碳排放核算页的 {{ dataStore.source.emissions === 'sample' ? '虚拟企业示例' : '用户上传记录' }}；模板版本与数据更新时间未提供。选择模板不等于完成对应标准的合规披露，导出前请复核边界、因子和证明材料。</span></div>
+    <div class="c-card p-4 report-context" role="note"><strong>报告草稿工作区</strong><span>数据来自碳排放核算页的 {{ reportSourceLabel }}；模板版本与数据更新时间未提供。选择模板不等于完成对应标准的合规披露，导出前请复核边界、因子和证明材料。</span></div>
     <!-- 区域选择 -->
     <div class="c-card p-4 flex flex-wrap items-center gap-4">
       <div class="flex items-center gap-2">
@@ -34,8 +34,9 @@
       <div class="c-card lg:col-span-8">
         <div class="c-card-title">
           报告预览 · {{ currentName }}
-          <span v-if="dataStore.source.emissions === 'sample'" class="sample-badge ml-auto">基于示例数据</span>
-          <span v-else class="user-badge ml-auto">基于用户数据</span>
+          <span v-if="reportSource === 'sample'" class="sample-badge ml-auto">基于示例数据</span>
+          <span v-else-if="reportSource === 'user'" class="user-badge ml-auto">基于用户上传记录（未核验）</span>
+          <span v-else class="sample-badge ml-auto">来源待确认</span>
         </div>
         <div class="p-3">
           <div class="report-preview" v-html="previewHtml" />
@@ -58,19 +59,20 @@
         <!-- 历史报告 -->
         <div class="c-card">
           <div class="c-card-title">
-            历史报告
+            本地报告操作记录
             <el-button size="small" text type="danger" style="margin-left: auto" :disabled="!history.length" @click="clearHistory">清空</el-button>
           </div>
           <div class="p-3 max-h-[320px] overflow-auto">
-            <p v-if="!history.length" class="report-empty" role="status">暂无历史报告草稿。</p>
+            <p class="text-[11px] text-[var(--c-text-3)] mb-2">仅保存操作元数据，不保存报告文件，不能重新下载。旧记录未区分生成与导出。</p>
+            <p v-if="!history.length" class="report-empty" role="status">暂无本地草稿或导出记录。</p>
             <table v-else class="dark-table">
               <thead><tr><th>报告名称</th><th>标准</th><th>日期</th><th>状态</th></tr></thead>
               <tbody>
-                <tr v-for="h in history" :key="h.name + h.date">
+                <tr v-for="h in history" :key="h.id">
                   <td class="text-[11.5px] text-[var(--c-text)]">{{ h.name }}</td>
                   <td class="text-[11px]">{{ h.standard }}</td>
                   <td class="text-[11px] num">{{ h.date }}</td>
-                  <td><el-tag size="small" type="info" effect="plain">本地记录</el-tag></td>
+                  <td><el-tag size="small" type="info" effect="plain">{{ reportHistoryLabel(h) }}</el-tag></td>
                 </tr>
               </tbody>
             </table>
@@ -87,15 +89,23 @@ import { useDataStore } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
 import { useConfirmAction } from '@/composables/useConfirmAction'
 import { REPORT_STANDARDS, REGION_LABELS, REGION_STANDARDS, STANDARD_NAMES } from '@/data/reportStandards'
-import { buildStandardReportHtml, exportHtmlToPdf, exportReportWord, addReportHistory, getReportHistory, clearReportHistory } from '@/utils/reportBuilder'
+import { buildStandardReportHtml, exportHtmlToPdf, exportReportWord, addReportHistory, getReportHistory, clearReportHistory, reportHistoryLabel, type ReportRecord, type ReportDataSource } from '@/utils/reportBuilder'
 
 const dataStore = useDataStore()
 const toast = useToast()
 const { confirmAction } = useConfirmAction()
 const region = ref('auto')
 const current = ref('cn-sse')
-const history = ref<any[]>([])
+const history = ref<ReportRecord[]>([])
 const exporting = ref<'' | 'pdf' | 'word'>('')
+
+const reportSource = computed<ReportDataSource>(() => {
+  if (dataStore.source.emissions === 'sample' && dataStore.emissions === dataStore.sampleEmissions) return 'sample'
+  if (dataStore.source.emissions === 'user' && dataStore.emissions === dataStore.userEmissions) return 'user'
+  return 'unknown'
+})
+const reportSourceLabel = computed(() => reportSource.value === 'sample' ? '内置虚拟企业示例数据'
+  : reportSource.value === 'user' ? '用户上传记录（真实性未核验）' : '来源待确认')
 
 const regionStandards = computed(() => (region.value === 'auto' ? [] : REGION_STANDARDS[region.value] || []))
 const currentName = computed(() => STANDARD_NAMES[current.value] || current.value)
@@ -107,7 +117,7 @@ const previewHtml = computed(() => {
   if (!dataStore.yearRecords.length) {
     return '<p style="color:#64748b;text-align:center;padding:30px">请先在「碳排放核算」页面加载数据（示例数据或上传数据），系统将自动按所选标准填充报告内容</p>'
   }
-  return draftBanner + buildStandardReportHtml(current.value, dataStore.yearRecords, dataStore.currentYear)
+  return draftBanner + buildStandardReportHtml(current.value, dataStore.yearRecords, dataStore.currentYear, reportSource.value)
 })
 
 function selectReport(key: string) {
@@ -128,7 +138,7 @@ function generate() {
   addReportHistory({
     name: `${dataStore.currentYear}年度${currentName.value}草稿`, standard: currentName.value,
     region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10),
-    format: 'PDF', type: 'standard',
+    format: '草稿', action: 'draft', type: 'standard',
   })
   history.value = getReportHistory()
   toast.success('报告草稿已加入历史记录，请核对预览内容')
@@ -140,7 +150,7 @@ async function exportPdf() {
   try {
     toast.info('正在生成 PDF 报告…')
     await exportHtmlToPdf(previewHtml.value, `报告草稿_${currentName.value}_${dataStore.currentYear}.pdf`)
-    addReportHistory({ name: `${dataStore.currentYear}年度${currentName.value}`, standard: currentName.value, region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10), format: 'PDF', type: 'standard' })
+    addReportHistory({ name: `${dataStore.currentYear}年度${currentName.value}草稿`, standard: currentName.value, region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10), format: 'PDF', action: 'export', type: 'standard' })
     history.value = getReportHistory()
     toast.success('✅ PDF 报告已导出')
   } catch (e: any) { toast.error('PDF 生成失败：' + e.message) }
@@ -157,7 +167,7 @@ async function exportWord() {
       `报告草稿，待核验 | CarbonAI V6.0 | ${new Date().toLocaleDateString('zh-CN')}`,
       previewHtml.value, `报告草稿_${currentName.value}_${dataStore.currentYear}.docx`,
     )
-    addReportHistory({ name: `${dataStore.currentYear}年度${currentName.value}`, standard: currentName.value, region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10), format: 'Word', type: 'standard' })
+    addReportHistory({ name: `${dataStore.currentYear}年度${currentName.value}草稿`, standard: currentName.value, region: REGION_LABELS[region.value] || '自动', date: new Date().toISOString().slice(0, 10), format: 'Word', action: 'export', type: 'standard' })
     history.value = getReportHistory()
     toast.success('✅ Word 报告已导出')
   } catch (e: any) { toast.error('Word 生成失败：' + e.message) }

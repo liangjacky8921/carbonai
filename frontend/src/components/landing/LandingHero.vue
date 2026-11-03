@@ -44,7 +44,7 @@ const paused = shallowRef(false)
 .hero-visual { position: absolute; z-index: 0; top: 0; right: -1%; width: 64%; height: 100%; }
 .hero-content { position: relative; z-index: 2; max-width: 700px; padding: 66px 7% 120px; animation: arrival 850ms ease-out both; }
 .product-line { margin: 0 0 26px; color: var(--landing-muted); font-size: 14px; }
-h1 { margin: 0; font-size: clamp(44px, 5.3vw, 76px); font-weight: 500; line-height: 1.19; letter-spacing: -0.045em; text-wrap: balance; }
+h1 { margin: 0; font-size: clamp(40px, 4.6vw, 66px); font-weight: 500; line-height: 1.23; letter-spacing: -0.045em; text-wrap: balance; }
 .hero-description { margin: 30px 0 32px; color: #c0ccc4; font-size: 16px; line-height: 1.9; }
 .hero-actions { display: flex; align-items: center; gap: 30px; }
 .access-note { margin: 14px 0 0; color: #8fa298; font-size: 11px; line-height: 1.6; }

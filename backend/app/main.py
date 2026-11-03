@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.routers import auth, business, carbon_mapper
+from app.routers import auth, business, collection
 from app.db import Base, engine
 
 ENV = os.getenv("APP_ENV", "development")
@@ -67,19 +67,10 @@ app.add_middleware(
 )
 
 
-@app.middleware("http")
-async def no_store_observations(request, call_next):
-    response = await call_next(request)
-    prefix = "/api/observations/carbon-mapper"
-    if request.url.path == prefix or request.url.path.startswith(prefix + "/"):
-        response.headers["Cache-Control"] = "no-store"
-        response.headers["Pragma"] = "no-cache"
-        response.headers["Vary"] = "Authorization"
-    return response
-
 app.include_router(auth.router)
 app.include_router(business.router)
-app.include_router(carbon_mapper.router)
+app.include_router(collection.router)
+app.add_middleware(collection.CollectionBodyLimit)
 
 
 @app.get("/api/health")

@@ -64,10 +64,10 @@
           </span>
         </div>
         <div class="topbar-actions flex items-center gap-3">
-          <el-tooltip :content="hasUserData ? '清空浏览器中的用户数据并切换回完整示例数据集' : '当前全部使用示例数据'" placement="bottom">
+          <el-tooltip :content="hasUserData ? '跨模块概览：有模块标记为用户数据；点击清空浏览器相关用户数据并切回示例。各页实际来源仍须核对' : '跨模块概览：当前无用户来源标记，不代表各页数据已经真实性核验'" placement="bottom">
             <el-button size="small" type="warning" plain round :disabled="!hasUserData"
               aria-label="清空用户数据并切回示例数据" @click="onToggleSample">
-              {{ hasUserData ? '用户数据 · 切回示例' : '当前：示例数据' }}
+              {{ hasUserData ? '跨模块：用户标记 · 切回示例' : '跨模块：无用户标记' }}
             </el-button>
           </el-tooltip>
           <el-dropdown v-if="auth.isLoggedIn" @command="onUserCmd">
@@ -133,7 +133,7 @@ const hasUserData = computed(() =>
 const navGroups = [
   {
     label: '总览',
-    items: [{ path: '/dashboard', title: '数据大屏', icon: Odometer }],
+    items: [{ path: '/dashboard', title: '数据大屏', icon: Odometer }, { path: '/collection', title: '数据采集与来源管理', icon: Files, auth: true }],
   },
   {
     label: '碳核算',
@@ -259,7 +259,7 @@ onMounted(() => {
 .collapse-btn:hover { color: var(--c-green); border-color: var(--c-green); }
 .topbar {
   height: 54px; flex-shrink: 0; display: flex; align-items: center; justify-content: space-between;
-  padding: 0 18px; border-bottom: 0.5px solid var(--c-border);
+  padding: 0 18px; border-bottom: 1px solid var(--c-border);
   background: rgba(13, 23, 20, 0.72);
   backdrop-filter: blur(20px) saturate(1.5);
   -webkit-backdrop-filter: blur(20px) saturate(1.5);

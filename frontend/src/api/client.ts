@@ -49,7 +49,10 @@ export const authApi = {
 /** 业务接口：后端在线时调用，离线时由各模块回退本地实现 */
 export const bizApi = {
   chat: (message: string, history: { role: string; content: string }[]) =>
-    wrap(http.post('/ai/chat', { message, history })),
+    wrap(http.post('/ai/chat', { message, history }, {
+      headers: { Authorization: `Bearer ${localStorage.getItem('carbonai_jwt') || ''}` },
+      timeout: 65000, // 后端上游单次I/O最多20秒，读取有界；不自动重试。
+    })),
   uploadEmissions: (formData: FormData) =>
     wrap(http.post('/emissions/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } })),
   getFactors: () =>

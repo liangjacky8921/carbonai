@@ -1,3 +1,4 @@
+// 本文件价格均为合成Mock验证数据，不作为真实市场行情或新增价格来源。
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { formatPriceTooltip, makePricePlot } from '../src/utils/carbonPriceChart.ts'
