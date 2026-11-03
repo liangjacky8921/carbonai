@@ -1,0 +1,8 @@
+{
+  "service": "active",
+  "database_integrity": "ok",
+  "collection_tables_present": true,
+  "photo_directory_mode": "0o700",
+  "paid_ai_enabled": false,
+  "production_git_head": "08af9014e7321ec02f2c1c126cbd7ba3c7e67b76"
+}

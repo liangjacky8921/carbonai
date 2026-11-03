@@ -1,0 +1,35 @@
+{
+  "environment": "Chrome headless on Windows; real public site, no production login or upload",
+  "errors": [],
+  "failedResources": [],
+  "checks": [
+    "Desktop real render: new China region, original 3D canvas/rotation pause and 66px H1",
+    "Workspace and new navigation visible; protected module redirects guests to existing login",
+    "Collection and AI reject anonymous requests with 401, no paid upstream calls",
+    "Backend health ok; removed Carbon Mapper API is 404",
+    "Mobile simulation: static regional highlight, visible text/buttons, no page overflow",
+    "Reduced-motion static fallback"
+  ],
+  "homeStatus": 200,
+  "release": {
+    "release_commit": "29683a01a0b5e14b95a331832de0acc8de1bb974",
+    "candidate_commit": "47530c421669159f46574c6fc267efb9c1826264",
+    "version": "V6.0 candidate 2026-11-03",
+    "index_sha256": "21258a148a8ded02f8ab3bde3d9975a8a70dacc8f229f3a6f85e932d29398ef6"
+  },
+  "authChecks": {
+    "/api/collection/sources": 401,
+    "/api/collection/records": 401,
+    "/api/ai/chat": 401
+  },
+  "health": {
+    "status": "ok",
+    "version": "6.0.0"
+  },
+  "mobile": {
+    "width": 390,
+    "scrollWidth": 390
+  },
+  "apex": 200,
+  "status": "passed"
+}

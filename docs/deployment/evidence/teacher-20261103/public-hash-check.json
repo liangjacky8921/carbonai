@@ -1,0 +1,26 @@
+{
+  "status": 200,
+  "html_sha256": "21258a148a8ded02f8ab3bde3d9975a8a70dacc8f229f3a6f85e932d29398ef6",
+  "headers": {
+    "Content-Type": "text/html",
+    "ETag": "\"6ae97f67-bc9\"",
+    "Cache-Control": "no-cache, no-store, must-revalidate"
+  },
+  "assets": [
+    {
+      "path": "/assets/index-DbXUZyRG.js",
+      "status": 200,
+      "mime": "application/javascript"
+    },
+    {
+      "path": "/assets/element-BgTjbRJ4.js",
+      "status": 200,
+      "mime": "application/javascript"
+    },
+    {
+      "path": "/assets/index-DLm7hbx0.css",
+      "status": 200,
+      "mime": "text/css"
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "path": "backend/app/main.py",
+    "sha256": "ebbae214b83a328ceaf2ba4c68794b32c073870c0d0f2fa6af9e353fc1261f8d",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/app/routers/auth.py",
+    "sha256": "3cf74136305ebfc996011e24ad31e6fdb4adb2b0c8010566afed201c2df275dd",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/app/routers/business.py",
+    "sha256": "833b3629a17c041a145dc1a7b3b7c967d764110b86f3df669ae47ce092ee266f",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/app/db.py",
+    "sha256": "859ae8d544dc9273c447b3b884c8e4771f5ad24772ce95012920b2b90f2e2f5e",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/app/factors.py",
+    "sha256": "7b2424d9863cedde745a4743c7e484327690c4d6a0d91f58c31e6352fc1146de",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/app/accounting_units.py",
+    "sha256": "bb01aea280627feecf9eb75015fa6cafccc98e0888c662009b71b852fdb77d63",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/app/collection.py",
+    "sha256": "76af4886c94781036d43418b8edc2fb490d46ebb0b39b7d56baa8c19d03b8cb3",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/app/routers/collection.py",
+    "sha256": "5c9519cc69f40ff13a8b66dbf8958477c611d5c85a2207bcd996829fa5d32c84",
+    "matches_local_candidate": true
+  },
+  {
+    "path": "backend/requirements.txt",
+    "sha256": "87622d368d4f32938d23bb47b35cc6cf82de2bb1a7c138b33dcfa3104aa29b08",
+    "matches_local_candidate": true
+  }
+]
