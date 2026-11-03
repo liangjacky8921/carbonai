@@ -1,0 +1,10 @@
+{
+  "candidate_commit": "a0c741d58baf2e8694c91a7b6430941078501f97",
+  "release_commit": "4c84cbb28a800687a3d211f954995b21a25652c8",
+  "previous_main": "cf0285333a5854f3e3fa083181ebb35622f73e99",
+  "files": [
+    "frontend/src/components/landing/LandingPage.vue",
+    "frontend/src/components/landing/PointCloudGlobe.vue",
+    "frontend/tests/teacherFeedback.test.mjs"
+  ]
+}

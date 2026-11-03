@@ -1,0 +1,9 @@
+{
+  "status": "published",
+  "release_commit": "4c84cbb28a800687a3d211f954995b21a25652c8",
+  "index_sha256": "3466de82cc4bb4ea0f06500b6f07fb4227aa634210e57877300e12d305e06d2e",
+  "new_assets": 27,
+  "backend_and_config_unchanged": true,
+  "service_restarted": false,
+  "rollback_directory": "/opt/carbonai/releases/title-polish-20261103/frontend-dist-before"
+}

@@ -1,0 +1,217 @@
+{
+  "environment": "Chrome headless on public site; mobile is simulated",
+  "errors": [],
+  "viewports": [
+    {
+      "width": 1440,
+      "typography": [
+        {
+          "id": "hero-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "57.6px",
+          "weight": "500",
+          "lineHeight": "70.848px",
+          "spacing": "-2.592px",
+          "width": 498.40625,
+          "scrollWidth": 498
+        },
+        {
+          "id": "capabilities-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "57.6px",
+          "weight": "500",
+          "lineHeight": "70.848px",
+          "spacing": "-2.592px",
+          "width": 689.5625,
+          "scrollWidth": 690
+        },
+        {
+          "id": "provenance-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "57.6px",
+          "weight": "500",
+          "lineHeight": "70.848px",
+          "spacing": "-2.592px",
+          "width": 381.3125,
+          "scrollWidth": 381
+        },
+        {
+          "id": "spatial-heading",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "57.6px",
+          "weight": "500",
+          "lineHeight": "70.848px",
+          "spacing": "-2.592px",
+          "width": 386.484375,
+          "scrollWidth": 386
+        },
+        {
+          "id": "product-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "57.6px",
+          "weight": "500",
+          "lineHeight": "70.848px",
+          "spacing": "-2.592px",
+          "width": 471.6875,
+          "scrollWidth": 472
+        },
+        {
+          "id": "closing-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "57.6px",
+          "weight": "500",
+          "lineHeight": "70.848px",
+          "spacing": "-2.592px",
+          "width": 780,
+          "scrollWidth": 780
+        }
+      ]
+    },
+    {
+      "width": 1280,
+      "typography": [
+        {
+          "id": "hero-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "51.2px",
+          "weight": "500",
+          "lineHeight": "62.976px",
+          "spacing": "-2.304px",
+          "width": 520.8125,
+          "scrollWidth": 521
+        },
+        {
+          "id": "capabilities-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "51.2px",
+          "weight": "500",
+          "lineHeight": "62.976px",
+          "spacing": "-2.304px",
+          "width": 650.5,
+          "scrollWidth": 651
+        },
+        {
+          "id": "provenance-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "51.2px",
+          "weight": "500",
+          "lineHeight": "62.976px",
+          "spacing": "-2.304px",
+          "width": 359.421875,
+          "scrollWidth": 359
+        },
+        {
+          "id": "spatial-heading",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "51.2px",
+          "weight": "500",
+          "lineHeight": "62.976px",
+          "spacing": "-2.304px",
+          "width": 364.03125,
+          "scrollWidth": 364
+        },
+        {
+          "id": "product-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "51.2px",
+          "weight": "500",
+          "lineHeight": "62.976px",
+          "spacing": "-2.304px",
+          "width": 439.125,
+          "scrollWidth": 439
+        },
+        {
+          "id": "closing-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "51.2px",
+          "weight": "500",
+          "lineHeight": "62.976px",
+          "spacing": "-2.304px",
+          "width": 780,
+          "scrollWidth": 780
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "typography": [
+        {
+          "id": "hero-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "34px",
+          "weight": "500",
+          "lineHeight": "41.82px",
+          "spacing": "-1.53px",
+          "width": 342,
+          "scrollWidth": 342
+        },
+        {
+          "id": "capabilities-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "34px",
+          "weight": "500",
+          "lineHeight": "41.82px",
+          "spacing": "-1.53px",
+          "width": 342,
+          "scrollWidth": 342
+        },
+        {
+          "id": "provenance-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "34px",
+          "weight": "500",
+          "lineHeight": "41.82px",
+          "spacing": "-1.53px",
+          "width": 342,
+          "scrollWidth": 342
+        },
+        {
+          "id": "spatial-heading",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "34px",
+          "weight": "500",
+          "lineHeight": "41.82px",
+          "spacing": "-1.53px",
+          "width": 342,
+          "scrollWidth": 342
+        },
+        {
+          "id": "product-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "34px",
+          "weight": "500",
+          "lineHeight": "41.82px",
+          "spacing": "-1.53px",
+          "width": 342,
+          "scrollWidth": 342
+        },
+        {
+          "id": "closing-title",
+          "font": "-apple-system, BlinkMacSystemFont, \"SF Pro Display\", \"PingFang SC\", \"Microsoft YaHei\", sans-serif",
+          "size": "34px",
+          "weight": "500",
+          "lineHeight": "41.82px",
+          "spacing": "-1.53px",
+          "width": 300,
+          "scrollWidth": 300
+        }
+      ]
+    }
+  ],
+  "checks": [
+    "Visible China caption removed; globe accessibility explanation retained",
+    "All six homepage display titles share Hero font family, weight, size, line height and tracking",
+    "1440/1280/390 no title or document overflow",
+    "Reduced-motion fallback unchanged"
+  ],
+  "release": {
+    "release_commit": "4c84cbb28a800687a3d211f954995b21a25652c8",
+    "candidate_commit": "a0c741d58baf2e8694c91a7b6430941078501f97",
+    "version": "V6.0 homepage typography 2026-11-03",
+    "index_sha256": "3466de82cc4bb4ea0f06500b6f07fb4227aa634210e57877300e12d305e06d2e",
+    "previous_release_commit": "29683a01a0b5e14b95a331832de0acc8de1bb974",
+    "scope": "frontend-only"
+  },
+  "health": "ok",
+  "status": "passed"
+}

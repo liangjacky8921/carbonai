@@ -1,0 +1,21 @@
+{
+  "html_status": 200,
+  "html_sha256": "3466de82cc4bb4ea0f06500b6f07fb4227aa634210e57877300e12d305e06d2e",
+  "entry_assets": [
+    {
+      "path": "/assets/index-Dy5ex6sd.js",
+      "status": 200,
+      "mime": "application/javascript"
+    },
+    {
+      "path": "/assets/element-BgTjbRJ4.js",
+      "status": 200,
+      "mime": "application/javascript"
+    },
+    {
+      "path": "/assets/index-DLm7hbx0.css",
+      "status": 200,
+      "mime": "text/css"
+    }
+  ]
+}
