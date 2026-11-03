@@ -10,3 +10,6 @@ pymysql==1.1.1
 # 碳排放数据解析（.xlsx/.xls）与报告 PDF 生成
 openpyxl==3.1.5
 reportlab==4.2.5
+
+# Collection image verification (already available in the local runtime)
+Pillow==12.3.0

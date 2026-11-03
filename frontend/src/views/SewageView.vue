@@ -2,7 +2,7 @@
   <div class="max-w-[1600px] mx-auto space-y-4 sewage-page">
     <div class="c-card p-4 sewage-heading">
       <div><div class="sewage-kicker">FACILITY OPERATIONS / WASTEWATER</div><h2>麻陂污水厂运行分析</h2><p>博罗县麻陂镇坤元污水处理有限公司 · 运行月报摘录</p></div>
-      <div class="sewage-meta"><span>资料：平台内置月报，授权待核实</span><span>统计期：{{ monthPeriod }}</span><span>数据更新时间：未提供</span><span>状态：非实时监测</span></div>
+      <div class="sewage-meta"><span>资料：主管授权的运行月报（据项目负责人确认）；公开范围及凭证归档待核对</span><span>统计期：{{ monthPeriod }}</span><span>数据更新时间：未提供</span><span>状态：非实时监测</span></div>
     </div>
 
     <div v-if="loadError" class="sewage-state" role="alert">{{ loadError }}</div>
@@ -38,13 +38,13 @@
 
     <!-- 温室气体核算与水质合规核验 -->
     <div class="c-card" v-if="kpi">
-      <div class="c-card-title">温室气体核算与水质合规核验（GB 18918-2002 一级A · IPCC 2019R）</div>
+      <div class="c-card-title">温室气体估算与水质资料摘要（内置GB 18918-2002 / IPCC 2019R参考）</div>
       <div class="p-4 space-y-4">
-        <p class="sewage-footnote">依据内置资料计算的估算与合规核验；核算期 {{ kpi.period?.start || '未提供' }} 至 {{ kpi.period?.end || '未提供' }}，与上方月报统计期分别展示。来源与授权待核实，非实时结论。</p>
+        <p class="sewage-footnote">内置摘要声明55个月（2022-01—2026-07）；显示核算期 {{ kpi.period?.start || '未提供' }} 至 {{ kpi.period?.end || '未提供' }}，与上方49个月月报分别展示；摘要来源、授权范围及计算依据另待核实，不代表实时监测或合规审查。</p>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <div class="stat-box"><div class="num text-green">{{ displayMetric(kpi.total_co2e_t, 1) }}</div><div class="lbl">全期估算排放 (tCO₂e)</div></div>
           <div class="stat-box"><div class="num text-blue">{{ displayMetric(kpi.total_flow_m3, 0) }}</div><div class="lbl">核算水量 (m³)</div></div>
-          <div class="stat-box"><div class="num text-amber">{{ displayMetric(compliance?.overall_rate_pct, 2) }}{{ compliance?.overall_rate_pct == null ? '' : '%' }}</div><div class="lbl">水质一级A核验达标率</div></div>
+          <div class="stat-box"><div class="num text-amber">{{ displayMetric(compliance?.overall_rate_pct, 2) }}{{ compliance?.overall_rate_pct == null ? '' : '%' }}</div><div class="lbl">内置阈值比对比例（待核实）</div></div>
           <div class="stat-box"><div class="num">{{ displayMetric(kpi.period?.n_months, 0) }}</div><div class="lbl">核算期月数</div></div>
         </div>
 
@@ -62,9 +62,9 @@
             </div>
           </div>
           <div v-if="compliance">
-            <div class="text-xs text-[var(--c-text-3)] mb-2">出水水质合规（1673 天逐日核验）</div>
+            <div class="text-xs text-[var(--c-text-3)] mb-2">出水水质阈值比对（内置1673天资料，非合规审查）</div>
             <table class="dark-table">
-              <thead><tr><th>指标</th><th class="text-right">超标天数</th><th class="text-right">出水P95</th><th class="text-right">一级A限值</th></tr></thead>
+              <thead><tr><th>指标</th><th class="text-right">超标天数</th><th class="text-right">出水P95</th><th class="text-right">内置一级A参考值</th></tr></thead>
               <tbody>
                 <tr><td>COD</td><td class="num text-right">{{ compliance.exc_cod_days }}</td><td class="num text-right">{{ compliance.cod_out_p95 }}</td><td class="text-right">≤50</td></tr>
                 <tr><td>氨氮</td><td class="num text-right">{{ compliance.exc_nh3n_days }}</td><td class="num text-right">{{ compliance.nh3n_out_p95 }}</td><td class="text-right">≤5</td></tr>
@@ -72,7 +72,7 @@
               </tbody>
             </table>
           </div>
-          <div v-else class="sewage-state" role="status">水质合规核验资料未提供。</div>
+          <div v-else class="sewage-state" role="status">水质阈值比对资料未提供。</div>
         </div>
 
         <div>
@@ -101,7 +101,7 @@
         </div>
 
         <div class="flex gap-2">
-          <el-button type="primary" round @click="downloadReport">生成 PDF 合规报告</el-button>
+          <el-button type="primary" round @click="downloadReport">下载 PDF（内容待核实）</el-button>
         </div>
       </div>
     </div>
@@ -172,7 +172,7 @@ async function downloadReport() {
     a.download = '麻陂污水厂碳核算与合规报告.pdf'
     a.click()
     URL.revokeObjectURL(url)
-    toast.success('合规报告已下载')
+    toast.success('PDF文件已下载；内容与用途需人工核对')
   } catch (e: any) {
     toast.error(e.message || '报告生成失败')
   }

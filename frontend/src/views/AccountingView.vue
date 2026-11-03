@@ -1,9 +1,10 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4 accounting-page">
     <div class="c-card p-4 accounting-context">
-      <div><strong>碳排放核算</strong><p>边界：当前年份的上传记录或虚拟企业示例；按现有 Scope 1–3 分类汇总。结果单位：tCO₂e。</p></div>
+      <div><strong>碳排放核算</strong><p>边界：当前年份的上传记录或虚拟企业示例；按现有 Scope 1–3 分类汇总。结果单位：{{ resultBasis.unit }}。</p></div>
       <div class="accounting-meta"><span>统计年份：{{ dataStore.currentYear || '未选择' }}</span><span>计算路径：{{ calculationPath }}</span><span>因子版本：未单独提供；逐条来源见明细</span></div>
     </div>
+    <p class="accounting-caveat">{{ resultBasis.note }}</p>
     <!-- 上传区 -->
     <div class="c-card p-4">
       <div class="flex flex-wrap items-center gap-4">
@@ -25,7 +26,7 @@
           </span>
         </div>
       </div>
-      <p class="accounting-caveat">当前解析器在本地回退时按排放源名称匹配因子；未匹配项可能使用默认因子并标为低置信。上传文件的 Scope 列和年份请与结果明细逐项核对。</p>
+      <p class="accounting-caveat">核算仍按原关键词匹配及Scope分类。新上传仅接受已明确支持的活动单位；不支持或因子口径冲突时拒绝计算。单位检查通过不等于因子或CO₂e核验通过。</p>
       <p v-if="uploadError" class="accounting-error" role="alert">{{ uploadError }}</p>
       <p v-if="lowConfidenceCount" class="accounting-error" role="status">{{ lowConfidenceCount }} 条记录的因子匹配为低置信，请核对活动数据、因子及来源。</p>
     </div>
@@ -42,10 +43,10 @@
 
     <!-- 统计 -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-      <div class="stat-box"><div class="num text-green">{{ hasRecords ? fmt(dataStore.yearTotal) : '—' }}</div><div class="lbl">总排放 (tCO₂e)</div></div>
-      <div class="stat-box"><div class="num text-red">{{ hasRecords ? fmt(s1) : '—' }}</div><div class="lbl">Scope 1 直接排放 (tCO₂e)</div></div>
-      <div class="stat-box"><div class="num text-amber">{{ hasRecords ? fmt(s2) : '—' }}</div><div class="lbl">Scope 2 间接排放 (tCO₂e)</div></div>
-      <div class="stat-box"><div class="num text-blue">{{ hasRecords ? fmt(s3) : '—' }}</div><div class="lbl">Scope 3 价值链排放 (tCO₂e)</div></div>
+      <div class="stat-box"><div class="num text-green">{{ hasRecords ? fmt(dataStore.yearTotal, resultBasis.unit === 'tCO₂' ? 6 : 2) : '—' }}</div><div class="lbl">总排放 ({{ resultBasis.unit }})</div></div>
+      <div class="stat-box"><div class="num text-red">{{ hasRecords ? fmt(s1, resultBasis.unit === 'tCO₂' ? 6 : 2) : '—' }}</div><div class="lbl">Scope 1 直接排放 ({{ resultBasis.unit }})</div></div>
+      <div class="stat-box"><div class="num text-amber">{{ hasRecords ? fmt(s2, resultBasis.unit === 'tCO₂' ? 6 : 2) : '—' }}</div><div class="lbl">Scope 2 间接排放 ({{ resultBasis.unit }})</div></div>
+      <div class="stat-box"><div class="num text-blue">{{ hasRecords ? fmt(s3, resultBasis.unit === 'tCO₂' ? 6 : 2) : '—' }}</div><div class="lbl">Scope 3 价值链排放 ({{ resultBasis.unit }})</div></div>
     </div>
 
     <!-- 图表 -->
@@ -53,7 +54,7 @@
       <ChartCard title="排放结构 (Scope 1–3)" height="280" :empty="!hasRecords" :sample="dataStore.source.emissions === 'sample'" :user-tag="dataStore.source.emissions === 'user'" source-note="当前年份核算记录；逐条因子来源见明细">
         <div ref="scopeEl" class="w-full h-full" />
       </ChartCard>
-      <ChartCard title="部门排放对比 · tCO₂e" height="280" :empty="!hasRecords" :sample="dataStore.source.emissions === 'sample'" :user-tag="dataStore.source.emissions === 'user'" source-note="当前年份核算记录">
+      <ChartCard :title="`部门排放对比 · ${resultBasis.unit}`" height="280" :empty="!hasRecords" :sample="dataStore.source.emissions === 'sample'" :user-tag="dataStore.source.emissions === 'user'" source-note="当前年份核算记录">
         <div ref="deptEl" class="w-full h-full" />
       </ChartCard>
     </div>
@@ -69,7 +70,7 @@
             <tr>
               <th>排放源</th><th>部门</th><th>Scope</th>
               <th class="text-right">活动数据</th><th>单位</th><th class="text-right">因子</th>
-              <th class="text-right">tCO₂e</th><th class="text-right">占比</th><th>因子来源</th>
+              <th class="text-right">{{ resultBasis.unit }}</th><th class="text-right">占比</th><th>因子来源</th>
             </tr>
           </thead>
           <tbody>
@@ -80,13 +81,13 @@
               <td class="num text-right">{{ fmt(r.activity) }}</td>
               <td>{{ r.unit }}</td>
               <td class="num text-right">{{ r.factor }}</td>
-              <td class="num text-right font-semibold text-[var(--c-green)]">{{ fmt(r.emission) }}</td>
+              <td class="num text-right font-semibold text-[var(--c-green)]">{{ fmt(r.emission, isUnitCheckedRecord(r) ? 6 : 2) }}</td>
               <td class="num text-right">{{ pct(r.emission) }}%</td>
-              <td class="text-[11px]">{{ r.factorSource || '未提供' }} <span v-if="r.confidence === 'low'" class="text-amber">低置信</span></td>
+              <td class="text-[11px]">{{ r.factorSource || '未提供' }} <span class="text-amber">{{ isUnitCheckedRecord(r) ? '单位已检查；因子/气体口径待核实' : '历史或示例单位未核验' }}</span><br /><span v-if="isUnitCheckedRecord(r)">换算活动量：{{ r.normalizedActivity }} {{ r.normalizedUnit }} · 因子：{{ r.factorUnit }}</span></td>
             </tr>
             <tr class="total-row">
               <td colspan="6">合计</td>
-              <td class="num text-right">{{ fmt(dataStore.yearTotal) }}</td>
+              <td class="num text-right">{{ fmt(dataStore.yearTotal, resultBasis.unit === 'tCO₂' ? 6 : 2) }}</td>
               <td class="num text-right">100%</td><td></td>
             </tr>
           </tbody>
@@ -109,6 +110,7 @@ import { useDataStore, parseEmissionFile } from '@/stores/data'
 import { useToast } from '@/composables/useToast'
 import { useConfirmAction } from '@/composables/useConfirmAction'
 import { fmt } from '@/utils/format'
+import { accountingUnitSummary, isUnitCheckedRecord } from '@/utils/accountingUnits'
 import { bizApi, backendOnline } from '@/api/client'
 
 const dataStore = useDataStore()
@@ -117,6 +119,7 @@ const { confirmAction } = useConfirmAction()
 const fileInput = ref<HTMLInputElement | null>(null)
 const uploadError = ref('')
 const calculationPath = ref('未执行核算')
+const resultBasis = computed(() => accountingUnitSummary(dataStore.yearRecords))
 const hasRecords = computed(() => dataStore.yearRecords.length > 0)
 const lowConfidenceCount = computed(() => dataStore.yearRecords.filter((record) => record.confidence === 'low').length)
 
@@ -139,7 +142,7 @@ async function onFile(file: File) {
     dataStore.setUserEmissions(records)
     toast.success(`核算完成：${records.length} 条记录`)
   } catch (e: any) {
-    uploadError.value = e.message || '解析失败'
+    uploadError.value = `${e.message || '解析失败'}；本次上传未保存，当前仍为先前加载的记录。`
     toast.error(uploadError.value)
   }
 }
@@ -147,19 +150,32 @@ async function onFile(file: File) {
 /** 优先调用后端核算，后端不可用或失败时回退本地解析 */
 async function uploadAndAccount(file: File) {
   if (backendOnline.value) {
+    let response
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await bizApi.uploadEmissions(fd)
-      if (res.code === 200 && Array.isArray(res.data)) { calculationPath.value = '现有后端接口'; return res.data }
-    } catch {
-      // 后端异常，回退本地
+      response = await bizApi.uploadEmissions(fd)
+    } catch (e: any) {
+      if (e?.response?.status === 422) throw new Error(e.response.data?.detail || '后端拒绝当前单位组合')
+    }
+    if (response) {
+      if (response.code === 422) throw new Error('后端拒绝当前活动数据或单位组合，请核对单位、大小写及因子口径；未自动回退')
+      if (response.code !== 200) throw new Error(response.message || '后端未完成核算')
+      if (Array.isArray(response.data) && response.data.length && response.data.every(isUnitCheckedRecord)) {
+        calculationPath.value = '现有后端接口（单位校验版）'
+        return response.data
+      }
+      // Old servers do not prove unit conversion; reparse the original file, never fix old response values.
+      const records = await parseEmissionFile(file)
+      calculationPath.value = '后端结果缺少单位核验元数据，已对本次文件本地解析'
+      return records
     }
   }
   const records = await parseEmissionFile(file)
-  calculationPath.value = '浏览器本地回退解析'
+  calculationPath.value = '浏览器本地回退解析（单位校验版）'
   return records
 }
+
 function onInputChange(e: Event) {
   const f = (e.target as HTMLInputElement).files?.[0]
   if (f) onFile(f)
@@ -200,9 +216,9 @@ function renderCharts() {
       itemStyle: { borderColor: '#0a120f', borderWidth: 2, borderRadius: 6 },
       label: { color: '#9db8ae' },
       data: [
-        { name: 'Scope 1', value: +s1.value.toFixed(1), itemStyle: { color: '#ef4444' } },
-        { name: 'Scope 2', value: +s2.value.toFixed(1), itemStyle: { color: '#f59e0b' } },
-        { name: 'Scope 3', value: +s3.value.toFixed(1), itemStyle: { color: '#0ea5e9' } },
+        { name: 'Scope 1', value: s1.value, itemStyle: { color: '#ef4444' } },
+        { name: 'Scope 2', value: s2.value, itemStyle: { color: '#f59e0b' } },
+        { name: 'Scope 3', value: s3.value, itemStyle: { color: '#0ea5e9' } },
       ], animationType: 'scale', animationEasing: 'elasticOut',
     }],
   }, true)
@@ -218,7 +234,7 @@ function renderCharts() {
     xAxis: { type: 'category', data: entries.map((e) => e[0]), axisLabel: { color: '#9db8ae' }, axisLine: { lineStyle: { color: '#1e3329' } } },
     yAxis: { type: 'value', axisLabel: { color: '#9db8ae' }, splitLine: { lineStyle: { color: 'rgba(30,51,41,0.6)' } } },
     series: [{
-      type: 'bar', data: entries.map((e) => +e[1].toFixed(1)), barWidth: '45%',
+      type: 'bar', data: entries.map((e) => e[1]), barWidth: '45%',
       itemStyle: { borderRadius: [6, 6, 0, 0], color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{ offset: 0, color: '#10b981' }, { offset: 1, color: 'rgba(16,185,129,0.15)' }]) },
       animationDelay: (i: number) => i * 100,
     }],
@@ -235,7 +251,7 @@ onMounted(async () => {
   await nextTick()
   renderCharts()
 })
-watch(() => [dataStore.currentYear, dataStore.source.emissions, dataStore.yearRecords.length], async () => { await nextTick(); renderCharts() }, { flush: 'post' })
+watch(() => [dataStore.currentYear, dataStore.source.emissions, dataStore.yearRecords], async () => { await nextTick(); renderCharts() }, { flush: 'post' })
 onBeforeUnmount(() => { scopeChart?.dispose(); deptChart?.dispose() })
 </script>
 

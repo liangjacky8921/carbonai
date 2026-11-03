@@ -1,7 +1,7 @@
 <template>
   <div class="max-w-[1600px] mx-auto space-y-4 soil-page">
     <div class="c-card p-4 soil-heading">
-      <div><div class="soil-kicker">SOIL SPECTRAL ANALYSIS</div><h2>土壤光谱与 SOC 建模准备</h2><p>平台内置第三批光谱处理结果；实验数据来源、授权与适用范围待核实。</p></div>
+      <div><div class="soil-kicker">SOIL SPECTRAL ANALYSIS</div><h2>土壤光谱与 SOC 建模准备</h2><p>据项目负责人确认，使用导师提供的脱敏可公开土壤高光谱数据；本页展示处理结果，适用范围及授权凭证归档仍待核对。</p></div>
       <div class="soil-meta"><span>处理日期：{{ data?.meta?.['处理日期'] || '未提供' }}</span><span>样本：{{ data?.n_samples ?? '—' }} · 波段：{{ data?.n_bands ?? '—' }}</span><span>波长：{{ wavelengthRange }}</span></div>
     </div>
 

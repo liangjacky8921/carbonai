@@ -30,7 +30,7 @@ from datetime import datetime, timedelta
 from email.mime.text import MIMEText
 from email.utils import formataddr
 
-from fastapi import APIRouter, Header
+from fastapi import APIRouter, Header, HTTPException
 from pydantic import BaseModel
 
 from app.db import SessionLocal, User, EmailCode
@@ -385,5 +385,21 @@ def user_info(authorization: str = Header(default="")):
         if not u:
             return err("无效凭证", 401)
         return ok(_user_dict(u))
+    finally:
+        db.close()
+
+
+def require_current_user_id(authorization: str = Header(default="")) -> int:
+    """复用既有签名/有效期及用户存在性；不改变签发或其他接口权限。"""
+    if not authorization.startswith("Bearer ") or len(authorization) > 4096:
+        raise HTTPException(status_code=401, detail="需要有效的平台登录凭据")
+    uid = _parse_token(authorization[7:].strip())
+    if not isinstance(uid, int) or isinstance(uid, bool) or uid < 1:
+        raise HTTPException(status_code=401, detail="需要有效的平台登录凭据")
+    db = SessionLocal()
+    try:
+        if not db.query(User).filter(User.id == uid).first():
+            raise HTTPException(status_code=401, detail="需要有效的平台登录凭据")
+        return uid
     finally:
         db.close()

@@ -1,9 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import * as XLSX from 'xlsx'
+import { parseTrajectoryCsv } from '@/utils/trajectory'
+import { calculateUnitChecked, type CheckedAccounting } from '@/utils/accountingUnits'
 
 /** 排放记录结构（与企业示例数据 JSON / 上传 Excel 解析结果一致） */
-export interface EmissionRecord {
+export interface EmissionRecord extends Partial<Omit<CheckedAccounting, 'emission' | 'confidence'>> {
   year: number
   month?: number
   department?: string
@@ -93,7 +95,34 @@ export const useDataStore = defineStore('data', () => {
   const userBom = ref<any>(lsGet(userKeys.bom))
   const bom = computed(() =>
     source.value.bom === 'user' && userBom.value ? userBom.value : sampleBom.value)
-  const userPcf = ref<any>(lsGet(userKeys.pcf))
+  // 无来源元数据的旧缓存只供人工确认，不恢复为用户结果，也不删除原始内容。
+  const historicalPcfCache = ref<string | null>(localStorage.getItem(userKeys.pcf))
+  const userPcf = ref<any>(null)
+  const pcfResetVersion = ref(0)
+
+  async function loadPcfSample() {
+    source.value.bom = 'sample'
+    source.value.pcf = 'sample'
+    const response = await fetch('/sample-data/product-bom.json')
+    if (!response.ok) throw new Error('示例 BOM 加载失败')
+    const b = await response.json()
+    const stages = ['raw', 'mfg', 'tpt', 'use', 'eol']
+    if (b?._meta?.dataType !== 'SAMPLE' || !b.product?.name || b.product.unit !== '件 (pcs)'
+      || !Array.isArray(b.bom) || !Array.isArray(b.lcaStages) || b.lcaStages.length !== stages.length
+      || !stages.every(key => b.lcaStages.filter((s: any) => s.stage === key
+        && typeof s.emission === 'number' && Number.isFinite(s.emission) && s.emission >= 0).length === 1)) {
+      throw new Error('示例 BOM 的来源、功能单位或阶段数据无效')
+    }
+    sampleBom.value = b
+    return b
+  }
+
+  function resetPcf() {
+    userPcf.value = null
+    source.value.pcf = 'sample'
+    pcfResetVersion.value++
+    // carbonai_user_pcf 可能来自旧版演示，保留原文，禁止静默删除或覆盖。
+  }
 
   // ================= 示例数据加载 =================
   async function loadSampleData() {
@@ -122,10 +151,12 @@ export const useDataStore = defineStore('data', () => {
   }
 
   async function loadSampleTrajectory(): Promise<TrajPoint[]> {
-    if (trajectory.value.length) return trajectory.value
-    const csv = await fetch('/sample-data/fleet-gps-trajectory.csv').then((r) => r.text())
+    const response = await fetch('/sample-data/fleet-gps-trajectory.csv')
+    if (!response.ok) throw new Error(`示例轨迹读取失败：HTTP ${response.status}`)
+    const csv = await response.text()
     const data = parseTrajCsv(csv)
-    // 示例轨迹不落库，仅回填展示
+    source.value.trajectory = 'sample'
+    // 保留已保存的用户轨迹，但本次展示明确切换到示例。
     return data
   }
 
@@ -189,6 +220,7 @@ export const useDataStore = defineStore('data', () => {
     source.value.bom = 'sample'
   }
   function setUserPcf(p: any) {
+    if (historicalPcfCache.value !== null) throw new Error('历史 PCF 缓存来源待确认，不能覆盖')
     userPcf.value = p
     lsSet(userKeys.pcf, p)
     source.value.pcf = 'user'
@@ -201,14 +233,15 @@ export const useDataStore = defineStore('data', () => {
     resetPoints()
     resetBoundary()
     resetBom()
-    lsDel(userKeys.pcf)
+    resetPcf()
     if (emissionYears.value.length) currentYear.value = emissionYears.value[emissionYears.value.length - 1]
   }
 
   return {
     source, emissions, userEmissions, emissionYears, currentYear, yearRecords, yearTotal, scopeSummary,
     sampleEmissions, samplePoints, sampleBom,
-    trajectory, points, boundary, bom, userPcf,
+    trajectory, points, boundary, bom, userPcf, historicalPcfCache, pcfResetVersion,
+    loadPcfSample, resetPcf,
     loadSampleData, loadSampleTrajectory, loadSampleBoundary,
     setUserEmissions, resetEmissions, setUserTrajectory, resetTrajectory,
     setUserPoints, resetPoints, setUserBoundary, resetBoundary, setUserBom, resetBom, setUserPcf,
@@ -272,19 +305,22 @@ export async function parseEmissionFile(file: File): Promise<EmissionRecord[]> {
   for (let i = hi + 1; i < rows.length; i++) {
     const r = rows[i]
     const srcName = String(r[ni] || '').trim()
-    const rawVal = parseFloat(r[vi]) || 0
-    if (!srcName || rawVal <= 0) continue
+    if (!srcName) continue
+    const rawVal = Number(r[vi])
     const m = matchFactor(srcName)
+    const originalUnit = ui >= 0 ? String(r[ui] ?? '') : ''
+    let checked: CheckedAccounting
+    try { checked = calculateUnitChecked(rawVal, originalUnit, m) }
+    catch (e) { throw new Error(`第${i + 1}行：${e instanceof Error ? e.message : '单位核验失败'}；本次文件未保存`) }
     const year = yi >= 0 ? (parseInt(r[yi]) || new Date().getFullYear()) : new Date().getFullYear()
     records.push({
       year, month: mi >= 0 ? parseInt(r[mi]) || undefined : undefined,
       department: di >= 0 ? String(r[di] || '') || undefined : undefined,
       source: srcName, activity: rawVal,
-      unit: ui >= 0 ? String(r[ui] || m.unit) : m.unit,
+      unit: originalUnit,
       factor: m.factor, scope: m.scope,
-      emission: +(rawVal * m.factor).toFixed(2),
+      ...checked,
       factorSource: m.source,
-      confidence: m.source === '默认排放因子' ? 'low' : 'high',
     })
   }
   if (!records.length) throw new Error('未解析到有效数据行')
@@ -293,17 +329,7 @@ export async function parseEmissionFile(file: File): Promise<EmissionRecord[]> {
 
 /** 解析车队轨迹 CSV：timestamp,lat,lon,speed,load,vehicle_type,fuel_type[,vehicle_id] */
 export function parseTrajCsv(csv: string): TrajPoint[] {
-  const lines = csv.trim().split('\n').filter((l) => l && !l.startsWith('#'))
-  const out: TrajPoint[] = []
-  for (let i = 1; i < lines.length; i++) {
-    const v = lines[i].split(',')
-    if (v.length < 7 || isNaN(parseFloat(v[1]))) continue
-    out.push({
-      time: v[0], lat: parseFloat(v[1]), lon: parseFloat(v[2]), speed: parseFloat(v[3]),
-      load: parseFloat(v[4]), vehicle: v[5], fuel: v[6], vehicleId: v[7] || '',
-    })
-  }
-  return out
+  return parseTrajectoryCsv(csv)
 }
 
 /** 解析排放点位 CSV/Excel：企业名称,纬度,经度,排放量,所属行业[,城市] */

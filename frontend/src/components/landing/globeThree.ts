@@ -5,6 +5,7 @@ export {
   Group,
   LineBasicMaterial,
   LineLoop,
+  LineSegments,
   Mesh,
   MeshBasicMaterial,
   PerspectiveCamera,

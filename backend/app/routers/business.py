@@ -4,6 +4,9 @@
 契约 {code, message, data} 由 app.schemas 提供。
 """
 import csv
+import asyncio
+import hashlib
+import threading
 import html as html_lib
 import io
 import json
@@ -11,15 +14,19 @@ import os
 import re
 import time
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 from urllib.parse import urljoin
 
-from fastapi import APIRouter, UploadFile, File, Form
-from fastapi.responses import Response
-from pydantic import BaseModel
+from fastapi import APIRouter, UploadFile, File, Form, Request, Header, HTTPException
+from fastapi.responses import Response, JSONResponse
+from starlette.concurrency import run_in_threadpool
+from starlette.requests import ClientDisconnect
+from pydantic import BaseModel, Field, ConfigDict, ValidationError
 
 from app.factors import FACTOR_LIB, match_factor
+from app.accounting_units import calculate_unit_checked
 from app.schemas import ok, err
+from app.routers import auth
 
 router = APIRouter(prefix="/api", tags=["business"])
 
@@ -84,14 +91,14 @@ def _read_tabular(content: bytes, filename: str) -> List[List[str]]:
     if name.endswith(".csv"):
         text = content.decode("utf-8-sig", errors="replace")
         for line in csv.reader(io.StringIO(text)):
-            rows.append([str(c).strip() for c in line])
+            rows.append([str(c) for c in line])
     elif name.endswith((".xlsx", ".xls")):
         import openpyxl
 
         wb = openpyxl.load_workbook(io.BytesIO(content), read_only=True, data_only=True)
         ws = wb.worksheets[0]
         for row in ws.iter_rows(values_only=True):
-            rows.append(["" if c is None else str(c).strip() for c in row])
+            rows.append(["" if c is None else str(c) for c in row])
         wb.close()
     else:
         raise ValueError("仅支持 .csv / .xlsx / .xls 文件")
@@ -103,7 +110,7 @@ def _find_columns(rows: List[List[str]]) -> dict:
     idx = {"source": -1, "activity": -1, "unit": -1, "year": -1, "month": -1, "department": -1}
     for i in range(min(len(rows), 20)):
         for j, cell in enumerate(rows[i]):
-            c = cell.lower()
+            c = cell.strip().lower()
             if not c:
                 continue
             if idx["source"] < 0 and ("排放源" in c or "source" in c):
@@ -152,12 +159,12 @@ async def emissions_upload(file: UploadFile = File(...)):
         if idx["source"] >= len(r) or idx["activity"] >= len(r):
             continue
         source_name = r[idx["source"]].strip()
+        if not source_name:
+            continue
         try:
             activity = float(r[idx["activity"]])
         except (ValueError, TypeError):
-            continue
-        if not source_name or activity <= 0:
-            continue
+            raise HTTPException(status_code=422, detail=f"第{i + 1}行：活动数据必须为有限正数") from None
 
         factor = match_factor(source_name)
         year = current_year
@@ -178,9 +185,11 @@ async def emissions_upload(file: UploadFile = File(...)):
         if idx["department"] >= 0 and idx["department"] < len(r):
             department = r[idx["department"]].strip() or None
 
-        unit = factor["unit"]
-        if idx["unit"] >= 0 and idx["unit"] < len(r) and r[idx["unit"]]:
-            unit = r[idx["unit"]]
+        unit = r[idx["unit"]] if 0 <= idx["unit"] < len(r) else ""
+        try:
+            checked = calculate_unit_checked(activity, unit, factor)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=f"第{i + 1}行：{exc}；本次文件未保存") from None
 
         records.append({
             "year": year,
@@ -191,9 +200,8 @@ async def emissions_upload(file: UploadFile = File(...)):
             "unit": unit,
             "factor": factor["factor"],
             "scope": factor["scope"],
-            "emission": round(activity * factor["factor"], 2),
+            **checked,
             "factorSource": factor["source"],
-            "confidence": "low" if factor["source"] == "默认排放因子" else "high",
         })
 
     if not records:
@@ -238,6 +246,10 @@ def _build_report_pdf(body: ReportBody) -> bytes:
     ]
 
     if body.records:
+        checked = [r for r in body.records if r.get("accountingVersion") == "activity-unit-v1" and r.get("emissionUnit") == "tCO₂"]
+        report_unit = "tCO₂" if len(checked) == len(body.records) else "吨（口径待核实）" if checked else "tCO₂e"
+        if checked:
+            story.append(Paragraph("单位仅按因子声明校验；CO₂不等于已核验的完整温室气体CO₂e，混合历史记录需人工核对。", sub_style))
         totals = {"Scope 1": 0.0, "Scope 2": 0.0, "Scope 3": 0.0}
         for r in body.records:
             scope = r.get("scope")
@@ -245,7 +257,7 @@ def _build_report_pdf(body: ReportBody) -> bytes:
                 totals[scope] += float(r.get("emission") or 0)
 
         story.append(Paragraph("一、Scope 排放汇总", head_style))
-        summary = [[Paragraph("#", cell_style), Paragraph("范围", cell_style), Paragraph("排放量 (tCO₂e)", cell_style)]]
+        summary = [[Paragraph("#", cell_style), Paragraph("范围", cell_style), Paragraph(f"排放量 ({report_unit})", cell_style)]]
         for i, (scope, val) in enumerate(totals.items(), start=1):
             summary.append([Paragraph(str(i), cell_style), Paragraph(scope, cell_style), Paragraph(f"{val:.2f}", cell_style)])
         summary.append([Paragraph("", cell_style), Paragraph("合计", cell_style), Paragraph(f"{sum(totals.values()):.2f}", cell_style)])
@@ -259,7 +271,7 @@ def _build_report_pdf(body: ReportBody) -> bytes:
         story.append(t)
 
         story.append(Paragraph("二、排放源明细（前 100 条）", head_style))
-        detail = [[Paragraph("#", cell_style), Paragraph("排放源", cell_style), Paragraph("范围", cell_style), Paragraph("活动数据", cell_style), Paragraph("因子", cell_style), Paragraph("排放量 (tCO₂e)", cell_style)]]
+        detail = [[Paragraph("#", cell_style), Paragraph("排放源", cell_style), Paragraph("范围", cell_style), Paragraph("活动数据", cell_style), Paragraph("因子", cell_style), Paragraph(f"排放量 ({report_unit})", cell_style)]]
         for i, r in enumerate(body.records[:100], start=1):
             detail.append([
                 Paragraph(str(i), cell_style),
@@ -304,15 +316,107 @@ def reports_generate(body: ReportBody):
 
 # ---------------- AI 对话（真实 LLM 代理，2026-09-19 实装） ----------------
 
-class ChatBody(BaseModel):
-    message: str
-    history: list = []
+def _ai_int(name: str, default: int, ceiling: int) -> int:
+    try:
+        value = int(os.getenv(name, str(default)))
+        return min(value, ceiling) if value > 0 else 0
+    except ValueError:
+        return 0  # 错配关闭调用，不将0/非法值解释为无限制。
 
 
 AI_API_BASE = os.getenv("AI_API_BASE", "https://api.deepseek.com/v1/chat/completions")
 AI_API_KEY = os.getenv("AI_API_KEY", "").strip()
 AI_MODEL = os.getenv("AI_MODEL", "deepseek-chat")
-AI_TIMEOUT = int(os.getenv("AI_TIMEOUT", "60"))
+AI_TIMEOUT = _ai_int("AI_TIMEOUT", 20, 20)
+AI_MAX_BODY_BYTES = _ai_int("AI_MAX_BODY_BYTES", 32768, 65536)
+AI_MAX_QUESTION_CHARS = _ai_int("AI_MAX_QUESTION_CHARS", 2000, 4000)
+AI_MAX_HISTORY_MESSAGES = _ai_int("AI_MAX_HISTORY_MESSAGES", 8, 16)
+AI_MAX_HISTORY_ITEM_CHARS = _ai_int("AI_MAX_HISTORY_ITEM_CHARS", 2000, 4000)
+AI_MAX_HISTORY_CHARS = _ai_int("AI_MAX_HISTORY_CHARS", 8000, 16000)
+AI_MAX_RESPONSE_BYTES = _ai_int("AI_MAX_RESPONSE_BYTES", 65536, 262144)
+AI_MAX_OUTPUT_TOKENS = _ai_int("AI_MAX_OUTPUT_TOKENS", 1500, 1500)
+AI_USER_RPM = _ai_int("AI_USER_REQUESTS_PER_MINUTE", 3, 30)
+AI_GLOBAL_RPM = _ai_int("AI_GLOBAL_REQUESTS_PER_MINUTE", 10, 120)
+AI_MAX_CONCURRENT = _ai_int("AI_MAX_CONCURRENT", 2, 8)
+AI_USER_DAILY_CALLS = _ai_int("AI_USER_DAILY_CALLS", 20, 500)
+AI_GLOBAL_DAILY_CALLS = _ai_int("AI_GLOBAL_DAILY_CALLS", 100, 5000)
+AI_DUPLICATE_SECONDS = _ai_int("AI_DUPLICATE_WINDOW_SECONDS", 10, 60)
+
+
+class ChatMessage(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=AI_MAX_HISTORY_ITEM_CHARS or 1)
+
+
+class ChatBody(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    message: str = Field(min_length=1, max_length=AI_MAX_QUESTION_CHARS or 1)
+    history: List[ChatMessage] = Field(default_factory=list, max_length=AI_MAX_HISTORY_MESSAGES or 1)
+
+
+_AI_LOCK = threading.Lock()
+_AI_STATE = {"day": "", "daily": {}, "total": 0, "times": [], "users": {}, "active": set(), "duplicates": {}}
+
+
+def _ai_ready() -> bool:
+    # 不支持共享额度；未知/多worker/多实例部署一律不启用付费调用。
+    singleton = (os.getenv("AI_DEPLOYMENT_MODE", "disabled") == "single-process"
+                 and os.getenv("AI_SINGLE_PROCESS_CONFIRMED", "false").lower() == "true"
+                 and all(os.getenv(name, "1") == "1" for name in ("WEB_CONCURRENCY", "UVICORN_WORKERS", "AI_INSTANCE_COUNT")))
+    limits = [AI_TIMEOUT, AI_MAX_BODY_BYTES, AI_MAX_QUESTION_CHARS, AI_MAX_HISTORY_MESSAGES,
+              AI_MAX_HISTORY_ITEM_CHARS, AI_MAX_HISTORY_CHARS, AI_MAX_RESPONSE_BYTES,
+              AI_MAX_OUTPUT_TOKENS, AI_USER_RPM, AI_GLOBAL_RPM, AI_MAX_CONCURRENT,
+              AI_USER_DAILY_CALLS, AI_GLOBAL_DAILY_CALLS, AI_DUPLICATE_SECONDS]
+    return singleton and all(value > 0 for value in limits)
+
+
+def _ai_enter(uid: int, fingerprint: str):
+    now = time.monotonic()
+    day = time.strftime("%Y-%m-%d", time.gmtime())
+    with _AI_LOCK:
+        state = _AI_STATE
+        if state["day"] != day:
+            state.update(day=day, daily={}, total=0)
+        state["times"] = [t for t in state["times"] if now - t < 60]
+        state["users"] = {u: [t for t in ts if now - t < 60] for u, ts in state["users"].items() if ts and now - ts[-1] < 60}
+        state["duplicates"] = {u: entry for u, entry in state["duplicates"].items() if now - entry[1] < AI_DUPLICATE_SECONDS}
+        if (uid in state["active"] or len(state["active"]) >= AI_MAX_CONCURRENT
+                or len(state["times"]) >= AI_GLOBAL_RPM or len(state["users"].get(uid, [])) >= AI_USER_RPM
+                or state["total"] >= AI_GLOBAL_DAILY_CALLS or state["daily"].get(uid, 0) >= AI_USER_DAILY_CALLS
+                or state["duplicates"].get(uid, (None, 0))[0] == fingerprint):
+            raise HTTPException(status_code=429, detail="AI调用次数、频率或并发已达限制，请稍后再试")
+        # 上游尝试即计数，不因失败退款；无自动重试，不称精确费用预算。
+        state["active"].add(uid)
+        state["times"].append(now)
+        state["users"].setdefault(uid, []).append(now)
+        state["daily"][uid] = state["daily"].get(uid, 0) + 1
+        state["total"] += 1
+        state["duplicates"][uid] = (fingerprint, now)
+
+
+def _ai_reply(code: int, message: str, data=None):
+    headers = {"Cache-Control": "no-store"}
+    if code == 401:
+        headers["WWW-Authenticate"] = "Bearer"
+    return JSONResponse(status_code=code, content={"code": code, "message": message, "data": data}, headers=headers)
+
+
+async def _read_ai_body(request: Request):
+    length = request.headers.get("content-length")
+    if length is not None and (not length.isdecimal() or int(length) > AI_MAX_BODY_BYTES):
+        raise HTTPException(status_code=413, detail="AI请求体超出限制")
+    if request.headers.get("content-encoding", "identity").lower() != "identity":
+        raise HTTPException(status_code=415, detail="AI接口不接受压缩请求体")
+    if request.headers.get("content-type", "").split(";")[0].strip().lower() != "application/json":
+        raise HTTPException(status_code=415, detail="AI接口需要JSON请求")
+    body = bytearray()
+    async for chunk in request.stream():
+        if len(body) + len(chunk) > AI_MAX_BODY_BYTES:
+            raise HTTPException(status_code=413, detail="AI请求体超出限制")
+        body.extend(chunk)
+    return ChatBody.model_validate_json(body)
+
 
 SYSTEM_PROMPT = (
     "你是 CarbonAI 时空智能碳管理平台的碳管理顾问。"
@@ -323,48 +427,85 @@ SYSTEM_PROMPT = (
 
 
 def _call_llm(message: str, history: list) -> str:
-    """调用 OpenAI 兼容接口（DeepSeek 等），使用标准库 urllib，不引入新依赖。"""
+    """单次有界上游请求；失败不重试，异常由聊天路由统一脱敏。"""
     import urllib.request
-
-    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    for h in (history or [])[-8:]:
-        if isinstance(h, dict) and h.get("role") in ("user", "assistant") and h.get("content"):
-            messages.append({"role": h["role"], "content": str(h["content"])})
-    messages.append({"role": "user", "content": message})
-
-    payload = json.dumps({
-        "model": AI_MODEL,
-        "messages": messages,
-        "temperature": 0.5,
-        "max_tokens": 1500,
-    }).encode()
-
-    req = urllib.request.Request(
-        AI_API_BASE,
-        data=payload,
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {AI_API_KEY}",
-        },
-        method="POST",
-    )
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history + [{"role": "user", "content": message}]
+    payload = json.dumps({"model": AI_MODEL, "messages": messages, "temperature": 0.5,
+                          "max_tokens": AI_MAX_OUTPUT_TOKENS}).encode()
+    req = urllib.request.Request(AI_API_BASE, data=payload,
+                                 headers={"Content-Type": "application/json", "Authorization": f"Bearer {AI_API_KEY}"}, method="POST")
+    deadline = time.monotonic() + AI_TIMEOUT
     with urllib.request.urlopen(req, timeout=AI_TIMEOUT) as resp:
-        data = json.loads(resp.read().decode())
-    return data["choices"][0]["message"]["content"]
+        chunks = bytearray()
+        while True:
+            if time.monotonic() >= deadline:
+                raise TimeoutError()
+            part = resp.read1(min(4096, AI_MAX_RESPONSE_BYTES + 1 - len(chunks)))
+            if not part:
+                break
+            chunks.extend(part)
+            if len(chunks) > AI_MAX_RESPONSE_BYTES:
+                raise ValueError("response limit")
+        data = json.loads(chunks.decode("utf-8"))
+    answer = data["choices"][0]["message"]["content"]
+    if not isinstance(answer, str) or not answer.strip():
+        raise ValueError("invalid answer")
+    return answer.strip()
+
+
+def _ai_call_reserved(uid: int, message: str, history: list):
+    try:
+        return _call_llm(message, history)
+    finally:
+        with _AI_LOCK:
+            _AI_STATE["active"].discard(uid)
 
 
 @router.post("/ai/chat")
-def ai_chat(body: ChatBody):
-    """AI 顾问：服务端代理调用 LLM（密钥不暴露给浏览器），未配置密钥时返回 503 由前端回退本地知识库。"""
-    if not body.message or not body.message.strip():
-        return err("消息不能为空")
-    if not AI_API_KEY:
-        return err("AI 服务尚未配置（请设置 AI_API_KEY 环境变量后启用）", 503)
+async def ai_chat(request: Request, authorization: str = Header(default="")):
+    """仅本接口鉴权及流式限长；其他业务路由保持既有权限。"""
+    from urllib.error import URLError
+    entered = False
+    submitted = False
+    uid = None
     try:
-        answer = _call_llm(body.message.strip(), body.history)
-        return ok(answer)
-    except Exception as e:
-        return err(f"AI 服务调用失败：{e}", 502)
+        uid = await run_in_threadpool(auth.require_current_user_id, authorization)
+        if not _ai_ready():
+            return _ai_reply(503, "AI服务未启用或单进程部署及限额尚未确认，可使用本地规则参考回答")
+        if not AI_API_KEY:
+            return _ai_reply(503, "AI上游服务尚未配置，可使用本地规则参考回答")
+        body = await asyncio.wait_for(_read_ai_body(request), timeout=5)
+        message = body.message.strip()
+        history = [h.model_dump() for h in body.history]
+        if not message or any(not h["content"].strip() for h in history) or sum(len(h["content"]) for h in history) > AI_MAX_HISTORY_CHARS:
+            return _ai_reply(422, "提问或历史内容为空或超出允许范围")
+        # 兼容旧客户端已经将当前问题放在history末尾的情况。
+        if history and history[-1]["role"] == "user" and history[-1]["content"].strip() == message:
+            history.pop()
+        fingerprint = hashlib.sha256(json.dumps([message, history], ensure_ascii=False).encode()).hexdigest()
+        _ai_enter(uid, fingerprint)
+        entered = True
+        # 等待线程真正结束后才释放并发名额，避免客户端断开导致重复计费请求穿透。
+        submitted = True
+        call = asyncio.create_task(run_in_threadpool(_ai_call_reserved, uid, message, history))
+        # 客户端取消后仍取走后台异常，避免事件循环输出原始上游异常日志。
+        call.add_done_callback(lambda done: None if done.cancelled() else done.exception())
+        answer = await asyncio.shield(call)
+        return _ai_reply(200, "success", answer)
+    except HTTPException as exc:
+        return _ai_reply(exc.status_code, str(exc.detail))
+    except (ValidationError, ValueError, ClientDisconnect):
+        return _ai_reply(502 if entered else 422, "AI上游响应无效" if entered else "AI请求格式或内容不符合限制")
+    except TimeoutError:
+        return _ai_reply(504 if entered else 408, "AI上游超时，未自动重试" if entered else "AI请求体读取超时")
+    except URLError as exc:
+        return _ai_reply(504 if isinstance(exc.reason, TimeoutError) else 502, "AI上游暂不可用，未自动重试")
+    except Exception:
+        return _ai_reply(502 if entered else 503, "AI服务暂不可用，可使用本地规则参考回答")
+    finally:
+        if entered and not submitted:
+            with _AI_LOCK:
+                _AI_STATE["active"].discard(uid)
 
 
 # ---------------- 碳市场行情快照（2026-09-21 新增） ----------------

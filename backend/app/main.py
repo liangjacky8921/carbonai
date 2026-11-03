@@ -15,7 +15,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.routers import auth, business
+from app.routers import auth, business, collection
 from app.db import Base, engine
 
 ENV = os.getenv("APP_ENV", "development")
@@ -66,8 +66,11 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
+
 app.include_router(auth.router)
 app.include_router(business.router)
+app.include_router(collection.router)
+app.add_middleware(collection.CollectionBodyLimit)
 
 
 @app.get("/api/health")

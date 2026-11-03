@@ -23,7 +23,7 @@
         </div>
 
         <div v-for="(m, i) in messages" :key="i" class="msg" :class="m.role">
-          <div class="bubble">{{ m.content }}</div>
+          <div class="bubble"><small v-if="m.role === 'assistant'">{{ m.source === 'model' ? '模型参考回答' : '本地规则参考回答（非大模型）' }}</small><div>{{ m.content }}</div></div>
         </div>
         <div v-if="thinking" class="msg assistant" role="status" aria-label="正在生成回答">
           <div class="bubble typing"><span /><span /><span /></div>
@@ -54,7 +54,7 @@ const input = ref('')
 const thinking = ref(false)
 const replyError = ref('')
 const chatBox = ref<HTMLElement | null>(null)
-const messages = ref<{ role: 'user' | 'assistant'; content: string }[]>([])
+const messages = ref<{ role: 'user' | 'assistant'; content: string; source?: 'model' | 'rule' }[]>([])
 
 const quickQuestions = [
   '什么是 CBAM？哪些企业需要申报？',
@@ -88,41 +88,49 @@ const LOCAL_KB: { kw: string[]; answer: string }[] = [
 
 async function send(q?: string) {
   const text = (q || input.value).trim()
-  if (!text) return
-  if (thinking.value) return
+  if (!text || thinking.value) return
+  if (text.length > 2000) { replyError.value = '提问请限制在2000字符以内。'; return }
+  let remaining = 8000
+  const history: { role: 'user' | 'assistant'; content: string }[] = []
+  for (const m of messages.value.slice(-8).reverse()) {
+    const content = m.content.slice(0, Math.min(2000, remaining))
+    if (content.trim()) history.unshift({ role: m.role, content })
+    remaining -= content.length
+    if (!remaining) break
+  }
   input.value = ''
   messages.value.push({ role: 'user', content: text })
   thinking.value = true
   replyError.value = ''
-  await nextTick()
-  chatBox.value?.scrollTo({ top: chatBox.value.scrollHeight, behavior: 'smooth' })
-
   let answer = ''
-  if (backendOnline.value) {
-    try {
-      const r = await bizApi.chat(text, messages.value.slice(-8))
-      if (r.code === 200 && r.data != null) answer = String(r.data)
-      else replyError.value = '后端问答暂不可用，已切换到本地知识库。'
-    } catch {
-      replyError.value = '后端问答请求失败，已切换到本地知识库。'
+  let source: 'model' | 'rule' = 'rule'
+  try {
+    if (backendOnline.value) {
+      try {
+        const r = await bizApi.chat(text, history)
+        if (r.code === 200 && typeof r.data === 'string' && r.data.trim()) {
+          answer = r.data.trim()
+          source = 'model'
+        } else replyError.value = r.code === 401
+          ? '平台会话无效或已过期，请重新登录；以下为本地规则参考回答。'
+          : r.code === 429 ? 'AI调用已达限制，未自动重试；以下为本地规则参考回答。'
+          : '服务器问答暂不可用，未自动重试；以下为本地规则参考回答。'
+      } catch { replyError.value = '服务器问答请求失败，未自动重试；以下为本地规则参考回答。' }
+    } else replyError.value = '后端离线；以下为本地规则参考回答。'
+    if (!answer) {
+      const lower = text.toLowerCase()
+      const hit = LOCAL_KB.find((k) => k.kw.some((w) => lower.includes(w)))
+      if (hit) {
+        answer = hit.answer
+      } else {
+        const topics = ['CBAM', 'Scope 1/2/3 划分', '碳价走势', '减排路径（SBTi）', 'ESG 披露标准', '企业碳核算流程', '产品碳足迹 LCA', '绿电认证', 'CCER 方法学', '第三方核查', '数据质量 DQR', '标准分类索引']
+        answer = `收到您的问题：「${text}」\n\n当前运行于本地碳管理知识库模式，可覆盖 ${topics.join('、')} 等专题。\n\n如需接入真实大模型（服务器端代理，密钥不暴露），请联系管理员在服务器 /etc/carbonai/carbonai.env 配置 AI_API_KEY（支持 DeepSeek / SiliconFlow / Moonshot 等 OpenAI 兼容协议）。`
+      }
     }
-  }
-  if (!answer) {
-    await new Promise((res) => setTimeout(res, 700))
-    const lower = text.toLowerCase()
-    const hit = LOCAL_KB.find((k) => k.kw.some((w) => lower.includes(w)))
-    if (hit) {
-      answer = hit.answer
-    } else {
-      const topics = ['CBAM', 'Scope 1/2/3 划分', '碳价走势', '减排路径（SBTi）', 'ESG 披露标准', '企业碳核算流程', '产品碳足迹 LCA', '绿电认证', 'CCER 方法学', '第三方核查', '数据质量 DQR', '标准分类索引']
-      answer = `收到您的问题：「${text}」\n\n当前运行于本地碳管理知识库模式，可覆盖 ${topics.join('、')} 等专题。\n\n如需接入真实大模型（服务器端代理，密钥不暴露），请联系管理员在服务器 /etc/carbonai/carbonai.env 配置 AI_API_KEY（支持 DeepSeek / SiliconFlow / Moonshot 等 OpenAI 兼容协议）。`
-    }
-  }
-
-  messages.value.push({ role: 'assistant', content: answer })
-  thinking.value = false
-  await nextTick()
-  chatBox.value?.scrollTo({ top: chatBox.value.scrollHeight, behavior: 'smooth' })
+    messages.value.push({ role: 'assistant', content: answer, source })
+    await nextTick()
+    chatBox.value?.scrollTo({ top: chatBox.value.scrollHeight, behavior: 'smooth' })
+  } finally { thinking.value = false }
 }
 </script>
 

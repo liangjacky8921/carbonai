@@ -22,6 +22,7 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/layouts/MainLayout.vue'),
     children: [
       { path: '', name: 'dashboard', component: () => import('@/views/DashboardView.vue'), meta: { title: '数据大屏', icon: 'Odometer' } },
+      { path: '/collection', name: 'collection', component: () => import('@/views/CollectionView.vue'), meta: { title: '数据采集与来源管理', requireAuth: true } },
       { path: '/accounting', name: 'accounting', component: () => import('@/views/AccountingView.vue'), meta: { title: '碳排放核算', icon: 'DataAnalysis' } },
       { path: '/factorlib', name: 'factorlib', component: () => import('@/views/FactorLibView.vue'), meta: { title: '排放因子库', icon: 'Files' } },
       { path: '/gis', name: 'gis', component: () => import('@/views/GisView.vue'), meta: { title: 'GIS碳源热力图', icon: 'MapLocation' } },
