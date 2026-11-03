@@ -299,7 +299,6 @@ onBeforeUnmount(() => {
     <div class="globe-halo" aria-hidden="true" />
     <img :src="globeFallback" class="globe-fallback" alt="" aria-hidden="true" />
     <div ref="canvasHost" class="canvas-host" aria-hidden="true" />
-    <span class="china-key" aria-hidden="true">中国区域 · 地理示意</span>
     <figcaption>基于公开地理轮廓生成的视觉示意，不代表实时排放监测点。</figcaption>
   </figure>
 </template>
@@ -314,10 +313,8 @@ onBeforeUnmount(() => {
 .is-ready .canvas-host { opacity: 1; }
 .is-static .globe-fallback { opacity: .78; }
 .canvas-host :deep(.globe-canvas) { display: block; width: 100%; height: 100%; }
-.china-key { position: absolute; right: 12%; bottom: 12%; color: #b6dfc1; font-size: 11px; letter-spacing: .08em; }
 figcaption { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 600px) {
-  .china-key { right: 8%; bottom: 10%; font-size: 10px; }
   .globe-halo { inset: 25% -22% -6% 18%; opacity: .42; }
   .globe-fallback { inset: 25% -28% -7% 23%; width: 105%; height: 82%; opacity: .34; }
 }
